@@ -222,7 +222,8 @@ export type Row = { id: string; updatedAt: number; deletedAt: number | null } & 
 export type Op =
   | { op: 'create'; entity: EntityName; id: string; fields: Record<string, unknown> }
   | { op: 'update'; entity: EntityName; id: string; fields: Record<string, unknown> }
-  | { op: 'delete'; entity: EntityName; id: string; label?: string }
+  /** trashId: chosen by the client so a retried request is idempotent */
+  | { op: 'delete'; entity: EntityName; id: string; label?: string; trashId?: string }
   | { op: 'undelete'; entity: EntityName; id: string }
   /** Soft-delete without a trash entry (used to undo a create). */
   | { op: 'discard'; entity: EntityName; id: string }

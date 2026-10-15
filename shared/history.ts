@@ -15,6 +15,8 @@ export interface HistoryEntry {
   forward: Op[];
   /** ops that undo it */
   inverse: Op[];
+  /** the inverse was supplied by the caller (not derivable from state): keep it across redo */
+  fixedInverse?: boolean;
 }
 
 /** Placeholder for a trash id not known yet: index of the delete op in `forward`. */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { History, inverseOps, resolveTrashIds } from './history';
-import { between, emptyStore, needsRebalance, numbering, type Store } from './model';
+import { between, emptyStore, needsRebalance, placeAt, numbering, type Store } from './model';
 import type { Op, Row } from './schema';
 import { acknowledge, markPending, mergeChanges, rowKey, type Pending, type Versions } from './sync';
 
@@ -136,5 +136,27 @@ describe('undo inverse operations', () => {
     expect(h.canRedo).toBe(true);
     h.push({ label: 'b', forward: [], inverse: [] });
     expect(h.canRedo).toBe(false);
+  });
+});
+
+describe('placeAt', () => {
+  const list = (ps: number[]) => ps.map((p, i) => row(`r${i}`, { position: p }));
+  it('uses the midpoint while there is room', () => {
+    expect(placeAt(list([1, 2]), 1)).toEqual({ position: 1.5, renumber: [] });
+  });
+  it('spreads the list out when neighbours touch', () => {
+    const r = placeAt(list([1, 1 + 1e-12, 3]), 1);
+    expect(r.position).toBe(2);
+    expect(r.renumber).toEqual([{ id: 'r0', position: 1 }, { id: 'r1', position: 3 }, { id: 'r2', position: 4 }]);
+  });
+  it('survives 100 inserts at the same place', () => {
+    let l = list([1, 2]);
+    for (let k = 0; k < 100; k++) {
+      const r = placeAt(l, 1);
+      const m = new Map(r.renumber.map((x) => [x.id, x.position]));
+      l = [...l.map((x) => ({ ...x, position: m.get(x.id) ?? x.position })), row(`n${k}`, { position: r.position })].sort((a, b) => (a.position as number) - (b.position as number));
+    }
+    expect(needsRebalance(l)).toBe(false);
+    expect(new Set(l.map((x) => x.position)).size).toBe(102);
   });
 });

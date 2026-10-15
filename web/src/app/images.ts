@@ -1,10 +1,10 @@
-import { positionAt } from '../../../shared/model';
+import { placeAt, positionAt } from '../../../shared/model';
 import { MAX_UPLOAD_BYTES, type Op, type Row } from '../../../shared/schema';
 import { api } from '../data/api';
 import { coverOf, type PLib, type PShot } from '../data/project';
 import type { Img } from '../lib/util';
 import { uid } from '../lib/util';
-import { commit } from './actions';
+import { commit, renumberOps } from './actions';
 import { engine, getState, project, setState, toast } from './state';
 
 /**
@@ -37,10 +37,12 @@ async function encode(bmp: ImageBitmap, max: number): Promise<Blob> {
   return (await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/jpeg', 0.85)))!;
 }
 
-export async function compress(file: File): Promise<{ full: Blob; thumb: Blob; width: number; height: number }> {
+/** keepOriginal: a photo that is already small enough is stored byte for byte (project import). */
+export async function compress(file: File, keepOriginal = false): Promise<{ full: Blob; thumb: Blob; width: number; height: number }> {
   const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' } as ImageBitmapOptions);
   try {
-    const full = await encode(bmp, FULL);
+    const asIs = keepOriginal && Math.max(bmp.width, bmp.height) <= FULL && /^image\/(webp|jpeg|png)$/.test(file.type);
+    const full = asIs ? file : await encode(bmp, FULL);
     const thumb = await encode(bmp, THUMB);
     const scale = Math.min(1, FULL / Math.max(bmp.width, bmp.height));
     return { full, thumb, width: Math.round(bmp.width * scale), height: Math.round(bmp.height * scale) };
@@ -50,14 +52,14 @@ export async function compress(file: File): Promise<{ full: Blob; thumb: Blob; w
 }
 
 /** Compresses and uploads one file; returns the new image id. */
-export async function uploadFile(file: File): Promise<string> {
+export async function uploadFile(file: File, keepOriginal = false): Promise<string> {
   if (!/^image\//.test(file.type)) throw new Error('type');
   if (file.size > MAX_UPLOAD_BYTES) throw new Error('size');
-  const c = await compress(file);
+  const c = await compress(file, keepOriginal);
   const fd = new FormData();
-  const ext = c.full.type === 'image/webp' ? 'webp' : 'jpg';
-  fd.set('file', new File([c.full], `image.${ext}`, { type: c.full.type }));
-  fd.set('thumb', new File([c.thumb], `thumb.${ext}`, { type: c.thumb.type }));
+  const ext = (b: Blob) => (b.type === 'image/webp' ? 'webp' : b.type === 'image/png' ? 'png' : 'jpg');
+  fd.set('file', new File([c.full], `image.${ext(c.full)}`, { type: c.full.type }));
+  fd.set('thumb', new File([c.thumb], `thumb.${ext(c.thumb)}`, { type: c.thumb.type }));
   fd.set('width', String(c.width));
   fd.set('height', String(c.height));
   const res = await api<{ id: string; width: number; height: number }>('/api/images', { method: 'POST', body: fd });
@@ -179,7 +181,8 @@ export function moveImage(target: Target, from: number, to: number) {
   const moving = linked[from];
   if (!moving || from === to) return;
   const rows = linkedPositions(linked as unknown as Row[]).filter((r) => r.id !== moving.linkId);
-  commit([{ op: 'update', entity: 'itemImages', id: moving.linkId!, fields: { position: positionAt(rows, to) } }], { history: 'ترتيب الصور' });
+  const at = placeAt(rows, to);
+  commit([...renumberOps('itemImages', at.renumber), { op: 'update', entity: 'itemImages', id: moving.linkId!, fields: { position: at.position } }], { history: 'ترتيب الصور' });
 }
 
 /** Files dropped on the empty board become a new moodboard card. */
@@ -190,7 +193,7 @@ export async function filesToMoodboard(list: FileList, pos: { x: number; y: numb
   if (!imgs.length) return;
   toast('يرفع الصور…');
   try {
-    const ids = await Promise.all(imgs.map(uploadFile));
+    const ids = await Promise.all(imgs.map((f) => uploadFile(f)));
     const mid = uid('mb');
     const ops: Op[] = [
       { op: 'create', entity: 'moodboards', id: mid, fields: { projectId: p.id, position: positionAt(p.library.moodboards, p.library.moodboards.length), title: 'لوحة مزاج', swatches: [] } },

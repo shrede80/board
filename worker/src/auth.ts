@@ -105,6 +105,12 @@ export async function lockRemaining(db: D1Database, now = Date.now()): Promise<n
   return Math.max(0, tenth + LOCK_WINDOW_MS - now);
 }
 
+/** Failed (or in-flight) attempts inside the lock window. */
+export async function recentFailures(db: D1Database, now = Date.now()): Promise<number> {
+  const r = await db.prepare('SELECT COUNT(*) AS n FROM login_failures WHERE at > ?').bind(now - LOCK_WINDOW_MS).first<{ n: number }>();
+  return r?.n ?? 0;
+}
+
 export async function recordFailure(db: D1Database, now = Date.now()) {
   await db.batch([
     db.prepare('INSERT INTO login_failures (at) VALUES (?)').bind(now),

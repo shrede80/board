@@ -58,6 +58,21 @@ export function positionAt(list: Row[], index: number, excludeId?: string): numb
   return between(l[i - 1]?.position as number | undefined, l[i]?.position as number | undefined);
 }
 
+/**
+ * Like positionAt, but when repeated halving has left no room between the neighbours it also
+ * returns new evenly spaced positions for the whole list (sent as updates in the same write).
+ */
+export function placeAt(list: Row[], index: number, excludeId?: string): { position: number; renumber: { id: string; position: number }[] } {
+  const l = excludeId ? list.filter((r) => r.id !== excludeId) : list;
+  const i = Math.max(0, Math.min(index, l.length));
+  const position = positionAt(l, i);
+  const a = l[i - 1]?.position as number | undefined, b = l[i]?.position as number | undefined;
+  const tight = (a != null && position - a < 1e-9) || (b != null && b - position < 1e-9);
+  if (!tight) return { position, renumber: [] };
+  const renumber = l.map((r, k) => ({ id: r.id, position: k < i ? k + 1 : k + 2 }));
+  return { position: i + 1, renumber };
+}
+
 /** True when two neighbours are too close for another midpoint (after ~50 halvings). */
 export function needsRebalance(list: Row[]): boolean {
   for (let i = 1; i < list.length; i++) {

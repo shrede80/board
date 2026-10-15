@@ -1,7 +1,7 @@
 import { Hono, type Context, type MiddlewareHandler } from 'hono';
 import { isEntityName, type Op } from '../../shared/schema';
 import {
-  authRow, checkSession, clearFailures, clearSessionCookie, COOKIE, equalStrings, hashPassword, lockRemaining, makeSessionCookie,
+  authRow, checkSession, clearFailures, LOCK_ATTEMPTS, recentFailures, clearSessionCookie, COOKIE, equalStrings, hashPassword, lockRemaining, makeSessionCookie,
   readCookie, recordFailure, validNewPassword, verifyPassword,
 } from './auth';
 import { ensureBootstrap } from './bootstrap';
@@ -35,7 +35,15 @@ app.use('/api/*', async (c, next) => {
   // Reject cross-site writes (cookie is SameSite=Lax; this is a second lock).
   if (c.req.method !== 'GET' && c.req.method !== 'HEAD') {
     const origin = c.req.header('Origin');
-    if (origin && new URL(origin).host !== new URL(c.req.url).host) return c.json({ error: 'forbidden' }, 403);
+    if (origin) {
+      let host = '';
+      try {
+        host = new URL(origin).host;
+      } catch {
+        /* "null" or garbage */
+      }
+      if (host !== new URL(c.req.url).host) return c.json({ error: 'forbidden' }, 403);
+    }
   }
   await ensureBootstrap(c.env.DB);
   await next();
@@ -68,15 +76,16 @@ app.get('/api/auth/status', async (c) => {
 
 app.post('/api/auth/login', async (c) => {
   const { password } = await body<{ password?: unknown }>(c);
-  const locked = await lockRemaining(c.env.DB);
-  if (locked > 0) return c.json({ error: 'locked', lockedMs: locked }, 429);
   const row = await authRow(c.env.DB);
   if (!row?.password_hash) return c.json({ error: 'setup_required' }, 409);
+  // Count the attempt BEFORE checking it, so parallel requests can't slip past the limit.
+  const attempt = await recordFailure(c.env.DB);
+  if ((await recentFailures(c.env.DB)) > LOCK_ATTEMPTS) return c.json({ error: 'locked', lockedMs: await lockRemaining(c.env.DB) }, 429);
   if (typeof password !== 'string' || !(await verifyPassword(password, row.password_hash))) {
-    await recordFailure(c.env.DB);
     const lockedMs = await lockRemaining(c.env.DB);
     return c.json({ error: lockedMs ? 'locked' : 'wrong_password', lockedMs }, lockedMs ? 429 : 401);
   }
+  void attempt;
   await clearFailures(c.env.DB);
   c.header('Set-Cookie', await makeSessionCookie(c.env.SESSION_SECRET, row.session_version));
   return c.json({ ok: true });

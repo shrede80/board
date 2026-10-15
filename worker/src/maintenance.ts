@@ -70,6 +70,8 @@ export async function purge(db: D1Database, bucket: R2Bucket, trashIds: string[]
          (kind = 'location' AND ref_id NOT IN (SELECT id FROM locations)) OR
          (kind = 'moodboard' AND ref_id NOT IN (SELECT id FROM moodboards))`,
     ),
+    // shots whose scene no longer exists at all (never shown, never purged otherwise)
+    db.prepare(`DELETE FROM shots WHERE scene_id NOT IN (SELECT id FROM scenes)`),
     db.prepare(`DELETE FROM scene_characters WHERE scene_id NOT IN (SELECT id FROM scenes) OR character_id NOT IN (SELECT id FROM characters)`),
     db.prepare(
       `DELETE FROM scene_links WHERE scene_id NOT IN (SELECT id FROM scenes) OR

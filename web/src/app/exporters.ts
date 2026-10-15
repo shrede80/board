@@ -110,8 +110,8 @@ export async function importProjectZip(pre: ImportPreview, onProgress?: (done: n
   for (const im of files) {
     const blob = await pre.zip.file(im.file!)!.async('blob');
     const type = im.file!.endsWith('.jpg') ? 'image/jpeg' : im.file!.endsWith('.png') ? 'image/png' : 'image/webp';
-    // re-encoded through the normal upload path so the photo also gets its thumbnail
-    imageMap[im.id] = await uploadFile(new File([blob], im.file!.split('/').pop()!, { type }));
+    // stored byte for byte; only the thumbnail is generated
+    imageMap[im.id] = await uploadFile(new File([blob], im.file!.split('/').pop()!, { type }), true);
     onProgress?.(++done, files.length);
   }
   const res = await api<{ projectId: string }>('/api/import', { method: 'POST', json: { project: pre.data, imageMap } });

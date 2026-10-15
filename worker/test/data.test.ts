@@ -90,6 +90,36 @@ describe('ops and numbering', () => {
     expect(trash.map((t: { kind: string }) => t.kind)).toEqual(['shots']);
   });
 
+  it('a delete retried with the same client trash id is applied once', async () => {
+    const cookie = await setupAndLogin();
+    await project(cookie);
+    const op = { op: 'delete', entity: 'shots', id: 'sh-a1', trashId: 'tr-client-1' };
+    expect((await ops(cookie, [op])).trashIds).toEqual(['tr-client-1']);
+    // the response was "lost": the same request again returns the same entry and adds none
+    expect((await ops(cookie, [op])).trashIds).toEqual(['tr-client-1']);
+    expect(await getJson('/api/trash', cookie)).toHaveLength(1);
+    expect((await call('/api/ops', { method: 'POST', cookie, json: { ops: [{ ...op, trashId: 'bad' }] } })).status).toBe(400);
+  });
+
+  it('restoring a shot whose scene is in the trash brings the scene back too', async () => {
+    const cookie = await setupAndLogin();
+    await project(cookie);
+    const shot = (await ops(cookie, [{ op: 'delete', entity: 'shots', id: 'sh-a2' }])).trashIds[0]!;
+    await ops(cookie, [{ op: 'delete', entity: 'scenes', id: 'sc-a' }]);
+    await ops(cookie, [{ op: 'restore', trashId: shot }]);
+    const n = numbering(await store(cookie), P);
+    expect(n.scenes.get('sc-a')).toBe(1);
+    expect(n.shots.get('sh-a2')).toBe('1.2');
+    expect(await getJson('/api/trash', cookie)).toHaveLength(0);
+  });
+
+  it('rejects prototype keys as field names', async () => {
+    const cookie = await setupAndLogin();
+    await project(cookie);
+    const res = await call('/api/ops', { method: 'POST', cookie, json: { ops: [{ op: 'update', entity: 'shots', id: 'sh-a1', fields: { __proto__: 1, constructor: 2 } }] } });
+    expect(res.status).toBe(400);
+  });
+
   it('discard (undo of create) leaves no trash entry; undelete brings it back', async () => {
     const cookie = await setupAndLogin();
     await project(cookie);

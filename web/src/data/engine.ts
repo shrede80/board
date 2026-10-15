@@ -1,6 +1,6 @@
 import { History, inverseOps, resolveTrashIds, type HistoryEntry } from '../../../shared/history';
 import { emptyStore, type Store } from '../../../shared/model';
-import { ENTITY_NAMES, type EntityName, type Op, type OpsResult, type Row, type Settings } from '../../../shared/schema';
+import { ENTITIES, ENTITY_NAMES, type EntityName, type Op, type OpsResult, type Row, type Settings } from '../../../shared/schema';
 import { acknowledge, markPending, mergeChanges, releasePending, rowKey, type Pending, type Versions } from '../../../shared/sync';
 import { api, ApiError } from './api';
 import { applyLocal } from './local';
@@ -52,6 +52,7 @@ const TYPE_DEBOUNCE = 500;
 const COALESCE_MS = 1500;
 /** Polls overlap a little so a write committed while a poll ran is never missed. */
 const OVERLAP_MS = 5000;
+const MAX_SERVER_ERRORS = 6;
 
 /**
  * Client data engine (SPEC §3.4, §3.5):
@@ -141,7 +142,7 @@ export class Engine {
         last.forward = mergeForward(last.forward, ops);
         entry = last;
       } else {
-        entry = { label: opts.history ?? '', forward: ops, inverse };
+        entry = { label: opts.history ?? '', forward: ops, inverse, fixedInverse: !!opts.inverse };
         this.history.push(entry);
       }
       this.lastHistoryKey = opts.key;
@@ -152,6 +153,8 @@ export class Engine {
   }
 
   private send(ops: Op[], entry?: HistoryEntry, key?: string, onAck?: (res: OpsResult) => void) {
+    // Trash ids are chosen here so that a request retried after a lost response is idempotent.
+    ops = ops.map((op) => (op.op === 'delete' && ENTITIES[op.entity].trashable && !op.trashId ? { ...op, trashId: `tr-${crypto.randomUUID()}` } : op));
     const { store, hiddenByIndex } = applyLocal(this.store, ops, this.trashHidden);
     this.store = store;
     const writes: Batch['writes'] = [];
@@ -211,7 +214,9 @@ export class Engine {
       if (head.ops.some((o) => o.op === 'restore')) void this.poll().catch(() => {});
     } catch (e) {
       const status = e instanceof ApiError ? e.status : 0;
-      if (status === 400 || status === 404 || status === 409) {
+      head.attempts++;
+      // A server error that keeps repeating is treated as a refusal; network loss (0) is retried forever.
+      if (status === 400 || status === 404 || status === 409 || (status >= 500 && head.attempts >= MAX_SERVER_ERRORS)) {
         // The server refused this change: drop it and roll the screen back.
         this.queue.shift();
         for (const w of head.writes) releasePending(this.pending, w.key, w.fields);
@@ -220,11 +225,13 @@ export class Engine {
           const { store } = applyLocal(this.store, rollback, this.trashHidden);
           this.store = store;
           this.history.remove(head.entry);
+        } else {
+          // An undo/redo was refused: the screen may now differ from the server, so re-read it.
+          void this.poll().catch(() => {});
         }
         this.ev.rejected('تعذّر حفظ التغيير، أُعيد كما كان');
         this.ev.change();
       } else {
-        head.attempts++;
         this.current = null;
         this.sending = false;
         this.setSave('error');
@@ -293,7 +300,7 @@ export class Engine {
     const e = this.history.popRedo();
     if (!e) return false;
     this.lastHistoryKey = undefined;
-    const entry: HistoryEntry = { label: e.label, forward: e.forward, inverse: inverseOps(this.store, e.forward) };
+    const entry: HistoryEntry = { label: e.label, forward: e.forward, inverse: e.fixedInverse ? e.inverse : inverseOps(this.store, e.forward), fixedInverse: e.fixedInverse };
     this.history.pushUndoKeepRedo(entry);
     this.send(e.forward, entry);
     return true;

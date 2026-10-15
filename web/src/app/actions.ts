@@ -1,4 +1,4 @@
-import { positionAt } from '../../../shared/model';
+import { placeAt, positionAt } from '../../../shared/model';
 import type { EntityName, Op, Row, Settings } from '../../../shared/schema';
 import { api, ApiError, type AuthStatus, setUnauthorizedHandler } from '../data/api';
 import { allShots, findShot, type PProject, type PScene } from '../data/project';
@@ -219,7 +219,8 @@ export function duplicateShot(id: string) {
   if (!p || !f) return;
   const nid = uid('sh');
   const { id: _id, updatedAt: _u, deletedAt: _d, images, ...fields } = f.sh;
-  const ops: Op[] = [{ op: 'create', entity: 'shots', id: nid, fields: { ...fields, position: positionAt(f.sc.shots, f.hi + 1) } }];
+  const at = placeAt(f.sc.shots, f.hi + 1);
+  const ops: Op[] = [...renumberOps('shots', at.renumber), { op: 'create', entity: 'shots', id: nid, fields: { ...fields, position: at.position } }];
   let cover: string | null = null;
   images.filter((i) => i.linkId).forEach((im, k) => {
     ops.push({ op: 'create', entity: 'itemImages', id: uid('ii'), fields: { projectId: p.id, ownerKind: 'shot', ownerId: nid, imageId: im.imageId, position: k + 1 } });
@@ -317,9 +318,9 @@ export function moveShot(shotId: string, toSceneId: string, toIndex: number | nu
   const list = to.shots.filter((s) => s.id !== shotId);
   let idx = toIndex == null ? list.length : toIndex;
   if (f.sc.id === to.id && f.hi < idx) idx--;
-  const position = positionAt(list, Math.max(0, idx));
   if (f.sc.id === to.id && to.shots[idx]?.id === shotId) return;
-  commit([{ op: 'update', entity: 'shots', id: shotId, fields: { sceneId: toSceneId, position } }], { history: 'نقل لقطة', flip: true });
+  const at = placeAt(list, Math.max(0, idx));
+  commit([...renumberOps('shots', at.renumber), { op: 'update', entity: 'shots', id: shotId, fields: { sceneId: toSceneId, position: at.position } }], { history: 'نقل لقطة', flip: true });
 }
 
 export function moveScene(sceneId: string, toIndex: number) {
@@ -330,8 +331,13 @@ export function moveScene(sceneId: string, toIndex: number) {
   let idx = toIndex;
   if (i < idx) idx--;
   if (idx === i) return;
-  const position = positionAt(p.scenes.filter((s) => s.id !== sceneId), idx);
-  commit([{ op: 'update', entity: 'scenes', id: sceneId, fields: { position } }], { history: 'نقل مشهد', flip: true });
+  const at = placeAt(p.scenes, idx, sceneId);
+  commit([...renumberOps('scenes', at.renumber), { op: 'update', entity: 'scenes', id: sceneId, fields: { position: at.position } }], { history: 'نقل مشهد', flip: true });
+}
+
+/** Updates that spread a crowded list out again (see placeAt). */
+export function renumberOps(entity: 'shots' | 'scenes' | 'itemImages', list: { id: string; position: number }[]): Op[] {
+  return list.map((r) => ({ op: 'update', entity, id: r.id, fields: { position: r.position } }));
 }
 
 // ---------- library / templates ----------
