@@ -18,7 +18,7 @@ export async function login(page: Page) {
     await pw.fill(PASSWORD);
     await page.keyboard.press('Enter');
   }
-  await expect(page.getByTestId('save-indicator')).toBeVisible();
+  await expect(page.getByTestId('save-indicator').or(page.locator('[data-component=MobileApp]'))).toBeVisible();
 }
 
 export async function newProject(page: Page, name: string, template = 'ad') {

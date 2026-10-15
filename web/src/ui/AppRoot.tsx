@@ -8,9 +8,17 @@ import { ConfirmDialog, Modals, Toasts } from './Modals';
 import { EqSprite, EquipmentPage, PageBack, SettingsPage, TrashPage } from './Pages';
 import { PresentationMode } from './Present';
 import { TopBar } from './TopBar';
+import { MobileApp, useIsMobile } from './Mobile';
 import { Workspace } from './Workspace';
 
-function Loading() {
+function Loading({ mobile }: { mobile: boolean }) {
+  if (mobile) {
+    return (
+      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {[1, 2, 3, 4, 5].map((k) => <Skeleton key={k} height={84} radius="md" />)}
+      </div>
+    );
+  }
   return (
     <>
       <div style={{ height: 60, borderBottom: '1px solid var(--color-border-subtle)', display: 'flex', alignItems: 'center', gap: 16, padding: '0 16px' }}>
@@ -35,6 +43,7 @@ export function AppRoot() {
   const loaded = useApp((s) => s.loaded);
   const screen = useApp((s) => s.screen);
   const offline = useApp((s) => s.offline);
+  const mobile = useIsMobile();
   useEffect(() => {
     wireKeys();
     void boot();
@@ -44,8 +53,9 @@ export function AppRoot() {
       <EqSprite />
       {auth === 'login' && <LoginScreen />}
       {auth === 'setup' && <SetupScreen />}
-      {(auth === 'loading' || (auth === 'app' && !loaded)) && <Loading />}
-      {auth === 'app' && loaded && (
+      {(auth === 'loading' || (auth === 'app' && !loaded)) && <Loading mobile={mobile} />}
+      {auth === 'app' && loaded && mobile && <MobileApp />}
+      {auth === 'app' && loaded && !mobile && (
         <>
           <TopBar />
           {offline && (
