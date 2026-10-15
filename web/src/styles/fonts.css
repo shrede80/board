@@ -1,15 +1,8 @@
-@font-face{font-family:'thmanyah Sans';src:url('/fonts/thmanyah-sans-300.woff2') format('woff2');font-weight:300;font-style:normal;font-display:swap}
+/* Only the weights the app uses (checked in phase 6: code + font requests during all e2e flows).
+   600 resolves to 700. Add a face back here (and its file) if a new weight appears. */
 @font-face{font-family:'thmanyah Sans';src:url('/fonts/thmanyah-sans-400.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
-@font-face{font-family:'thmanyah Sans';src:url('/fonts/thmanyah-sans-500.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
 @font-face{font-family:'thmanyah Sans';src:url('/fonts/thmanyah-sans-700.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap}
-@font-face{font-family:'thmanyah Sans';src:url('/fonts/thmanyah-sans-900.woff2') format('woff2');font-weight:900;font-style:normal;font-display:swap}
-@font-face{font-family:'thmanyah Serif Display';src:url('/fonts/thmanyah-serif-display-300.woff2') format('woff2');font-weight:300;font-style:normal;font-display:swap}
-@font-face{font-family:'thmanyah Serif Display';src:url('/fonts/thmanyah-serif-display-400.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
-@font-face{font-family:'thmanyah Serif Display';src:url('/fonts/thmanyah-serif-display-500.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
 @font-face{font-family:'thmanyah Serif Display';src:url('/fonts/thmanyah-serif-display-700.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap}
 @font-face{font-family:'thmanyah Serif Display';src:url('/fonts/thmanyah-serif-display-900.woff2') format('woff2');font-weight:900;font-style:normal;font-display:swap}
-@font-face{font-family:'thmanyah Serif Text';src:url('/fonts/thmanyah-serif-text-300.woff2') format('woff2');font-weight:300;font-style:normal;font-display:swap}
 @font-face{font-family:'thmanyah Serif Text';src:url('/fonts/thmanyah-serif-text-400.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
-@font-face{font-family:'thmanyah Serif Text';src:url('/fonts/thmanyah-serif-text-500.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
 @font-face{font-family:'thmanyah Serif Text';src:url('/fonts/thmanyah-serif-text-700.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap}
-@font-face{font-family:'thmanyah Serif Text';src:url('/fonts/thmanyah-serif-text-900.woff2') format('woff2');font-weight:900;font-style:normal;font-display:swap}

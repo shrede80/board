@@ -53,7 +53,8 @@ npm run test:e2e            # Playwright, laptop 1440×900 + mobile 390×844 (st
 npm run build               # production build to dist/
 npm run types               # regenerate worker/worker-configuration.d.ts after editing wrangler.jsonc
 npm run seed                # (dev server running) loads the 4 prototype demo projects; dev password: dev-password
-npm run deploy              # build + wrangler deploy (phase 6)
+npm run deploy              # build + scripts/deploy.mjs (web files embedded in the Worker; stops at 2.5 MB compressed)
+npm run size                # same bundle + size check, no deploy
 ```
 - Playwright is pinned to 1.56.1 to match the preinstalled Chromium in /opt/pw-browsers. Do not run `playwright install`.
 - To re-shoot the prototype: unpack is not needed; open `prototype/laptop.html#screen=…&theme=…` (states listed in HANDOFF.md / prototype index).
@@ -64,6 +65,8 @@ npm run deploy              # build + wrangler deploy (phase 6)
 - D1 rejects compound SELECTs with many UNION terms — use NOT EXISTS.
 - Tests: `worker/test/setup.ts` wipes D1 + R2 before each test. E2E uses its own state dir `.wrangler/e2e` (wiped per run).
 - Trashable entities: projects, scenes, shots, notes, characters, locations, moodboards. Others tombstone (deleted_at) and are hard-deleted after 30 days.
+- Production: https://lawhat-almashahed.mstrstyf80.workers.dev. Deploy from the cloud session with `CLOUDFLARE_API_TOKEN=proxy-injected NODE_EXTRA_CA_CERTS=/root/.ccr/ca-bundle.crt npm run deploy` (the proxy injects the real token; it also breaks wrangler's static-asset upload, hence the embedded files — PROGRESS decision 28). If the size gate trips: move to GitHub + Workers Builds.
+- New font weight in the UI → add its @font-face in web/src/styles/fonts.css and the file in web/public/fonts (only used weights ship).
 - Never use `pkill -f <pattern>` inside a Bash command containing the same pattern: it kills the shell itself.
 
 ## Workflow
