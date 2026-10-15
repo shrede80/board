@@ -20,3 +20,6 @@ button:disabled { cursor: not-allowed; }
 @media print {
   [data-print-root] table { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* During the board↔storyboard FLIP, rows must not clip the flying cards. */
+[data-flipping] .sb-shots { overflow-x: visible !important; }

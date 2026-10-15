@@ -482,7 +482,7 @@ export function setMode(m: 'board' | 'storyboard') {
   const st = getState();
   if (m === st.mode) return;
   playFlipLater(m, capture(st.mode));
-  setState({ mode: m, flipping: true, selection: [], pick: null });
+  setState({ mode: m, flipping: true, selection: st.selection.length ? [] : st.selection, pick: null });
   setTimeout(() => setState({ flipping: false }), 650);
 }
 

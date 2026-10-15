@@ -44,7 +44,8 @@ export function StoryboardView() {
       }}
       onDragOver={(e) => { if (currentDrag()) e.preventDefault(); }}
       onDrop={dropOnSbEmpty}
-      style={{ position: 'absolute', inset: 0, overflowY: 'auto', overflowX: 'hidden', opacity: isBoard ? 0 : 1, pointerEvents: isBoard ? 'none' : 'auto', backgroundColor: isBoard ? 'rgba(0,0,0,0)' : 'var(--color-bg)', transition: 'background-color 400ms var(--ease-standard)' }}
+      data-flipping={flipping ? '1' : undefined}
+      style={{ ['--sb-chrome-op' as string]: chromeOp, position: 'absolute', inset: 0, overflowY: 'auto', overflowX: 'hidden', opacity: isBoard ? 0 : 1, pointerEvents: isBoard ? 'none' : 'auto', backgroundColor: isBoard ? 'rgba(0,0,0,0)' : 'var(--color-bg)', transition: 'background-color 400ms var(--ease-standard)' }}
     >
       <div data-component="RhythmBar" style={{ position: 'sticky', top: 0, zIndex: 8, background: 'var(--color-bg)', padding: '12px 24px', borderBottom: '1px solid var(--color-border-subtle)', opacity: chromeOp, transition: 'opacity 400ms var(--ease-standard)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 8 }}>
@@ -67,7 +68,7 @@ export function StoryboardView() {
       </div>
       <div style={{ padding: `6px 24px ${DOCK_SPACE}px`, display: 'flex', flexDirection: 'column' }}>
         {p.scenes.map((sc, si) => (
-          <SceneRow key={sc.id} p={p} sc={sc} si={si} match={matches(sc)} chromeOp={chromeOp} />
+          <SceneRow key={sc.id} p={p} sc={sc} si={si} match={matches(sc)} />
         ))}
         <div
           onDragOver={(e) => { if (!isSceneDrag(currentDrag())) return; e.preventDefault(); e.stopPropagation(); setOver({ kind: 'gap', id: p.scenes.length }); }}
@@ -82,10 +83,9 @@ export function StoryboardView() {
   );
 }
 
-const SceneRow = memo(function SceneRow({ p, sc, si, match, chromeOp }: { p: PProject; sc: PScene; si: number; match: boolean; chromeOp: number }) {
+const SceneRow = memo(function SceneRow({ p, sc, si, match }: { p: PProject; sc: PScene; si: number; match: boolean }) {
   const dragOver = useApp((s) => s.dragOver);
   const editor = useApp((s) => s.editor);
-  const flipping = useApp((s) => s.flipping);
   const offline = useApp((s) => s.offline);
   const hex = moodHex(sc.mood);
   const loc = p.library.locations.find((l) => l.id === sc.locationId);
@@ -116,7 +116,7 @@ const SceneRow = memo(function SceneRow({ p, sc, si, match, chromeOp }: { p: PPr
           else setOver({ kind: 'row', id: sc.id });
         }}
         onDrop={(e) => (isSceneDrag(currentDrag()) ? dropOnGap(e, si) : dropOnRow(e, sc.id))}
-        style={{ display: 'flex', alignItems: 'stretch', border: `1px solid ${rowOver || edSel ? 'var(--color-accent)' : 'var(--color-border-subtle)'}`, backgroundColor: rowOver ? 'var(--color-accent-soft)' : 'var(--color-surface)', borderRadius: 14, transition: 'background-color 300ms,border-color 300ms,opacity 200ms', opacity: match ? 1 : 0.22 }}
+        style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 280px', display: 'flex', alignItems: 'stretch', border: `1px solid ${rowOver || edSel ? 'var(--color-accent)' : 'var(--color-border-subtle)'}`, backgroundColor: rowOver ? 'var(--color-accent-soft)' : 'var(--color-surface)', borderRadius: 14, transition: 'background-color 300ms,border-color 300ms,opacity 200ms', opacity: match ? 1 : 0.22 }}
       >
         <div data-flip={`scene-${sc.id}`} draggable title="اسحب لإعادة ترتيب المشهد" data-testid="sb-row-head"
           onDragStart={(e) => dragStart(e, { kind: 'scene', id: sc.id })} onDragEnd={dragEnd} onClick={() => openEditor('scene', sc.id)}
@@ -136,7 +136,7 @@ const SceneRow = memo(function SceneRow({ p, sc, si, match, chromeOp }: { p: PPr
             {sc.moodboardIds.length > 0 && <span title="لوحات مزاج مرتبطة" style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="image" size={14} />{sc.moodboardIds.length}</span>}
           </div>
         </div>
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', gap: 14, padding: 16, overflowX: flipping ? 'visible' : 'auto', alignItems: 'flex-start' }}>
+        <div className="sb-shots" style={{ flex: 1, minWidth: 0, display: 'flex', gap: 14, padding: 16, overflowX: 'auto', alignItems: 'flex-start' }}>
           {sc.shots.map((sh, hi) => (
             <ShotCard key={sh.id} sh={sh} sceneId={sc.id} num={`${si + 1}.${hi + 1}`} hex={hex} ar={ar} />
           ))}
@@ -149,7 +149,7 @@ const SceneRow = memo(function SceneRow({ p, sc, si, match, chromeOp }: { p: PPr
           {/* «+ لقطة» stays fully visible at the row's end even when the shots scroll (SPEC §7.3). */}
           <div style={{ position: 'sticky', insetInlineEnd: -16, flexShrink: 0, alignSelf: 'stretch', display: 'flex', alignItems: 'flex-start', padding: '16px 16px 16px 8px', margin: '-16px -16px -16px -8px', borderStartEndRadius: 13, borderEndEndRadius: 13, background: 'var(--color-surface)', boxShadow: '10px 0 12px -10px rgba(20,18,16,.25)', zIndex: 1 }}>
             <button data-testid="add-shot" className="h-accent-text" disabled={offline} onClick={() => addShot(sc.id)}
-              style={{ width: 120, minWidth: 120, height: addH, flexShrink: 0, border: '1.5px dashed var(--color-border)', borderRadius: 8, background: 'var(--color-surface)', color: 'var(--color-text-muted)', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: chromeOp, transition: 'opacity 400ms', whiteSpace: 'nowrap' }}>
+              style={{ width: 120, minWidth: 120, height: addH, flexShrink: 0, border: '1.5px dashed var(--color-border)', borderRadius: 8, background: 'var(--color-surface)', color: 'var(--color-text-muted)', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: 'var(--sb-chrome-op)', transition: 'opacity 400ms', whiteSpace: 'nowrap' }}>
               <Icon name="plus" size={18} />
               لقطة
             </button>
