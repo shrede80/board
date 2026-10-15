@@ -22,12 +22,12 @@ export async function login(page: Page) {
 }
 
 export async function newProject(page: Page, name: string, template = 'ad') {
-  await page.locator('[data-component=ProjectSwitcherTrigger]').click();
+  await page.getByTestId('crumb-home').click();
   await page.getByTestId('new-project').click();
   await page.getByTestId('np-name').fill(name);
   await page.getByTestId(`tpl-${template}`).click();
   await page.getByTestId('np-create').click();
-  await expect(page.locator('[data-component=ProjectSwitcherTrigger]')).toContainText(name);
+  await expect(page.getByTestId('project-name')).toContainText(name);
 }
 
 export async function saved(page: Page) {

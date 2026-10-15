@@ -1,6 +1,7 @@
 import { createFromTemplate, openEditor, toggleFilter } from '../app/actions';
 import { dragEnd, dragStart } from '../app/dnd';
-import { setState, useApp, useProject } from '../app/state';
+import { openMenu, setState, useApp, useProject } from '../app/state';
+import { libMenu } from '../app/boardActions';
 import { coverOf, type PLib, type PProject } from '../data/project';
 import { Button, EmptyState, Icon, Tabs } from '../ds/ds';
 import { frameBg, pad2, type Img } from '../lib/util';
@@ -75,6 +76,13 @@ function Open({ p, tab, filterId, offline }: { p: PProject; tab: Tab; filterId: 
               <span style={{ fontSize: 12, color: 'var(--color-text-muted)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{it.sub}</span>
             </div>
             <span style={{ fontSize: 12, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>{it.meta}</span>
+            <button title="خيارات" data-testid="lib-dots" disabled={offline} className="h-strong"
+              onClick={(e) => {
+                e.stopPropagation();
+                const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                openMenu(r.right, r.bottom + 4, libMenu(it.type, it.id), 'lib-menu');
+              }}
+              style={{ width: 28, height: 28, flexShrink: 0, border: 'none', borderRadius: 6, background: 'transparent', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Icon name="more" size={16} /></button>
           </div>
         ))}
         {tab === 'inbox' && L.inbox.length > 0 && (

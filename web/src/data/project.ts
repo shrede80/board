@@ -26,6 +26,9 @@ export interface PScene extends Row {
   locationId: string | null;
   boardX: number;
   boardY: number;
+  boardW: number | null;
+  boardZ: number;
+  boardLocked: boolean;
   characterIds: string[];
   noteIds: string[];
   moodboardIds: string[];
@@ -44,17 +47,30 @@ export interface PInbox extends Row {
   isNew: boolean;
   image: Img | null;
 }
+export type CardKind = 'note' | 'character' | 'location' | 'moodboard' | 'image' | 'heading' | 'frame';
 export interface PCard extends Row {
-  kind: 'note' | 'character' | 'location' | 'moodboard';
+  kind: CardKind;
   refId: string;
   x: number;
   y: number;
+  w: number | null;
+  h: number | null;
+  z: number;
+  locked: boolean;
+  color: string | null;
+  text: string;
 }
 export interface PProject {
   id: string;
   name: string;
   aspect: string;
   template: string;
+  client: string;
+  shootDate: string | null;
+  shootTime: string | null;
+  stage: string;
+  archived: boolean;
+  coverImageId: string | null;
   scenes: PScene[];
   library: { characters: PLib[]; locations: PLib[]; moodboards: PLib[]; inbox: PInbox[] };
   notes: Row[];
@@ -132,6 +148,12 @@ export function deriveProject(store: Store, images: Map<string, ImageMeta>, pid:
     name: p.name as string,
     aspect: p.aspect as string,
     template: p.template as string,
+    client: (p.client as string) ?? '',
+    shootDate: (p.shootDate as string) ?? null,
+    shootTime: (p.shootTime as string) ?? null,
+    stage: (p.stage as string) ?? 'prep',
+    archived: !!p.archived,
+    coverImageId: (p.coverImageId as string) ?? null,
     scenes,
     library: { characters, locations: lib(store.locations, 'location'), moodboards, inbox },
     notes,

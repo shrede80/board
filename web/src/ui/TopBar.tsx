@@ -1,6 +1,8 @@
+import { useEffect, useRef, useState } from 'react';
 import { redo, setMode, setTheme, undo } from '../app/actions';
+import { archiveProject, askLogout, deleteProject, goHome, reloadForUpdate, renameProject } from '../app/projects';
 import { openPresent } from '../app/present';
-import { engine, setState, useApp, useProject } from '../app/state';
+import { engine, getState, setState, useApp, useProject } from '../app/state';
 import { fitAll } from '../app/board';
 import { sceneDur } from '../data/project';
 import { Button, Icon, Tabs } from '../ds/ds';
@@ -42,14 +44,14 @@ export function TopBar() {
     { label: 'معداتي', icon: 'camera', onClick: go('equipment') },
     { label: 'سلة المحذوفات', icon: 'trash', onClick: go('trash') },
     { label: 'الإعدادات', icon: 'settings', onClick: go('settings') },
+    { label: 'تسجيل الخروج', icon: 'log-out', onClick: askLogout, testid: 'menu-logout' },
   ];
   return (
     <header data-component="TopBar" style={{ height: 60, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', borderBottom: '1px solid var(--color-border-subtle)', background: 'var(--color-bg)', position: 'relative', zIndex: 30 }}>
-      <img src={isDark ? '/img/logo-white.png' : '/img/logo-black.png'} alt="إبراهيم الشريدي" style={{ width: 62, height: 38, objectFit: 'cover', mixBlendMode: isDark ? 'normal' : 'multiply' }} />
-      <button data-component="ProjectSwitcherTrigger" className="h-strong" onClick={() => setState({ modal: 'projects', menu: false })} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-text)', padding: '6px 10px', borderRadius: 8, fontFamily: 'var(--font-serif-text)', fontSize: 16, fontWeight: 700, maxWidth: 330 }}>
-        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p?.name ?? ''}</span>
-        <Icon name="chevron-down" size={16} />
+      <button title="الرئيسية" onClick={goHome} style={{ border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', display: 'flex' }}>
+        <img src={isDark ? '/img/logo-white.png' : '/img/logo-black.png'} alt="إبراهيم الشريدي" style={{ width: 62, height: 38, objectFit: 'cover', mixBlendMode: isDark ? 'normal' : 'multiply' }} />
       </button>
+      <Breadcrumb />
       <div style={{ flex: 1 }} />
       <div data-component="ModeSwitch" style={{ flexShrink: 0 }}>
         <Tabs
@@ -93,7 +95,7 @@ export function TopBar() {
         {menu && (
           <div style={{ position: 'absolute', top: 44, insetInlineEnd: 0, width: 220, background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 8, boxShadow: 'var(--shadow-lift)', padding: 6, display: 'flex', flexDirection: 'column' }}>
             {menuItems.map((m) => (
-              <button key={m.label} className="h-strong" onClick={m.onClick} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', border: 'none', background: 'transparent', borderRadius: 4, cursor: 'pointer', color: 'var(--color-text)', fontSize: 15, textAlign: 'right' }}>
+              <button key={m.label} className="h-strong" data-testid={m.testid} onClick={m.onClick} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', border: 'none', background: 'transparent', borderRadius: 4, cursor: 'pointer', color: 'var(--color-text)', fontSize: 15, textAlign: 'right' }}>
                 <Icon name={m.icon} size={17} />
                 {m.label}
               </button>
@@ -102,5 +104,93 @@ export function TopBar() {
         )}
       </div>
     </header>
+  );
+}
+
+const menuItem: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 10, height: 38, padding: '0 10px', border: 'none', background: 'transparent', borderRadius: 4, cursor: 'pointer', color: 'var(--color-text)', fontSize: 14, fontWeight: 700, textAlign: 'right', width: '100%' };
+
+/** «⌂ الرئيسية ‹ اسم المشروع ▾» with the project menu (UPDATE-1 أ1). */
+function Breadcrumb() {
+  const p = useProject();
+  const open = useApp((s) => s.projMenu);
+  const renaming = useApp((s) => s.renaming?.kind === 'project');
+  const offline = useApp((s) => s.offline);
+  if (!p) return null;
+  const pick = (f: () => void) => () => (setState({ projMenu: false }), f());
+  const items: { label: string; icon: string; key?: string; run: () => void; danger?: boolean; testid: string }[] = [
+    { label: 'إعادة التسمية', icon: 'edit', key: 'F2', run: () => setState({ renaming: { kind: 'project', id: p.id } }), testid: 'pm-rename' },
+    { label: 'إعدادات المشروع…', icon: 'settings', run: () => setState({ modal: 'projectSettings' }), testid: 'pm-settings' },
+    { label: 'تكرار المشروع', icon: 'repeat', run: () => setState({ modal: 'duplicateProject' }), testid: 'pm-duplicate' },
+    { label: 'تصدير…', icon: 'download', run: () => setState({ modal: 'export' }), testid: 'pm-export' },
+    { label: p.archived ? 'إلغاء الأرشفة' : 'أرشفة', icon: 'folder', run: () => archiveProject(!p.archived), testid: 'pm-archive' },
+  ];
+  return (
+    <div data-component="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+      <button data-testid="crumb-home" className="h-strong" onClick={goHome} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: 'none', background: 'var(--color-surface)', color: 'var(--color-text-muted)', fontSize: 14, fontWeight: 600, padding: '6px 10px', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+        <Icon name="home" size={15} />الرئيسية
+      </button>
+      <span style={{ color: 'var(--color-text-muted)' }}>‹</span>
+      {renaming ? <ProjectNameInput name={p.name} /> : (
+        <div data-menu="1" style={{ position: 'relative', minWidth: 0 }}>
+          <button data-component="ProjectMenuTrigger" data-testid="project-menu" className="h-strong" disabled={offline} onClick={() => setState({ projMenu: !open, menu: false })}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-text)', padding: '6px 10px', borderRadius: 8, fontFamily: 'var(--font-serif-text)', fontSize: 16, fontWeight: 700, maxWidth: 330 }}>
+            <span data-testid="project-name" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
+            {p.archived && <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, color: 'var(--color-text-muted)', border: '1px solid var(--color-border)', borderRadius: 999, padding: '1px 8px' }}>مؤرشف</span>}
+            <Icon name="chevron-down" size={16} />
+          </button>
+          {open && (
+            <div data-testid="project-menu-list" style={{ position: 'absolute', top: 44, insetInlineStart: 0, width: 250, background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 8, boxShadow: 'var(--shadow-lift)', padding: 6, zIndex: 40 }}>
+              {items.map((m) => (
+                <button key={m.label} data-testid={m.testid} className="h-strong" onClick={pick(m.run)} style={menuItem}>
+                  <Icon name={m.icon} size={16} />{m.label}
+                  {m.key && <span style={{ marginInlineStart: 'auto', fontSize: 12, color: 'var(--color-text-muted)', fontWeight: 400, direction: 'ltr' }}>{m.key}</span>}
+                </button>
+              ))}
+              <div style={{ height: 1, background: 'var(--color-border-subtle)', margin: '5px 4px' }} />
+              <button data-testid="pm-delete" className="h-strong" onClick={pick(() => deleteProject(p.id, p.name))} style={{ ...menuItem, color: 'var(--color-danger)' }}>
+                <Icon name="trash" size={16} />حذف (يبقى في السلة 30 يوماً)
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Rename in place: Enter saves, Esc cancels. */
+function ProjectNameInput({ name }: { name: string }) {
+  const [v, setV] = useState(name);
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    ref.current?.focus();
+    ref.current?.select();
+  }, []);
+  const done = (save: boolean) => {
+    if (getState().renaming?.kind !== 'project') return;
+    setState({ renaming: null });
+    if (save) renameProject(v);
+  };
+  return (
+    <input ref={ref} data-testid="project-name-input" value={v} onChange={(e) => setV(e.target.value)} onBlur={() => done(true)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') done(true);
+        if (e.key === 'Escape') (e.stopPropagation(), done(false));
+      }}
+      style={{ width: 300, height: 34, padding: '0 10px', border: '1px solid var(--color-accent)', borderRadius: 8, background: 'var(--color-bg)', color: 'var(--color-text)', fontFamily: 'var(--font-serif-text)', fontSize: 16, fontWeight: 700, outline: 'none' }} />
+  );
+}
+
+/** «نسخة جديدة من البرنامج جاهزة — تحديث» (UPDATE-1 أ10). */
+export function UpdateBanner() {
+  const on = useApp((s) => s.newVersion);
+  const [busy, setBusy] = useState(false);
+  if (!on) return null;
+  return (
+    <div data-component="UpdateBanner" data-testid="update-banner" style={{ position: 'fixed', top: 70, left: '50%', transform: 'translateX(-50%)', zIndex: 96, display: 'flex', alignItems: 'center', gap: 14, background: 'var(--color-inverse-bg)', color: 'var(--color-inverse-text)', padding: '8px 10px 8px 16px', borderRadius: 999, boxShadow: 'var(--shadow-lift)', fontSize: 14, fontWeight: 600 }}>
+      <span style={{ paddingInlineStart: 6 }}>نسخة جديدة من البرنامج جاهزة</span>
+      <button data-testid="update-now" disabled={busy} onClick={() => (setBusy(true), void reloadForUpdate())} style={{ border: 'none', borderRadius: 999, background: 'var(--color-accent)', color: '#141210', fontWeight: 700, fontSize: 13, padding: '6px 14px', cursor: 'pointer' }}>{busy ? 'يحفظ…' : 'تحديث'}</button>
+      <button title="لاحقاً" onClick={() => setState({ newVersion: false })} style={{ width: 26, height: 26, borderRadius: '50%', border: 'none', background: 'rgba(128,128,128,.25)', color: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Icon name="x" size={14} /></button>
+    </div>
   );
 }

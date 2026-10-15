@@ -20,8 +20,41 @@ export interface Toast {
   id: string;
   msg: string;
   undo?: boolean;
+  /** extra button(s) next to the message, e.g. «فتح» or a custom undo */
+  actions?: { label: string; run: () => void; testid?: string }[];
   tone: 'info' | 'danger';
 }
+
+/** One entry of a pop-up menu (right-click, ⋯, long-press — UPDATE-1 أ3). */
+export interface MenuItem {
+  label: string;
+  icon?: string;
+  /** shortcut shown at the end of the line */
+  keys?: string;
+  run?: () => void;
+  danger?: boolean;
+  disabled?: boolean;
+  /** opens a nested list in place */
+  children?: MenuItem[];
+  /** a row of colour dots instead of a line */
+  swatches?: { key: string | null; hex: string; on: boolean; run: () => void; label: string }[];
+  testid?: string;
+}
+export type MenuEntry = MenuItem | 'sep';
+/** Pop-up menu at screen coordinates; it keeps itself inside the window. */
+export interface PopMenu {
+  x: number;
+  y: number;
+  items: MenuEntry[];
+  testid?: string;
+}
+
+/** What is being renamed / edited in place. */
+export type Renaming =
+  | { kind: 'project'; id: string }
+  | { kind: 'scene'; id: string; where: 'board' | 'row' }
+  | { kind: 'card'; id: string }
+  | null;
 export interface Confirm {
   title: string;
   msg: string;
@@ -58,7 +91,19 @@ export interface UIState {
   toasts: Toast[];
   save: SaveState;
   offline: boolean;
-  modal: null | 'projects' | 'newProject' | 'export';
+  modal: null | 'projects' | 'newProject' | 'export' | 'projectSettings' | 'duplicateProject' | 'shortcuts';
+  /** «⌂ الرئيسية ‹ project ▾» menu */
+  projMenu: boolean;
+  popMenu: PopMenu | null;
+  /** temporary sizes while resizing on the board (id → world size; heading: h = font) */
+  dragSize: Record<string, { w: number; h?: number }> | null;
+  renaming: Renaming;
+  /** a newer version was deployed while this tab is open (UPDATE-1 أ10) */
+  newVersion: boolean;
+  /** pick a target for an image card: a shot or a moodboard */
+  pickTarget: { kind: 'shot' | 'moodboard'; cardId: string } | null;
+  /** board item under the pointer (shows its ⋯ button) */
+  hoverItem: string | null;
   exportTab: 'pdf' | 'table' | 'project';
   exportScope: 'all' | 'some';
   exportSel: string[];
@@ -94,7 +139,7 @@ let state: UIState = {
   settings: null, libOpen: true, libTab: 'characters', editor: null,
   sections: { refs: true, basics: true, comp: true, cam: true, move: true, light: false, audio: false },
   selection: [], view: { x: 0, y: 0, z: 0.8 }, filter: null, toasts: [], save: 'saved', offline: typeof navigator !== 'undefined' ? !navigator.onLine : false,
-  modal: null, exportTab: 'pdf', exportScope: 'all', exportSel: [], confirm: null, dragOver: null,
+  modal: null, projMenu: false, popMenu: null, dragSize: null, renaming: null, newVersion: false, pickTarget: null, hoverItem: null, exportTab: 'pdf', exportScope: 'all', exportSel: [], confirm: null, dragOver: null,
   present: { open: false, i: 0, playing: false, tech: false, fill: 0 }, hoverShot: null, marquee: null, space: false, menu: false,
   pick: null, custom: null, customVal: '', flipping: false, guides: [], dragPos: null, uploads: {}, canUndo: false, canRedo: false,
 };
@@ -148,9 +193,9 @@ export function useEquipment() {
 
 // ---------- toasts ----------
 let toastSeq = 0;
-export function toast(msg: string, o: { undo?: boolean; tone?: 'info' | 'danger'; ms?: number } = {}) {
+export function toast(msg: string, o: { undo?: boolean; tone?: 'info' | 'danger'; ms?: number; actions?: Toast['actions'] } = {}) {
   const id = `t${++toastSeq}`;
-  setState((s) => ({ toasts: [...s.toasts, { id, msg, undo: !!o.undo, tone: o.tone ?? 'info' }] }));
+  setState((s) => ({ toasts: [...s.toasts, { id, msg, undo: !!o.undo, actions: o.actions, tone: o.tone ?? 'info' }] }));
   setTimeout(() => dismissToast(id), o.ms ?? 5000);
 }
 export function dismissToast(id: string) {
@@ -158,4 +203,11 @@ export function dismissToast(id: string) {
 }
 export function askConfirm(c: Confirm) {
   setState({ confirm: c });
+}
+
+export function openMenu(x: number, y: number, items: MenuEntry[], testid?: string) {
+  setState({ popMenu: { x, y, items, testid }, menu: false, projMenu: false });
+}
+export function closeMenu() {
+  if (getState().popMenu) setState({ popMenu: null });
 }

@@ -21,6 +21,14 @@ export interface ProjectSummary {
   coverImageId: string | null;
   coverPlaceholder: ImageMeta['placeholder'];
   coverMood: string | null;
+  client: string;
+  shootDate: string | null;
+  shootTime: string | null;
+  stage: string;
+  archived: boolean;
+  /** shots by status (for the progress bar) */
+  shotsShot: number;
+  shotsApproved: number;
 }
 
 export async function getSettings(db: D1Database): Promise<Settings> {
@@ -98,7 +106,11 @@ export async function changes(db: D1Database, projectId: string, since: number):
 export async function listProjects(db: D1Database): Promise<ProjectSummary[]> {
   const res = await db
     .prepare(
-      `SELECT p.id, p.name, p.template, p.aspect, p.updated_at, p.created_at,
+      `SELECT p.id, p.name, p.template, p.aspect, p.updated_at, p.created_at, p.client, p.shoot_date, p.shoot_time, p.stage, p.archived,
+         (SELECT COUNT(*) FROM shots h JOIN scenes s ON s.id = h.scene_id
+            WHERE h.project_id = p.id AND h.deleted_at IS NULL AND s.deleted_at IS NULL AND h.status = 'shot') AS shots_shot,
+         (SELECT COUNT(*) FROM shots h JOIN scenes s ON s.id = h.scene_id
+            WHERE h.project_id = p.id AND h.deleted_at IS NULL AND s.deleted_at IS NULL AND h.status = 'approved') AS shots_approved,
          (SELECT COUNT(*) FROM scenes s WHERE s.project_id = p.id AND s.deleted_at IS NULL) AS scenes,
          (SELECT COUNT(*) FROM shots h JOIN scenes s ON s.id = h.scene_id
             WHERE h.project_id = p.id AND h.deleted_at IS NULL AND s.deleted_at IS NULL) AS shots,
@@ -135,6 +147,13 @@ export async function listProjects(db: D1Database): Promise<ProjectSummary[]> {
     coverImageId: (r.cover_image_id as string) ?? null,
     coverPlaceholder: r.cover_image_id ? ph.get(r.cover_image_id as string) ?? null : null,
     coverMood: (r.cover_mood as string) ?? null,
+    client: (r.client as string) ?? '',
+    shootDate: (r.shoot_date as string) ?? null,
+    shootTime: (r.shoot_time as string) ?? null,
+    stage: (r.stage as string) ?? 'prep',
+    archived: r.archived === 1,
+    shotsShot: r.shots_shot as number,
+    shotsApproved: r.shots_approved as number,
   }));
 }
 

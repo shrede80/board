@@ -8,6 +8,8 @@ import { ensureBootstrap } from './bootstrap';
 import type { Env } from './env';
 import { serveImage, uploadImage } from './images';
 import { daily, purge } from './maintenance';
+import { duplicateProject } from './duplicate';
+import { APP_VERSION, VERSION_HEADER } from '../../shared/version';
 import { applyOps, parseOps } from './ops';
 import { exportProject, importProject } from './portable';
 import { changes, customValues, getSettings, listProjects, listTrash, snapshot } from './queries';
@@ -23,6 +25,8 @@ app.use('*', async (c, next) => {
   c.res.headers.set('Referrer-Policy', 'same-origin');
   c.res.headers.set('X-Frame-Options', 'DENY');
   if (c.req.path.startsWith('/api/') && !c.req.path.startsWith('/api/images/')) c.res.headers.set('Cache-Control', 'no-store');
+  // Lets an open tab notice that a newer version was deployed (UPDATE-1 أ10).
+  if (c.req.path.startsWith('/api/')) c.res.headers.set(VERSION_HEADER, APP_VERSION);
 });
 
 app.onError((err, c) => {
@@ -181,6 +185,11 @@ app.get('/api/projects/:id/changes', async (c) => {
   const since = Number(c.req.query('since'));
   if (!Number.isFinite(since) || since < 0) throw new BadRequest('since');
   return c.json(await changes(c.env.DB, c.req.param('id'), since));
+});
+
+app.post('/api/projects/:id/duplicate', async (c) => {
+  const { keepStatus } = await body<{ keepStatus?: unknown }>(c);
+  return c.json(await duplicateProject(c.env.DB, c.req.param('id'), { keepStatus: keepStatus === true }));
 });
 
 app.get('/api/projects/:id/export', async (c) => {

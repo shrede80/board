@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Op, Row } from '../../../shared/schema';
-import { commit, setTheme } from '../app/actions';
+import { commit, openProject, setTheme } from '../app/actions';
 import { fitAll } from '../app/board';
 import { askConfirm, engine, setState, toast, useApp, useEquipment } from '../app/state';
 import { api, ApiError } from '../data/api';
@@ -198,7 +198,8 @@ export function TrashPage() {
   const restore = (t: TrashItem) => {
     const ok = commit([{ op: 'restore', trashId: t.id }], { history: 'استعادة', inverse: [{ op: 'delete', entity: t.kind as Op extends { entity: infer E } ? E : never, id: t.refId, label: t.label }] });
     if (!ok) return;
-    toast('استُعيد العنصر');
+    if (t.kind === 'projects') toast('استُعيد المشروع', { actions: [{ label: 'فتح', testid: 'toast-open', run: () => void engine.idle().then(() => openProject(t.refId)) }] });
+    else toast('استُعيد العنصر');
     void engine.idle().then(load);
   };
   const purge = (t: TrashItem) =>

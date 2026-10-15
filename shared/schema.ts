@@ -38,7 +38,11 @@ const pid: FieldDef = { col: 'project_id', type: 'text', createOnly: true };
 export const ASPECTS = ['16:9', '9:16', '1:1', '2.39:1'] as const;
 export const STATUSES = ['planned', 'shot', 'approved'] as const;
 export const TEMPLATE_IDS = ['ad', 'clip', 'short', 'doc', 'blank'] as const;
-export const CARD_KINDS = ['note', 'character', 'location', 'moodboard'] as const;
+/** heading/frame cards have no referenced row: their ref_id is '' (UPDATE-1 §2.1). image: ref_id = images.id. */
+export const CARD_KINDS = ['note', 'character', 'location', 'moodboard', 'image', 'heading', 'frame'] as const;
+export const STAGES = ['idea', 'prep', 'shoot', 'post', 'done'] as const;
+/** Colour keys for notes, frames and headings (same keys as the scene moods). */
+export const COLOR_KEYS = ['gold', 'amber', 'sand', 'clay', 'night', 'olive', 'wine', 'cool'] as const;
 export const IMAGE_OWNERS = ['shot', 'character', 'location', 'moodboard'] as const;
 
 export const ENTITIES = {
@@ -50,6 +54,13 @@ export const ENTITIES = {
       aspect: e('aspect', ASPECTS, '16:9'),
       coverImageId: tn('cover_image_id'),
       createdAt: { col: 'created_at', type: 'int', createOnly: true },
+      client: t('client'),
+      /** YYYY-MM-DD */
+      shootDate: tn('shoot_date'),
+      /** HH:MM */
+      shootTime: tn('shoot_time'),
+      stage: e('stage', STAGES, 'prep'),
+      archived: b('archived'),
     },
   },
   scenes: {
@@ -67,6 +78,10 @@ export const ENTITIES = {
       coverImageId: tn('cover_image_id'),
       boardX: r('board_x'),
       boardY: r('board_y'),
+      /** null = default width 280 */
+      boardW: { col: 'board_w', type: 'real', def: null },
+      boardZ: r('board_z'),
+      boardLocked: b('board_locked'),
     },
   },
   shots: {
@@ -141,6 +156,14 @@ export const ENTITIES = {
       refId: { col: 'ref_id', type: 'text', createOnly: true },
       x: r('x'),
       y: r('y'),
+      /** null = default size of the kind. heading: w = wrap width, h = font size. */
+      w: { col: 'w', type: 'real', def: null },
+      h: { col: 'h', type: 'real', def: null },
+      z: r('z'),
+      locked: b('locked'),
+      color: { col: 'color', type: 'text', values: COLOR_KEYS, def: null },
+      /** heading text, frame title, image caption */
+      text: t('text'),
     },
   },
   inboxItems: {

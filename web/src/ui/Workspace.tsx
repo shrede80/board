@@ -1,8 +1,9 @@
 import { createFromTemplate } from '../app/actions';
+import { addCard, pickImages } from '../app/boardActions';
 import { dragEnd, dragStart } from '../app/dnd';
 import { setState, useApp, useProject } from '../app/state';
 import { EmptyState, Icon } from '../ds/ds';
-import { TPL } from '../lib/constants';
+import { BOARD_ONLY, TPL, type TplType } from '../lib/constants';
 import { BoardCanvas, ZoomControls } from './Board';
 import { EditorPanel } from './Editor';
 import { LibraryPanel } from './Library';
@@ -55,15 +56,23 @@ function TemplateDock() {
   const offline = useApp((s) => s.offline);
   return (
     <div data-component="TemplateDock" data-testid="dock" style={{ position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)', zIndex: 14, display: 'flex', gap: 2, padding: 6, background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 14, boxShadow: 'var(--shadow-lift)' }}>
-      {TPL.map((t) => (
-        <button key={t.type} draggable title="اسحب أو اضغط" data-testid={`dock-${t.type}`} className="h-strong" disabled={offline}
+      {TPL.map((t) => {
+        const boardOnly = BOARD_ONLY.includes(t.type as TplType);
+        const off = offline || (boardOnly && mode !== 'board');
+        return (
+        <button key={t.type} draggable={!off} title={off && !offline ? 'للوحة الأفكار فقط' : 'اسحب أو اضغط'} data-testid={`dock-${t.type}`} className="h-strong" disabled={off}
           onDragStart={(e) => dragStart(e, { kind: 'tpl', type: t.type })} onDragEnd={dragEnd}
-          onClick={() => createFromTemplate(t.type, { where: mode === 'board' ? 'center' : t.type === 'scene' ? 'gap' : 'library', index: p?.scenes.length ?? 0 })}
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 12px 6px', border: 'none', background: 'transparent', borderRadius: 8, cursor: 'grab', color: 'var(--color-text)', fontSize: 12, fontWeight: 600, minWidth: 74 }}>
+          onClick={() => {
+            if (t.type === 'heading' || t.type === 'frame') addCard(t.type);
+            else if (t.type === 'image') pickImages();
+            else createFromTemplate(t.type, { where: mode === 'board' ? 'center' : t.type === 'scene' ? 'gap' : 'library', index: p?.scenes.length ?? 0 });
+          }}
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 10px 6px', border: 'none', background: 'transparent', borderRadius: 8, cursor: 'grab', color: 'var(--color-text)', fontSize: 12, fontWeight: 600, minWidth: 64, opacity: off && !offline ? 0.35 : 1 }}>
           <span style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--color-surface-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-700)' }}><Icon name={t.icon} size={17} /></span>
           {t.label}
         </button>
-      ))}
+        );
+      })}
     </div>
   );
 }

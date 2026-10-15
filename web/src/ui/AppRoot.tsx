@@ -7,7 +7,8 @@ import { LoginScreen, SetupScreen } from './Login';
 import { ConfirmDialog, Modals, Toasts } from './Modals';
 import { EqSprite, EquipmentPage, PageBack, SettingsPage, TrashPage } from './Pages';
 import { PresentationMode } from './Present';
-import { TopBar } from './TopBar';
+import { TopBar, UpdateBanner } from './TopBar';
+import { MenuLayer, PickTargetDialog } from './Menu';
 import { MobileApp, useIsMobile } from './Mobile';
 import { Workspace } from './Workspace';
 
@@ -74,6 +75,9 @@ export function AppRoot() {
       )}
       <ConfirmDialog />
       <Toasts />
+      {auth === 'app' && <UpdateBanner />}
+      {auth === 'app' && <MenuLayer />}
+      {auth === 'app' && <PickTargetDialog />}
     </div>
   );
 }

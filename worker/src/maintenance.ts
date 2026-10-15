@@ -83,13 +83,18 @@ export async function purge(db: D1Database, bucket: R2Bucket, trashIds: string[]
   if (opts.sweepImages !== false) await sweepImages(db, bucket, now);
 }
 
-/** Deletes images nothing points at (older than a day, so a fresh upload not yet linked survives). */
+/**
+ * Deletes images nothing points at (older than a day, so a fresh upload not yet linked survives).
+ * Rows in the trash or tombstoned still count as pointers until they are purged themselves.
+ */
 export async function sweepImages(db: D1Database, bucket: R2Bucket, now = Date.now()) {
   const orphans = await db
     .prepare(
       `SELECT id, r2_key, thumb_key FROM images i WHERE created_at < ?
          AND NOT EXISTS (SELECT 1 FROM item_images x WHERE x.image_id = i.id)
          AND NOT EXISTS (SELECT 1 FROM inbox_items x WHERE x.image_id = i.id)
+         AND NOT EXISTS (SELECT 1 FROM board_cards x WHERE x.kind = 'image' AND x.ref_id = i.id)
+         AND NOT EXISTS (SELECT 1 FROM ideas x, json_each(x.image_ids) j WHERE j.value = i.id)
          ${['projects', 'scenes', 'shots', 'characters', 'locations', 'moodboards']
            .map((t) => `AND NOT EXISTS (SELECT 1 FROM ${t} x WHERE x.cover_image_id = i.id)`)
            .join('\n         ')}

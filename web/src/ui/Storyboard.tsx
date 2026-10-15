@@ -1,8 +1,10 @@
-import { memo, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { addShot, deleteShot, duplicateShot, openEditor } from '../app/actions';
 import { currentDrag, dragEnd, dragStart, dropOnGap, dropOnRow, dropOnSbEmpty, dropOnShot, hasFiles, isSceneDrag, setOver } from '../app/dnd';
 import { addFiles } from '../app/images';
-import { getState, setState, useApp, useEquipment, useProject } from '../app/state';
+import { getState, openMenu, setState, useApp, useEquipment, useProject } from '../app/state';
+import { sceneRowMenu, shotMenu } from '../app/boardActions';
+import { commit } from '../app/actions';
 import { camLine, coverOf, moodHex, moveLine, sceneDur, type PProject, type PScene, type PShot } from '../data/project';
 import { Badge, EmptyState, Icon } from '../ds/ds';
 import { AR, STATUS } from '../lib/constants';
@@ -92,6 +94,7 @@ const SceneRow = memo(function SceneRow({ p, sc, si, match }: { p: PProject; sc:
   const rowOver = dragOver?.kind === 'row' && dragOver.id === sc.id;
   const gapOver = dragOver?.kind === 'gap' && dragOver.id === si;
   const edSel = editor?.type === 'scene' && editor.id === sc.id;
+  const renaming = useApp((s) => s.renaming?.kind === 'scene' && s.renaming.id === sc.id && s.renaming.where === 'row');
   const ar = AR[p.aspect] || 16 / 9;
   const cw = ar >= 1 ? 236 : 168;
   const addH = Math.round(Math.min(300, cw / ar)) + 74;
@@ -124,7 +127,14 @@ const SceneRow = memo(function SceneRow({ p, sc, si, match }: { p: PProject; sc:
           <div style={{ height: 5, background: hex, margin: '0 -18px 6px' }} />
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
             <span data-testid="scene-num" style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 40, lineHeight: 1 }}>{pad2(si + 1)}</span>
-            <span style={{ fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 18, lineHeight: 1.3 }}>{sc.name}</span>
+            {renaming ? <RowRename id={sc.id} name={sc.name} /> : <span data-testid="row-name" style={{ flex: 1, fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 18, lineHeight: 1.3 }}>{sc.name}</span>}
+            <button title="خيارات المشهد" data-testid="row-dots" disabled={offline} className="h-strong"
+              onClick={(e) => {
+                e.stopPropagation();
+                const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                openMenu(r.right, r.bottom + 4, sceneRowMenu(sc.id), 'row-menu');
+              }}
+              style={{ alignSelf: 'center', width: 30, height: 30, flexShrink: 0, border: 'none', borderRadius: 8, background: 'transparent', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', marginInlineStart: 'auto' }}><Icon name="more" size={17} /></button>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <Badge tone="outline">{`${sc.intExt === 'int' ? 'داخلي' : 'خارجي'} · ${sc.dayNight === 'night' ? 'ليل' : 'نهار'}`}</Badge>
@@ -207,6 +217,8 @@ const ShotCard = memo(function ShotCard({ sh, sceneId, num, hex, ar }: { sh: PSh
             <span style={{ fontSize: 11 }}>أو أفلتها / الصقها هنا</span>
           </div>
         )}
+        <button title="خيارات" data-testid="shot-dots" onClick={(e) => { e.stopPropagation(); const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); openMenu(r.right, r.bottom + 4, shotMenu(sh.id), 'shot-menu'); }}
+          style={{ ...round, position: 'absolute', top: 8, insetInlineStart: 8, opacity: hov ? 1 : 0, transition: 'opacity 120ms' }}><Icon name="more" size={14} /></button>
         <div style={{ position: 'absolute', bottom: 8, insetInlineStart: 8, display: 'flex', gap: 6, opacity: hov ? 1 : 0, transition: 'opacity 120ms' }}>
           <button title="فتح" onClick={stop(() => openEditor('shot', sh.id))} style={round}><Icon name="edit" size={14} /></button>
           <button title="تكرار" onClick={stop(() => duplicateShot(sh.id))} style={round}><Icon name="plus" size={14} /></button>
@@ -232,3 +244,34 @@ const ShotCard = memo(function ShotCard({ sh, sceneId, num, hex, ar }: { sh: PSh
   );
 });
 
+
+/** Rename a scene in its row header (UPDATE-1 أ8): Enter saves, Esc cancels. */
+function RowRename({ id, name }: { id: string; name: string }) {
+  const ref = useRef<HTMLInputElement>(null);
+  const finished = useRef(false);
+  // focus after the menu that opened us is gone (autoFocus loses it to the closing menu)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      ref.current?.focus();
+      ref.current?.select();
+    }, 0);
+    return () => clearTimeout(t);
+  }, []);
+  const done = (v: string | null) => {
+    if (finished.current) return;
+    finished.current = true;
+    setState({ renaming: null });
+    const n = v?.trim();
+    if (n && n !== name) commit([{ op: 'update', entity: 'scenes', id, fields: { name: n } }], { history: 'إعادة التسمية' });
+  };
+  return (
+    <input ref={ref} defaultValue={name} data-testid="row-name-input" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()} draggable={false}
+      onBlur={(e) => done(e.currentTarget.value)}
+      onKeyDown={(e) => {
+        e.stopPropagation();
+        if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
+        if (e.key === 'Escape') done(null);
+      }}
+      style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 17, padding: '2px 6px', border: '1px solid var(--color-accent)', borderRadius: 6, background: 'var(--color-bg)', color: 'var(--color-text)', outline: 'none' }} />
+  );
+}

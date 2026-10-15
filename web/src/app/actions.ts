@@ -1,6 +1,6 @@
 import { placeAt, positionAt } from '../../../shared/model';
 import type { EntityName, Op, Row, Settings } from '../../../shared/schema';
-import { api, ApiError, type AuthStatus, setUnauthorizedHandler } from '../data/api';
+import { api, ApiError, type AuthStatus, setNewVersionHandler, setUnauthorizedHandler } from '../data/api';
 import { allShots, findShot, type PProject, type PScene } from '../data/project';
 import { MOODS, POLL_MS, TEMPLATES } from '../lib/constants';
 import { pad2, uid } from '../lib/util';
@@ -11,6 +11,7 @@ import { askConfirm, engine, getState, project, setState, toast, type EditorType
 
 export async function boot() {
   setUnauthorizedHandler(() => setState({ auth: 'login', loaded: false }));
+  setNewVersionHandler(() => !getState().newVersion && setState({ newVersion: true }));
   wireWindow();
   try {
     const st = await api<AuthStatus>('/api/auth/status');
@@ -34,7 +35,7 @@ async function loadInitial() {
   const settings = await api<Settings>('/api/settings');
   applySettings(settings);
   const projects = await api<{ id: string }[]>('/api/projects');
-  let pid = settings.lastProjectId && projects.some((p) => p.id === settings.lastProjectId) ? settings.lastProjectId : projects[0]?.id;
+  let pid = settings.lastProjectId && projects.some((p) => p.id === settings.lastProjectId) ? settings.lastProjectId : (projects.find((p) => !(p as { archived?: boolean }).archived) ?? projects[0])?.id;
   if (!pid) {
     // First run (SPEC §3.6): no projects yet → open an empty «مشروع جديد».
     pid = uid('pr');
@@ -252,7 +253,7 @@ export function addScene(o: { index?: number; pos?: { x: number; y: number }; na
   const ok = commit(
     [{
       op: 'create', entity: 'scenes', id,
-      fields: { projectId: p.id, position: positionAt(p.scenes, index), name: o.name || 'مشهد جديد', intExt: 'ext', dayNight: 'day', locationId: null, summary: '', goal: '', mood: 'sand', coverImageId: null, boardX: Math.round(pos.x), boardY: Math.round(pos.y) },
+      fields: { projectId: p.id, position: positionAt(p.scenes, index), name: o.name || 'مشهد جديد', intExt: 'ext', dayNight: 'day', locationId: null, summary: '', goal: '', mood: 'sand', coverImageId: null, boardX: Math.round(pos.x), boardY: Math.round(pos.y), boardZ: nextZ() },
     }],
     { history: 'إضافة مشهد', flip: true },
   );
@@ -277,6 +278,15 @@ export function deleteScene(id: string) {
   if (!ok) return;
   if (getState().editor?.id === id) closeEditor();
   toast(`حُذف المشهد ${num}`, { undo: true });
+}
+
+/** Layer for a new board item: above everything (frames excluded — they always stay underneath). */
+export function nextZ(): number {
+  const pid = getState().projectId;
+  let z = 0;
+  for (const c of engine.store.boardCards.values()) if (!c.deletedAt && c.projectId === pid && c.kind !== 'frame') z = Math.max(z, Number(c.z) || 0);
+  for (const s of engine.store.scenes.values()) if (!s.deletedAt && s.projectId === pid) z = Math.max(z, Number(s.boardZ) || 0);
+  return z + 1;
 }
 
 export function isCard(id: string) {
@@ -307,7 +317,7 @@ export function deleteSelection() {
   }
   if (!commit(ops, { history: 'حذف' })) return;
   setState({ selection: [], editor: null });
-  toast(nums.length === 1 && sel.length === 1 ? `حُذف المشهد ${nums[0]}` : `حُذف ${sel.length} عناصر`, { undo: true });
+  toast(nums.length === 1 && sel.length === 1 ? `حُذف المشهد ${nums[0]}` : sel.length === 1 ? 'حُذف العنصر' : `حُذف ${sel.length} عناصر`, { undo: true });
 }
 
 export function moveShot(shotId: string, toSceneId: string, toIndex: number | null) {
@@ -383,7 +393,7 @@ export function createFromTemplate(type: 'scene' | LibType, ctx: { where: 'board
   const ops = createEntityOps(p, type, id);
   if (place) {
     const pos = ctx.pos ?? centerWorldRef();
-    ops.push({ op: 'create', entity: 'boardCards', id: uid('bc'), fields: { projectId: p.id, kind: type, refId: id, x: Math.round(pos.x), y: Math.round(pos.y) } });
+    ops.push({ op: 'create', entity: 'boardCards', id: uid('bc'), fields: { projectId: p.id, kind: type, refId: id, x: Math.round(pos.x), y: Math.round(pos.y), z: nextZ() } });
   }
   if (ctx.where === 'row' && ctx.sceneId) {
     // link to a scene that the create above hasn't added to `p` yet
@@ -467,11 +477,11 @@ export function inboxTo(target: { shotId?: string; sceneId?: string; board?: { x
       const mid = uid('mb');
       ops.push({ op: 'create', entity: 'moodboards', id: mid, fields: { projectId: p.id, position: positionAt(p.library.moodboards, p.library.moodboards.length), title: it.text || 'من الجوال', swatches: [] } });
       ops.push({ op: 'create', entity: 'itemImages', id: uid('ii'), fields: { projectId: p.id, ownerKind: 'moodboard', ownerId: mid, imageId: it.image.imageId, position: 1 } });
-      ops.push({ op: 'create', entity: 'boardCards', id: uid('bc'), fields: { projectId: p.id, kind: 'moodboard', refId: mid, x: target.board.x, y: target.board.y } });
+      ops.push({ op: 'create', entity: 'boardCards', id: uid('bc'), fields: { projectId: p.id, kind: 'moodboard', refId: mid, x: target.board.x, y: target.board.y, z: nextZ() } });
     } else {
       const nid = uid('note');
       ops.push({ op: 'create', entity: 'notes', id: nid, fields: { projectId: p.id, text: it.text } });
-      ops.push({ op: 'create', entity: 'boardCards', id: uid('bc'), fields: { projectId: p.id, kind: 'note', refId: nid, x: target.board.x, y: target.board.y } });
+      ops.push({ op: 'create', entity: 'boardCards', id: uid('bc'), fields: { projectId: p.id, kind: 'note', refId: nid, x: target.board.x, y: target.board.y, z: nextZ() } });
     }
   }
   if (commit(ops, { history: 'نقل من الوارد' })) toast(target.shotId && it.kind === 'image' ? 'أصبحت الصورة مرجعاً للّقطة' : 'نُقل العنصر من الوارد');
@@ -494,10 +504,13 @@ export function setMode(m: 'board' | 'storyboard') {
 
 // ---------- projects ----------
 
-export function createProject(np: { name: string; aspect: string; template: string }) {
+export function createProject(np: { name: string; aspect: string; template: string; client?: string; shootDate?: string; shootTime?: string; stage?: string }) {
   const tpl = TEMPLATES.find((t) => t.id === np.template) ?? TEMPLATES[4];
   const id = uid('pr');
-  const ops: Op[] = [{ op: 'create', entity: 'projects', id, fields: { name: np.name.trim() || 'مشروع جديد', template: tpl.id, aspect: np.aspect } }];
+  const extra: Record<string, unknown> = { client: (np.client ?? '').trim(), stage: np.stage || 'prep' };
+  if (np.shootDate) extra.shootDate = np.shootDate;
+  if (np.shootDate && np.shootTime) extra.shootTime = np.shootTime;
+  const ops: Op[] = [{ op: 'create', entity: 'projects', id, fields: { name: np.name.trim() || 'مشروع جديد', template: tpl.id, aspect: np.aspect, ...extra } }];
   tpl.scenes.forEach((n, i) =>
     ops.push({
       op: 'create', entity: 'scenes', id: uid('sc'),

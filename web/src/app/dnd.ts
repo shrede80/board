@@ -1,8 +1,9 @@
 import { findShot } from '../data/project';
 import { uid } from '../lib/util';
-import { addScene, commit, createFromTemplate, inboxTo, linkLib, moveScene, moveShot } from './actions';
+import { addScene, commit, createFromTemplate, inboxTo, linkLib, moveScene, moveShot, nextZ } from './actions';
 import { toWorld } from './board';
-import { addFiles, filesToMoodboard } from './images';
+import { addFiles } from './images';
+import { addCard, addImageCards, pickImages } from './boardActions';
 import { getState, project, setState, toast, type Drag } from './state';
 
 /** HTML5 drag & drop between the dock, library, inbox, board and storyboard (ported from the prototype). */
@@ -49,13 +50,18 @@ export function dropOnBoard(e: React.DragEvent) {
   const w = toWorld(e.clientX, e.clientY);
   const pos = { x: Math.round(w.x - 100), y: Math.round(w.y - 50) };
   if (!d) {
-    if (e.dataTransfer?.files?.length) filesToMoodboard(e.dataTransfer.files, pos);
+    // photos dropped on the board become image cards (UPDATE-1 أ5)
+    if (e.dataTransfer?.files?.length) void addImageCards(e.dataTransfer.files, pos);
     return;
   }
-  if (d.kind === 'tpl') createFromTemplate(d.type, { where: 'board', pos });
+  if (d.kind === 'tpl') {
+    if (d.type === 'heading' || d.type === 'frame') addCard(d.type, pos);
+    else if (d.type === 'image') pickImages(pos);
+    else createFromTemplate(d.type, { where: 'board', pos });
+  }
   if (d.kind === 'lib') {
     const p = project();
-    if (p) commit([{ op: 'create', entity: 'boardCards', id: uid('bc'), fields: { projectId: p.id, kind: d.type, refId: d.id, x: pos.x, y: pos.y } }], { history: 'إضافة إلى اللوحة' });
+    if (p) commit([{ op: 'create', entity: 'boardCards', id: uid('bc'), fields: { projectId: p.id, kind: d.type, refId: d.id, x: pos.x, y: pos.y, z: nextZ() } }], { history: 'إضافة إلى اللوحة' });
   }
   if (d.kind === 'inbox') inboxTo({ board: pos }, d.id);
 }
@@ -65,6 +71,7 @@ export function dropOnSbEmpty(e: React.DragEvent) {
   if (!d) return;
   if (d.kind === 'tpl') {
     if (d.type === 'scene') addScene({});
+    else if (d.type === 'heading' || d.type === 'frame' || d.type === 'image') toast('هذا القالب للوحة الأفكار فقط');
     else createFromTemplate(d.type, { where: 'library' });
   }
   if (d.kind === 'lib') toast('العنصر موجود في المكتبة — أفلته فوق صف مشهد لربطه');
@@ -78,6 +85,7 @@ export function dropOnRow(e: React.DragEvent, sceneId: string, d0?: Drag | null)
   if (!p) return;
   if (d.kind === 'tpl') {
     if (d.type === 'scene') addScene({ index: p.scenes.findIndex((s) => s.id === sceneId) + 1 });
+    else if (d.type === 'heading' || d.type === 'frame' || d.type === 'image') toast('هذا القالب للوحة الأفكار فقط');
     else createFromTemplate(d.type, { where: 'row', sceneId });
   }
   if (d.kind === 'lib') linkLib(sceneId, d.type, d.id);

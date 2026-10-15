@@ -41,7 +41,9 @@ const REFS: Partial<Record<EntityName, Record<string, EntityName | 'image' | 'by
 };
 /** Reference fields without which the row is meaningless (dropped if the target is missing). */
 const REQUIRED = new Set(['shots.sceneId', 'boardCards.refId', 'sceneCharacters.sceneId', 'sceneCharacters.characterId', 'sceneLinks.sceneId', 'sceneLinks.refId', 'itemImages.ownerId', 'itemImages.imageId']);
-const KIND_ENTITY: Record<string, EntityName> = { note: 'notes', character: 'characters', location: 'locations', moodboard: 'moodboards', shot: 'shots' };
+const KIND_ENTITY: Record<string, EntityName | 'image'> = { note: 'notes', character: 'characters', location: 'locations', moodboard: 'moodboards', shot: 'shots', image: 'image' };
+/** Card kinds that point at nothing (ref_id = ''). */
+const NO_REF_KINDS = new Set(['heading', 'frame']);
 
 function kindField(entity: EntityName): string {
   return entity === 'itemImages' ? 'ownerKind' : 'kind';
@@ -58,6 +60,7 @@ function pruneDangling(rows: Partial<Record<EntityName, Row[]>>, imageIds: Set<s
     out[e] = (rows[e] ?? []).filter((r) =>
       Object.entries(refs).every(([field, target]) => {
         if (!REQUIRED.has(`${e}.${field}`)) return true;
+        if (e === 'boardCards' && NO_REF_KINDS.has(r.kind as string)) return true;
         const t = target === 'byKind' ? KIND_ENTITY[r[kindField(e)] as string] : target;
         return !!t && exists(t, r[field]);
       }),
@@ -78,7 +81,8 @@ export async function exportProject(db: D1Database, projectId: string): Promise<
     .prepare(
       `SELECT * FROM images WHERE owner_id = ?2 AND id IN (
          SELECT image_id FROM item_images WHERE project_id = ?1 AND deleted_at IS NULL
-         UNION SELECT image_id FROM inbox_items WHERE project_id = ?1 AND deleted_at IS NULL AND image_id IS NOT NULL)`,
+         UNION SELECT image_id FROM inbox_items WHERE project_id = ?1 AND deleted_at IS NULL AND image_id IS NOT NULL
+         UNION SELECT ref_id FROM board_cards WHERE project_id = ?1 AND deleted_at IS NULL AND kind = 'image')`,
     )
     .bind(projectId, OWNER_ID)
     .all<Record<string, unknown>>();
@@ -143,7 +147,13 @@ export async function importProject(db: D1Database, input: unknown, imageMap: Re
 
   const projectId = newId('pr-x');
   const ids = new Map<string, string>();
-  for (const e of PROJECT_ENTITIES) for (const r of rows[e]!) ids.set(r.id, newId(r.id));
+  for (const e of PROJECT_ENTITIES) {
+    if (e === 'sceneCharacters' || e === 'sceneLinks') continue;
+    for (const r of rows[e]!) ids.set(r.id, newId(r.id));
+  }
+  // Link rows keep the client's composite id convention (unlinking relies on it).
+  for (const r of rows.sceneCharacters!) ids.set(r.id, `${ids.get(r.sceneId as string)}:${ids.get(r.characterId as string)}`);
+  for (const r of rows.sceneLinks!) ids.set(r.id, `${ids.get(r.sceneId as string)}:${r.kind}:${ids.get(r.refId as string)}`);
 
   const ops: Op[] = [];
   const mapRef = (target: EntityName | 'image', v: unknown) => (typeof v !== 'string' ? null : target === 'image' ? img.get(v) ?? null : ids.get(v) ?? null);
@@ -154,6 +164,10 @@ export async function importProject(db: D1Database, input: unknown, imageMap: Re
       if (!(name in r) || name === 'createdAt') continue;
       const target = refs[name];
       if (target) {
+        if (entity === 'boardCards' && NO_REF_KINDS.has(r.kind as string)) {
+          out[name] = '';
+          continue;
+        }
         const t = target === 'byKind' ? KIND_ENTITY[r[kindField(entity)] as string] : target;
         out[name] = t ? mapRef(t, r[name]) : null;
       } else out[name] = r[name];

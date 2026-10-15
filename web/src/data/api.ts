@@ -5,10 +5,17 @@ export class ApiError extends Error {
   }
 }
 
+import { APP_VERSION, VERSION_HEADER } from '../../../shared/version';
+
 type Handler = () => void;
 let onUnauthorized: Handler = () => {};
 export function setUnauthorizedHandler(h: Handler) {
   onUnauthorized = h;
+}
+let onNewVersion: Handler = () => {};
+/** Called once the server reports a different build than this tab runs (UPDATE-1 أ10). */
+export function setNewVersionHandler(h: Handler) {
+  onNewVersion = h;
 }
 
 export async function api<T = unknown>(path: string, init: RequestInit & { json?: unknown } = {}): Promise<T> {
@@ -24,6 +31,8 @@ export async function api<T = unknown>(path: string, init: RequestInit & { json?
   } catch {
     throw new ApiError(0);
   }
+  const v = res.headers.get(VERSION_HEADER);
+  if (v && v !== APP_VERSION) onNewVersion();
   let data: Record<string, unknown> = {};
   try {
     data = await res.json();

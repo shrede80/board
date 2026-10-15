@@ -64,7 +64,7 @@ test('exports: storyboard PDF (print), shot list Excel, full project zip → imp
   await page.getByTestId('import-input').setInputFiles(zpath);
   await expect(page.getByTestId('import-preview')).toContainText('5 مشاهد · 2 لقطة · 1 صورة');
   await page.getByTestId('import-confirm').click();
-  await expect(page.locator('[data-component=ProjectSwitcherTrigger]')).toContainText('تصدير (مستورد)');
+  await expect(page.getByTestId('project-name')).toContainText('تصدير (مستورد)');
   await page.getByText('الستوري بورد').click();
   await expect(page.getByTestId('shot-card').first()).toContainText('لقطة للتصدير');
   // the photo came through

@@ -40,18 +40,21 @@ export const MOOD_PALETTE: Record<string, { name: string; hex: string }> = {
   wine: { name: 'عنّابي', hex: '#6e2c34' },
   cool: { name: 'رمادي بارد', hex: '#7c8288' },
 };
-/** Card sizes on the board (world px): [width, height]. */
-export const CARD: Record<string, [number, number]> = {
-  scene: [280, 330], note: [210, 130], character: [210, 200], location: [230, 220], moodboard: [250, 250],
-};
+/** Card sizes on the board (world px): [width, height] — defaults per kind (heading: [width, font]). */
+export { DEFAULT_SIZE as CARD } from '../../../shared/board';
+/** Template dock (UPDATE-1 أ5: 8 templates). heading/image/frame only exist on the board. */
 export const TPL = [
   { type: 'scene', label: 'مشهد', icon: 'film' },
   { type: 'note', label: 'ملاحظة', icon: 'file' },
+  { type: 'heading', label: 'عنوان', icon: 'heading' },
+  { type: 'image', label: 'صورة', icon: 'image' },
+  { type: 'frame', label: 'إطار', icon: 'frame' },
   { type: 'character', label: 'شخصية', icon: 'user' },
   { type: 'location', label: 'موقع', icon: 'map-pin' },
   { type: 'moodboard', label: 'لوحة مزاج', icon: 'image' },
 ] as const;
 export type TplType = (typeof TPL)[number]['type'];
+export const BOARD_ONLY: TplType[] = ['heading', 'image', 'frame'];
 
 /** Board dot grid spacing (world px). Snapping uses the same value (SPEC 7ب.2). */
 export const GRID = 24;
@@ -59,3 +62,7 @@ export const GRID = 24;
 export const SNAP_PX = 6;
 
 export const POLL_MS = 10_000;
+
+/** Project stages (UPDATE-1 §2.1). */
+export const STAGE_LABEL: Record<string, string> = { idea: 'فكرة', prep: 'تحضير', shoot: 'تصوير', post: 'مونتاج', done: 'منتهي' };
+export const STAGE_ORDER = ['idea', 'prep', 'shoot', 'post', 'done'] as const;

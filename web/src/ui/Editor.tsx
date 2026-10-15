@@ -10,6 +10,7 @@ import { allShots, coverOf, eqName, findShot, moodHex, moodName, sceneDur, type 
 import { Button, EmptyState, Icon, Input, Textarea } from '../ds/ds';
 import { ANGLES, GENERAL, MOODS, MOVES, ORDER, SIZES, STATUS } from '../lib/constants';
 import { frameBg, mmss, pad2, type Img } from '../lib/util';
+import { deleteLib, duplicateLib } from '../app/boardActions';
 import { avatar } from './Library';
 
 const label: React.CSSProperties = { fontSize: 13, fontWeight: 600, color: 'var(--color-text-muted)' };
@@ -515,6 +516,10 @@ function LibEditor({ p, type, e }: { p: PProject; type: 'character' | 'location'
           ))}
         </div>
       )}
+      <div style={{ borderTop: '1px solid var(--color-border-subtle)', marginTop: 18, paddingTop: 14, display: 'flex', gap: 8 }}>
+        <Button variant="ghost" size="sm" icon="repeat" onClick={() => duplicateLib(type, e.id)} data-testid="lib-duplicate">تكرار</Button>
+        <Button variant="ghost" size="sm" icon="trash" onClick={() => deleteLib(type, e.id)} data-testid="lib-delete">{{ character: 'حذف الشخصية', location: 'حذف الموقع', moodboard: 'حذف لوحة المزاج' }[type]}</Button>
+      </div>
     </>
   );
 }
