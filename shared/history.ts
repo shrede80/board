@@ -85,6 +85,14 @@ export class History {
     const last = this.undoStack[this.undoStack.length - 1];
     if (last && last.forward === forward) last.inverse = inverse;
   }
+  peekUndo(): HistoryEntry | undefined {
+    return this.undoStack[this.undoStack.length - 1];
+  }
+  /** Drops an entry (its change was refused by the server). */
+  remove(e: HistoryEntry) {
+    this.undoStack = this.undoStack.filter((x) => x !== e);
+    this.redoStack = this.redoStack.filter((x) => x !== e);
+  }
   popUndo(): HistoryEntry | undefined {
     return this.undoStack.pop();
   }

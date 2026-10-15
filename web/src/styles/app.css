@@ -1,0 +1,22 @@
+/* Hover styles from the prototype's `style-hover` attributes (inline styles can't express :hover). */
+.h-strong:hover { background: var(--color-surface-strong) !important; }
+.h-surface:hover { background: var(--color-surface) !important; }
+.h-bright:hover { filter: brightness(1.08); }
+.h-accent-text:hover { border-color: var(--color-accent) !important; color: var(--color-text) !important; }
+.h-accent:hover { border-color: var(--color-accent) !important; }
+
+button:disabled { cursor: not-allowed; }
+.sb-nodrag { -webkit-user-drag: none; }
+
+/* Library tabs (SPEC §7.2): one line with full names; scroll sideways if ever too narrow. */
+.lib-tabs > * { flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; }
+.lib-tabs > *::-webkit-scrollbar { display: none; }
+.lib-tabs button { white-space: nowrap; flex: 1 1 auto; padding-inline: 5px !important; }
+
+@keyframes sb-spin { to { transform: rotate(360deg); } }
+
+/* Print: keep colours and photos (A4 landscape rules live in dark.css). */
+[data-print-page] { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+@media print {
+  [data-print-root] table { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

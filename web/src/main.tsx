@@ -4,10 +4,11 @@ import './styles/fonts.css';
 import './styles/tokens.css';
 import './styles/dark.css';
 import './styles/base.css';
-import { App } from './App';
+import './styles/app.css';
+import { AppRoot } from './ui/AppRoot';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <AppRoot />
   </StrictMode>,
 );
