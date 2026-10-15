@@ -34,6 +34,7 @@ interface Batch {
   entry?: HistoryEntry;
   /** coalescing key for typing (same field of the same row) */
   key?: string;
+  onAck?: (res: OpsResult) => void;
   readyAt: number;
   attempts: number;
 }
@@ -150,7 +151,7 @@ export class Engine {
     return entry;
   }
 
-  private send(ops: Op[], entry?: HistoryEntry, key?: string) {
+  private send(ops: Op[], entry?: HistoryEntry, key?: string, onAck?: (res: OpsResult) => void) {
     const { store, hiddenByIndex } = applyLocal(this.store, ops, this.trashHidden);
     this.store = store;
     const writes: Batch['writes'] = [];
@@ -167,7 +168,7 @@ export class Engine {
       last.writes.push(...writes);
       last.readyAt = Date.now() + TYPE_DEBOUNCE;
     } else {
-      this.queue.push({ ops, writes, hiddenByIndex, entry, key, readyAt: key ? Date.now() + TYPE_DEBOUNCE : 0, attempts: 0 });
+      this.queue.push({ ops, writes, hiddenByIndex, entry, key, onAck, readyAt: key ? Date.now() + TYPE_DEBOUNCE : 0, attempts: 0 });
     }
     this.ev.change();
     this.setSave('saving');
@@ -206,6 +207,7 @@ export class Engine {
       if (head.entry && res.trashIds.some(Boolean)) {
         head.entry.inverse = resolveTrashIds(head.entry.inverse, res.trashIds);
       }
+      head.onAck?.(res);
       if (head.ops.some((o) => o.op === 'restore')) void this.poll().catch(() => {});
     } catch (e) {
       const status = e instanceof ApiError ? e.status : 0;
@@ -277,7 +279,11 @@ export class Engine {
     const e = this.history.popUndo();
     if (!e) return false;
     this.lastHistoryKey = undefined;
-    this.send(e.inverse);
+    // Undoing a restore puts the row back in the trash under a NEW trash id: redo must use it.
+    this.send(e.inverse, undefined, undefined, (res) => {
+      const fresh = res.trashIds.filter(Boolean) as string[];
+      if (fresh.length) e.forward = e.forward.map((op) => (op.op === 'restore' && fresh.length ? { op: 'restore', trashId: fresh.shift()! } : op));
+    });
     this.history.pushRedo(e);
     return true;
   }

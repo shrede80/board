@@ -3,8 +3,17 @@ import { defineConfig, devices } from '@playwright/test';
 const PORT = 5199;
 export default defineConfig({
   testDir: 'e2e',
-  timeout: 60_000,
-  use: { baseURL: `http://localhost:${PORT}`, locale: 'ar' },
+  timeout: 90_000,
+  // One shared local database: run test files one after another.
+  workers: 1,
+  fullyParallel: false,
+  reporter: [['list']],
+  use: {
+    baseURL: `http://localhost:${PORT}`,
+    locale: 'ar',
+    // headless Chromium needs a UTF-8 locale to keep Arabic download file names
+    launchOptions: { env: { ...process.env, LANG: 'C.UTF-8', LC_ALL: 'C.UTF-8' } },
+  },
   projects: [
     { name: 'laptop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
     { name: 'mobile', use: { ...devices['Desktop Chrome'], viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } },
