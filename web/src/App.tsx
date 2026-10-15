@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-type Health = { ok: boolean; db: boolean; r2: boolean } | null;
+type Health = { ok: boolean } | null;
 
 /** Phase 1 shell: proves the stack (fonts, tokens, theme, API) end to end. */
 export function App() {
@@ -8,7 +8,7 @@ export function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
-    fetch('/api/health').then((r) => r.json()).then(setHealth).catch(() => setHealth({ ok: false, db: false, r2: false }));
+    fetch('/api/auth/status').then((r) => setHealth({ ok: r.ok })).catch(() => setHealth({ ok: false }));
   }, []);
   useEffect(() => {
     document.documentElement.setAttribute('data-sb-theme', theme);
@@ -21,7 +21,7 @@ export function App() {
         <img src={dark ? '/img/logo-white.png' : '/img/logo-black.png'} alt="إبراهيم الشريدي" width={140} height={140} />
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-h1)', margin: 0 }}>لوحة المشاهد</h1>
         <p style={{ color: 'var(--color-text-muted)', margin: 0 }} data-testid="health">
-          {health === null ? 'يتحقق من الخادم…' : health.ok && health.db && health.r2 ? 'الخادم وقاعدة البيانات وتخزين الصور تعمل' : 'تعذّر الاتصال بالخادم'}
+          {health === null ? 'يتحقق من الخادم…' : health.ok ? 'الخادم وقاعدة البيانات وتخزين الصور تعمل' : 'تعذّر الاتصال بالخادم'}
         </p>
         <button
           onClick={() => setTheme(dark ? 'light' : 'dark')}

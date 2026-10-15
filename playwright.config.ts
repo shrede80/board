@@ -10,9 +10,9 @@ export default defineConfig({
     { name: 'mobile', use: { ...devices['Desktop Chrome'], viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } },
   ],
   webServer: {
-    command: `npx vite --port ${PORT} --strictPort`,
-    url: `http://localhost:${PORT}/api/health`,
-    reuseExistingServer: true,
+    command: `rm -rf .wrangler/e2e && npx wrangler d1 migrations apply DB --local --persist-to .wrangler/e2e && E2E=1 npx vite --port ${PORT} --strictPort`,
+    url: `http://localhost:${PORT}/api/auth/status`,
+    reuseExistingServer: false,
     timeout: 120_000,
   },
 });

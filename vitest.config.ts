@@ -8,7 +8,7 @@ export default defineConfig({
       return {
         wrangler: { configPath: './wrangler.jsonc' },
         miniflare: {
-          bindings: { TEST_MIGRATIONS: migrations, SESSION_SECRET: 'test-secret' },
+          bindings: { TEST_MIGRATIONS: migrations, SESSION_SECRET: 'test-secret', SETUP_TOKEN: 'test-setup-token' },
         },
       };
     }),

@@ -52,10 +52,19 @@ npm test                    # Vitest inside workerd (worker + shared tests)
 npm run test:e2e            # Playwright, laptop 1440×900 + mobile 390×844 (starts its own server)
 npm run build               # production build to dist/
 npm run types               # regenerate worker/worker-configuration.d.ts after editing wrangler.jsonc
+npm run seed                # (dev server running) loads the 4 prototype demo projects; dev password: dev-password
 npm run deploy              # build + wrangler deploy (phase 6)
 ```
 - Playwright is pinned to 1.56.1 to match the preinstalled Chromium in /opt/pw-browsers. Do not run `playwright install`.
 - To re-shoot the prototype: unpack is not needed; open `prototype/laptop.html#screen=…&theme=…` (states listed in HANDOFF.md / prototype index).
+
+## Server notes
+- All writes go through `applyOps` (worker/src/ops.ts): ops grouped into few `json_each` statements, one D1 batch (= transaction).
+- Free plan: ≤ 50 D1 queries per invocation — keep handlers within that (snapshot ≈ 17, daily cron ≈ 40).
+- D1 rejects compound SELECTs with many UNION terms — use NOT EXISTS.
+- Tests: `worker/test/setup.ts` wipes D1 + R2 before each test. E2E uses its own state dir `.wrangler/e2e` (wiped per run).
+- Trashable entities: projects, scenes, shots, notes, characters, locations, moodboards. Others tombstone (deleted_at) and are hard-deleted after 30 days.
+- Never use `pkill -f <pattern>` inside a Bash command containing the same pattern: it kills the shell itself.
 
 ## Workflow
 After each phase: run tests → commit → update PROGRESS.md → send the user a 2-line Arabic summary + what he can try.
