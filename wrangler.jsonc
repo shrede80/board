@@ -12,8 +12,7 @@
     {
       "binding": "DB",
       "database_name": "lawhat-db",
-      // Replaced with the real id at deploy time (phase 6). Local dev ignores it.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "ad44f944-7e27-400d-bdc0-d058594b8e58",
       "migrations_dir": "worker/migrations"
     }
   ],
