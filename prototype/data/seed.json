@@ -1,0 +1,2682 @@
+{
+  "version": 1,
+  "settings": {
+    "theme": "light",
+    "lastBackup": "2026-10-14T03:00:00+03:00",
+    "lastProjectId": "pr-yasmin"
+  },
+  "moods": {
+    "gold": {
+      "name": "ذهبي",
+      "hex": "#c9a14f"
+    },
+    "amber": {
+      "name": "عنبري",
+      "hex": "#c27a32"
+    },
+    "sand": {
+      "name": "رملي",
+      "hex": "#cdb488"
+    },
+    "clay": {
+      "name": "طيني",
+      "hex": "#94603f"
+    },
+    "night": {
+      "name": "أزرق ليلي",
+      "hex": "#2e3d5c"
+    },
+    "olive": {
+      "name": "زيتي",
+      "hex": "#6c6a3c"
+    },
+    "wine": {
+      "name": "عنّابي",
+      "hex": "#6e2c34"
+    },
+    "cool": {
+      "name": "رمادي بارد",
+      "hex": "#7c8288"
+    }
+  },
+  "projects": [
+    {
+      "id": "pr-yasmin",
+      "name": "إعلان مشروع سكني — حي الياسمين",
+      "template": "ad",
+      "aspect": "16:9",
+      "updatedAt": "2026-10-14T09:40:00+03:00",
+      "scenes": [
+        {
+          "id": "sc-1",
+          "name": "الافتتاحية الجوية",
+          "intExt": "ext",
+          "dayNight": "day",
+          "locationId": "loc-site",
+          "characterIds": [],
+          "summary": "الشمس تشرق على الحي والمشروع يظهر تدريجياً من خلف السور.",
+          "goal": "إحساس بالانطلاقة والفخامة من أول ثانية.",
+          "mood": "gold",
+          "coverImageId": null,
+          "noteIds": [
+            "note-1"
+          ],
+          "moodboardIds": [],
+          "board": {
+            "x": 1180,
+            "y": 60
+          },
+          "shots": [
+            {
+              "id": "sh-1-1",
+              "desc": "ريفيل صاعد من خلف السور يكشف المشروع عند الشروق",
+              "cameraId": "cam-mini4",
+              "lens": null,
+              "focal": 24,
+              "size": "EWS",
+              "angle": "جوية",
+              "movement": "ريفيل",
+              "supportId": "sup-drone",
+              "lightingIds": [],
+              "lightingMood": "ضوء الشروق الذهبي من الخلف",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 4,
+              "status": "approved",
+              "filterId": "flt-nd232",
+              "images": [
+                {
+                  "id": "img-1",
+                  "src": null,
+                  "frame": {
+                    "x": 70,
+                    "y": 25,
+                    "v": 37
+                  }
+                },
+                {
+                  "id": "img-2",
+                  "src": null,
+                  "frame": {
+                    "x": 45,
+                    "y": 60,
+                    "v": 74
+                  }
+                }
+              ],
+              "coverImageId": "img-1"
+            },
+            {
+              "id": "sh-1-2",
+              "desc": "تحليق علوي فوق الشوارع الداخلية والحدائق",
+              "cameraId": "cam-mini4",
+              "lens": null,
+              "focal": 24,
+              "size": "EWS",
+              "angle": "علوية عمودية (Top-down)",
+              "movement": "تحليق علوي",
+              "supportId": "sup-drone",
+              "lightingIds": [],
+              "lightingMood": "ظلال طويلة على الأرض",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 4,
+              "status": "approved",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "img-3",
+                  "src": null,
+                  "frame": {
+                    "x": 80,
+                    "y": 70,
+                    "v": 11
+                  }
+                }
+              ],
+              "coverImageId": "img-3"
+            },
+            {
+              "id": "sh-1-3",
+              "desc": "أوربت حول المبنى الرئيسي والشمس خلفه",
+              "cameraId": "cam-mini4",
+              "lens": null,
+              "focal": 24,
+              "size": "WS",
+              "angle": "جوية",
+              "movement": "أوربت",
+              "supportId": "sup-drone",
+              "lightingIds": [],
+              "lightingMood": "وهج شمس خفيف على العدسة",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 4,
+              "status": "shot",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "img-4",
+                  "src": null,
+                  "frame": {
+                    "x": 20,
+                    "y": 75,
+                    "v": 48
+                  }
+                }
+              ],
+              "coverImageId": "img-4"
+            }
+          ]
+        },
+        {
+          "id": "sc-2",
+          "name": "الوصول",
+          "intExt": "ext",
+          "dayNight": "day",
+          "locationId": "loc-site",
+          "characterIds": [
+            "ch-fahd",
+            "ch-sara",
+            "ch-leen"
+          ],
+          "summary": "العائلة تصل بالسيارة وتتوقف أمام مدخل العمارة.",
+          "goal": "التعرّف على العائلة وربطها بالمكان.",
+          "mood": "sand",
+          "coverImageId": null,
+          "noteIds": [],
+          "moodboardIds": [],
+          "board": {
+            "x": 880,
+            "y": 90
+          },
+          "shots": [
+            {
+              "id": "sh-2-1",
+              "desc": "منظور السائق: السيارة تدخل بوابة الحي",
+              "cameraId": "cam-iphone15",
+              "lens": "1x (24mm)",
+              "focal": 24,
+              "size": "POV",
+              "angle": "مستوى العين",
+              "movement": "دخول",
+              "supportId": "sup-azuni",
+              "lightingIds": [],
+              "lightingMood": "ضوء نهار طبيعي",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "shot",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "img-5",
+                  "src": null,
+                  "frame": {
+                    "x": 55,
+                    "y": 40,
+                    "v": 85
+                  }
+                }
+              ],
+              "coverImageId": "img-5"
+            },
+            {
+              "id": "sh-2-2",
+              "desc": "السيارة تتوقف أمام المدخل",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 18,
+              "size": "WS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "shot",
+              "filterId": "flt-nd232",
+              "images": [
+                {
+                  "id": "img-6",
+                  "src": null,
+                  "frame": {
+                    "x": 28,
+                    "y": 30,
+                    "v": 22
+                  }
+                },
+                {
+                  "id": "img-7",
+                  "src": null,
+                  "frame": {
+                    "x": 70,
+                    "y": 25,
+                    "v": 59
+                  }
+                }
+              ],
+              "coverImageId": "img-6"
+            },
+            {
+              "id": "sh-2-3",
+              "desc": "تتبّع العائلة من السيارة حتى باب العمارة",
+              "cameraId": "cam-iphone15",
+              "lens": "1x (24mm)",
+              "focal": 24,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "تتبّع",
+              "supportId": "sup-osmo8",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [
+                "au-micmini"
+              ],
+              "audioNotes": "ضحكات طبيعية",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "img-8",
+                  "src": null,
+                  "frame": {
+                    "x": 45,
+                    "y": 60,
+                    "v": 96
+                  }
+                }
+              ],
+              "coverImageId": "img-8"
+            },
+            {
+              "id": "sh-2-4",
+              "desc": "لين تركض نحو المدخل وتلتفت للكاميرا",
+              "cameraId": "cam-iphone15",
+              "lens": "2x (48mm)",
+              "focal": 48,
+              "size": "FS",
+              "angle": "منخفضة",
+              "movement": "تتبّع",
+              "supportId": "sup-osmo8",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 2,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "img-9",
+                  "src": null,
+                  "frame": {
+                    "x": 80,
+                    "y": 70,
+                    "v": 33
+                  }
+                }
+              ],
+              "coverImageId": "img-9"
+            }
+          ]
+        },
+        {
+          "id": "sc-3",
+          "name": "جولة الشقة",
+          "intExt": "int",
+          "dayNight": "day",
+          "locationId": "loc-apt",
+          "characterIds": [
+            "ch-fahd",
+            "ch-sara",
+            "ch-leen"
+          ],
+          "summary": "العائلة تدخل الشقة وتستكشف الصالة والمطبخ.",
+          "goal": "إظهار الاتساع والدفء.",
+          "mood": "amber",
+          "coverImageId": null,
+          "noteIds": [],
+          "moodboardIds": [
+            "mb-1"
+          ],
+          "board": {
+            "x": 580,
+            "y": 50
+          },
+          "shots": [
+            {
+              "id": "sh-3-1",
+              "desc": "دخول من الباب إلى الصالة المفتوحة",
+              "cameraId": "cam-iphone15",
+              "lens": "0.5x (13mm)",
+              "focal": 13,
+              "size": "WS",
+              "angle": "مستوى العين",
+              "movement": "دخول",
+              "supportId": "sup-osmo8",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "shot",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "img-10",
+                  "src": null,
+                  "frame": {
+                    "x": 20,
+                    "y": 75,
+                    "v": 70
+                  }
+                }
+              ],
+              "coverImageId": "img-10"
+            },
+            {
+              "id": "sh-3-2",
+              "desc": "سارة تفتح ستارة الصالة والضوء يملأ المكان",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [
+                "lt-hs60b",
+                "lt-softbox45"
+              ],
+              "lightingMood": "ضوء دافئ ناعم من النافذة، 4300K",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "shot",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "img-11",
+                  "src": null,
+                  "frame": {
+                    "x": 55,
+                    "y": 40,
+                    "v": 7
+                  }
+                },
+                {
+                  "id": "img-12",
+                  "src": null,
+                  "frame": {
+                    "x": 28,
+                    "y": 30,
+                    "v": 44
+                  }
+                },
+                {
+                  "id": "img-13",
+                  "src": null,
+                  "frame": {
+                    "x": 70,
+                    "y": 25,
+                    "v": 81
+                  }
+                }
+              ],
+              "coverImageId": "img-11"
+            },
+            {
+              "id": "sh-3-3",
+              "desc": "فهد ولين في المطبخ — تبادل نظرات",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 50,
+              "size": "MCU",
+              "angle": "مستوى العين",
+              "movement": "بان",
+              "supportId": "sup-benro",
+              "lightingIds": [
+                "lt-hs60b",
+                "lt-reflector"
+              ],
+              "lightingMood": "دافئ، تباين منخفض",
+              "audioIds": [
+                "au-shotgun"
+              ],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "img-14",
+                  "src": null,
+                  "frame": {
+                    "x": 45,
+                    "y": 60,
+                    "v": 18
+                  }
+                }
+              ],
+              "coverImageId": "img-14"
+            },
+            {
+              "id": "sh-3-4",
+              "desc": "خروج بطيء من غرفة النوم الرئيسية",
+              "cameraId": "cam-iphone15",
+              "lens": "0.5x (13mm)",
+              "focal": 13,
+              "size": "WS",
+              "angle": "مستوى العين",
+              "movement": "خروج",
+              "supportId": "sup-osmo8",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "img-15",
+                  "src": null,
+                  "frame": {
+                    "x": 80,
+                    "y": 70,
+                    "v": 55
+                  }
+                }
+              ],
+              "coverImageId": "img-15"
+            }
+          ]
+        },
+        {
+          "id": "sc-4",
+          "name": "تفاصيل التشطيب",
+          "intExt": "int",
+          "dayNight": "day",
+          "locationId": "loc-apt",
+          "characterIds": [],
+          "summary": "لقطات قريبة للخامات: الرخام، النحاس، الإضاءة المخفية.",
+          "goal": "الجودة في التفاصيل.",
+          "mood": "clay",
+          "coverImageId": null,
+          "noteIds": [],
+          "moodboardIds": [],
+          "board": {
+            "x": 280,
+            "y": 130
+          },
+          "shots": [
+            {
+              "id": "sh-4-1",
+              "desc": "يد تمر على رخام المطبخ",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 50,
+              "size": "Insert",
+              "angle": "عالية",
+              "movement": "بان",
+              "supportId": "sup-benro",
+              "lightingIds": [
+                "lt-ua20c"
+              ],
+              "lightingMood": "ضوء جانبي يُظهر ملمس الرخام",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 2,
+              "status": "approved",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "img-16",
+                  "src": null,
+                  "frame": {
+                    "x": 20,
+                    "y": 75,
+                    "v": 92
+                  }
+                }
+              ],
+              "coverImageId": "img-16"
+            },
+            {
+              "id": "sh-4-2",
+              "desc": "مقبض الباب النحاسي عن قرب",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 50,
+              "size": "ECU",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [
+                "lt-ua20c"
+              ],
+              "lightingMood": "انعكاس دافئ على النحاس",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 2,
+              "status": "approved",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "img-17",
+                  "src": null,
+                  "frame": {
+                    "x": 55,
+                    "y": 40,
+                    "v": 29
+                  }
+                }
+              ],
+              "coverImageId": "img-17"
+            },
+            {
+              "id": "sh-4-3",
+              "desc": "إضاءة السقف المخفية تُضاء تدريجياً",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "Insert",
+              "angle": "منخفضة",
+              "movement": "تلت",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 2,
+              "status": "shot",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "img-18",
+                  "src": null,
+                  "frame": {
+                    "x": 28,
+                    "y": 30,
+                    "v": 66
+                  }
+                }
+              ],
+              "coverImageId": "img-18"
+            },
+            {
+              "id": "sh-4-4",
+              "desc": "بان بطيء على بلاط الحمّام",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 50,
+              "size": "CU",
+              "angle": "عالية",
+              "movement": "بان",
+              "supportId": "sup-benro",
+              "lightingIds": [
+                "lt-ua20c"
+              ],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 2,
+              "status": "planned",
+              "filterId": null,
+              "images": [],
+              "coverImageId": null
+            }
+          ]
+        },
+        {
+          "id": "sc-5",
+          "name": "المهندس يشرح",
+          "intExt": "int",
+          "dayNight": "day",
+          "locationId": "loc-office",
+          "characterIds": [
+            "ch-khaled"
+          ],
+          "summary": "م. خالد يشرح جودة البناء أمام المجسّم في مكتب المبيعات.",
+          "goal": "الثقة والمصداقية.",
+          "mood": "cool",
+          "coverImageId": null,
+          "noteIds": [],
+          "moodboardIds": [],
+          "board": {
+            "x": 880,
+            "y": 520
+          },
+          "shots": [
+            {
+              "id": "sh-5-1",
+              "desc": "م. خالد يشرح جودة العزل",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MCU",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [
+                "lt-hs60b",
+                "lt-softbox45"
+              ],
+              "lightingMood": "إضاءة مقابلة ناعمة، خلفية أغمق بدرجة",
+              "audioIds": [
+                "au-shotgun",
+                "au-micmini",
+                "au-q20i"
+              ],
+              "audioNotes": "مراقبة الصوت بالسماعة طوال المقابلة",
+              "dialogue": "«كل شقة هنا معزولة حرارياً وصوتياً بمواصفات تتجاوز الكود السعودي.»",
+              "duration": 5,
+              "status": "shot",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "img-51",
+                  "src": null,
+                  "frame": {
+                    "x": 45,
+                    "y": 40,
+                    "v": 30
+                  }
+                }
+              ],
+              "coverImageId": "img-51"
+            },
+            {
+              "id": "sh-5-2",
+              "desc": "لقطة جانبية للمخطط على الطاولة",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 24,
+              "size": "OTS",
+              "angle": "عالية",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [
+                "lt-hs60b"
+              ],
+              "lightingMood": "",
+              "audioIds": [
+                "au-micmini"
+              ],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "img-19",
+                  "src": null,
+                  "frame": {
+                    "x": 70,
+                    "y": 25,
+                    "v": 3
+                  }
+                }
+              ],
+              "coverImageId": "img-19"
+            },
+            {
+              "id": "sh-5-3",
+              "desc": "يد المهندس تشير إلى المجسّم",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sonypz",
+              "focal": 50,
+              "size": "Insert",
+              "angle": "مستوى العين",
+              "movement": "زوم",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 2,
+              "status": "planned",
+              "filterId": null,
+              "images": [],
+              "coverImageId": null
+            }
+          ]
+        },
+        {
+          "id": "sc-6",
+          "name": "ليل الحي",
+          "intExt": "ext",
+          "dayNight": "night",
+          "locationId": "loc-site",
+          "characterIds": [
+            "ch-fahd",
+            "ch-sara",
+            "ch-leen"
+          ],
+          "summary": "العائلة في حديقة الحي ليلاً والمبنى مضاء خلفهم.",
+          "goal": "الأمان والانتماء — ختام عاطفي.",
+          "mood": "night",
+          "coverImageId": null,
+          "noteIds": [],
+          "moodboardIds": [],
+          "board": {
+            "x": 580,
+            "y": 560
+          },
+          "shots": [
+            {
+              "id": "sh-6-1",
+              "desc": "العائلة في الحديقة تحت إضاءة الأعمدة",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 24,
+              "size": "WS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [
+                "lt-lm07"
+              ],
+              "lightingMood": "ليلي بارد مع لمسة دافئة على الوجوه",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 2,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "img-20",
+                  "src": null,
+                  "frame": {
+                    "x": 45,
+                    "y": 60,
+                    "v": 40
+                  }
+                }
+              ],
+              "coverImageId": "img-20"
+            },
+            {
+              "id": "sh-6-2",
+              "desc": "لين تمسك فانوساً صغيراً",
+              "cameraId": "cam-iphone15",
+              "lens": "3x (77mm)",
+              "focal": 77,
+              "size": "CU",
+              "angle": "مستوى العين",
+              "movement": "تتبّع",
+              "supportId": "sup-osmo8",
+              "lightingIds": [
+                "lt-lm07",
+                "lt-lantern30"
+              ],
+              "lightingMood": "دافئ، 2700K",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 2,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "img-21",
+                  "src": null,
+                  "frame": {
+                    "x": 80,
+                    "y": 70,
+                    "v": 77
+                  }
+                }
+              ],
+              "coverImageId": "img-21"
+            },
+            {
+              "id": "sh-6-3",
+              "desc": "فهد ينظر للمبنى المضاء",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 50,
+              "size": "OTS",
+              "angle": "منخفضة",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [
+                "lt-lm07"
+              ],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 2,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "img-22",
+                  "src": null,
+                  "frame": {
+                    "x": 20,
+                    "y": 75,
+                    "v": 14
+                  }
+                }
+              ],
+              "coverImageId": "img-22"
+            },
+            {
+              "id": "sh-6-4",
+              "desc": "أوربت ختامي للمشروع مضاءً",
+              "cameraId": "cam-mini4",
+              "lens": null,
+              "focal": 24,
+              "size": "EWS",
+              "angle": "جوية",
+              "movement": "أوربت",
+              "supportId": "sup-drone",
+              "lightingIds": [],
+              "lightingMood": "المبنى مضاء بالكامل",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 4,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "img-23",
+                  "src": null,
+                  "frame": {
+                    "x": 55,
+                    "y": 40,
+                    "v": 51
+                  }
+                },
+                {
+                  "id": "img-24",
+                  "src": null,
+                  "frame": {
+                    "x": 28,
+                    "y": 30,
+                    "v": 88
+                  }
+                }
+              ],
+              "coverImageId": "img-23"
+            }
+          ]
+        }
+      ],
+      "library": {
+        "characters": [
+          {
+            "id": "ch-fahd",
+            "name": "فهد",
+            "role": "الأب",
+            "desc": "في الأربعين، هادئ وواثق.",
+            "wardrobe": "ثوب أبيض، شماغ أحمر في الليل",
+            "notes": "يفضّل ألا يتكلّم أمام الكاميرا.",
+            "images": [],
+            "coverImageId": null
+          },
+          {
+            "id": "ch-sara",
+            "name": "سارة",
+            "role": "الأم",
+            "desc": "أنيقة، حاضرة في تفاصيل البيت.",
+            "wardrobe": "عباءة بيج بتطريز خفيف",
+            "notes": "",
+            "images": [],
+            "coverImageId": null
+          },
+          {
+            "id": "ch-leen",
+            "name": "لين",
+            "role": "الطفلة",
+            "desc": "سبع سنوات، فضولية وتركض كثيراً.",
+            "wardrobe": "فستان أصفر فاتح",
+            "notes": "التصوير قبل الساعة 8 مساءً.",
+            "images": [],
+            "coverImageId": null
+          },
+          {
+            "id": "ch-khaled",
+            "name": "م. خالد",
+            "role": "مهندس الموقع",
+            "desc": "مهندس المشروع، يشرح بلغة بسيطة.",
+            "wardrobe": "قميص كحلي وخوذة بيضاء",
+            "notes": "مدة المقابلة 20 دقيقة كحد أقصى.",
+            "images": [],
+            "coverImageId": null
+          }
+        ],
+        "locations": [
+          {
+            "id": "loc-site",
+            "name": "موقع المشروع",
+            "address": "حي الياسمين، شمال الرياض",
+            "mapUrl": "https://maps.google.com/?q=حي+الياسمين+الرياض",
+            "notes": "تصريح الطيران مطلوب. الدخول من البوابة الشمالية.",
+            "images": [
+              {
+                "id": "li-1",
+                "src": null,
+                "frame": {
+                  "x": 30,
+                  "y": 30,
+                  "v": 12
+                }
+              }
+            ]
+          },
+          {
+            "id": "loc-apt",
+            "name": "الشقة النموذجية",
+            "address": "المبنى B — الدور الثاني",
+            "mapUrl": "",
+            "notes": "المفتاح مع مكتب المبيعات. لا تحرّك الأثاث.",
+            "images": [
+              {
+                "id": "li-2",
+                "src": null,
+                "frame": {
+                  "x": 60,
+                  "y": 40,
+                  "v": 40
+                }
+              }
+            ]
+          },
+          {
+            "id": "loc-office",
+            "name": "مكتب المبيعات",
+            "address": "مدخل المشروع",
+            "mapUrl": "",
+            "notes": "متاح من 4 عصراً.",
+            "images": [
+              {
+                "id": "li-3",
+                "src": null,
+                "frame": {
+                  "x": 50,
+                  "y": 60,
+                  "v": 70
+                }
+              }
+            ]
+          }
+        ],
+        "moodboards": [
+          {
+            "id": "mb-1",
+            "title": "دفء الصباح داخل الشقة",
+            "swatches": [
+              "#d2a06a",
+              "#eee5d3",
+              "#6b4a2f",
+              "#f7f5ef",
+              "#3a342c"
+            ],
+            "images": [
+              {
+                "id": "mi-1",
+                "src": null,
+                "frame": {
+                  "x": 30,
+                  "y": 40,
+                  "v": 5
+                }
+              },
+              {
+                "id": "mi-2",
+                "src": null,
+                "frame": {
+                  "x": 70,
+                  "y": 30,
+                  "v": 55
+                }
+              },
+              {
+                "id": "mi-3",
+                "src": null,
+                "frame": {
+                  "x": 50,
+                  "y": 70,
+                  "v": 80
+                }
+              },
+              {
+                "id": "mi-4",
+                "src": null,
+                "frame": {
+                  "x": 20,
+                  "y": 60,
+                  "v": 33
+                }
+              }
+            ]
+          }
+        ],
+        "inbox": [
+          {
+            "id": "in-1",
+            "type": "image",
+            "src": null,
+            "frame": {
+              "x": 40,
+              "y": 35,
+              "v": 22
+            },
+            "text": "واجهة المدخل وقت العصر",
+            "createdAt": "2026-10-13T16:42:00+03:00",
+            "sceneId": "sc-2",
+            "isNew": true
+          },
+          {
+            "id": "in-2",
+            "type": "note",
+            "src": null,
+            "text": "فكرة: انعكاس المبنى على زجاج السيارة في مشهد الوصول",
+            "createdAt": "2026-10-13T17:05:00+03:00",
+            "sceneId": null,
+            "isNew": true
+          }
+        ]
+      },
+      "notes": [
+        {
+          "id": "note-1",
+          "text": "الشروق 5:52 ص — نكون في الموقع 5:15"
+        },
+        {
+          "id": "note-2",
+          "text": "تأكيد تصريح الطيران من الهيئة قبل الثلاثاء"
+        }
+      ],
+      "board": {
+        "cards": [
+          {
+            "id": "bc-1",
+            "kind": "note",
+            "refId": "note-1",
+            "x": 1200,
+            "y": 470
+          },
+          {
+            "id": "bc-2",
+            "kind": "note",
+            "refId": "note-2",
+            "x": 300,
+            "y": 540
+          },
+          {
+            "id": "bc-3",
+            "kind": "moodboard",
+            "refId": "mb-1",
+            "x": -20,
+            "y": 60
+          },
+          {
+            "id": "bc-4",
+            "kind": "character",
+            "refId": "ch-khaled",
+            "x": 1200,
+            "y": 640
+          },
+          {
+            "id": "bc-5",
+            "kind": "location",
+            "refId": "loc-apt",
+            "x": -20,
+            "y": 420
+          }
+        ]
+      }
+    },
+    {
+      "id": "pr-clip",
+      "name": "فيديو كليب — ليل الرياض",
+      "template": "clip",
+      "aspect": "9:16",
+      "updatedAt": "2026-10-09T22:10:00+03:00",
+      "scenes": [
+        {
+          "id": "pr-clip-sc1",
+          "name": "مقدمة",
+          "intExt": "ext",
+          "dayNight": "night",
+          "locationId": null,
+          "characterIds": [],
+          "summary": "",
+          "goal": "",
+          "mood": "night",
+          "coverImageId": null,
+          "noteIds": [],
+          "moodboardIds": [],
+          "board": {
+            "x": 1100,
+            "y": 80
+          },
+          "shots": [
+            {
+              "id": "pr-clip-sh1-1",
+              "desc": "لقطة 1",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-clip-im00",
+                  "src": null,
+                  "frame": {
+                    "x": 30,
+                    "y": 40,
+                    "v": 0
+                  }
+                }
+              ],
+              "coverImageId": "pr-clip-im00"
+            },
+            {
+              "id": "pr-clip-sh1-2",
+              "desc": "لقطة 2",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-clip-im01",
+                  "src": null,
+                  "frame": {
+                    "x": 45,
+                    "y": 40,
+                    "v": 1
+                  }
+                }
+              ],
+              "coverImageId": "pr-clip-im01"
+            }
+          ]
+        },
+        {
+          "id": "pr-clip-sc2",
+          "name": "مقطع 1",
+          "intExt": "int",
+          "dayNight": "night",
+          "locationId": null,
+          "characterIds": [],
+          "summary": "",
+          "goal": "",
+          "mood": "wine",
+          "coverImageId": null,
+          "noteIds": [],
+          "moodboardIds": [],
+          "board": {
+            "x": 800,
+            "y": 140
+          },
+          "shots": [
+            {
+              "id": "pr-clip-sh2-1",
+              "desc": "لقطة 1",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-clip-im10",
+                  "src": null,
+                  "frame": {
+                    "x": 30,
+                    "y": 40,
+                    "v": 20
+                  }
+                }
+              ],
+              "coverImageId": "pr-clip-im10"
+            },
+            {
+              "id": "pr-clip-sh2-2",
+              "desc": "لقطة 2",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-clip-im11",
+                  "src": null,
+                  "frame": {
+                    "x": 45,
+                    "y": 40,
+                    "v": 21
+                  }
+                }
+              ],
+              "coverImageId": "pr-clip-im11"
+            },
+            {
+              "id": "pr-clip-sh2-3",
+              "desc": "لقطة 3",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-clip-im12",
+                  "src": null,
+                  "frame": {
+                    "x": 60,
+                    "y": 40,
+                    "v": 22
+                  }
+                }
+              ],
+              "coverImageId": "pr-clip-im12"
+            }
+          ]
+        },
+        {
+          "id": "pr-clip-sc3",
+          "name": "اللازمة",
+          "intExt": "ext",
+          "dayNight": "night",
+          "locationId": null,
+          "characterIds": [],
+          "summary": "",
+          "goal": "",
+          "mood": "cool",
+          "coverImageId": null,
+          "noteIds": [],
+          "moodboardIds": [],
+          "board": {
+            "x": 500,
+            "y": 80
+          },
+          "shots": [
+            {
+              "id": "pr-clip-sh3-1",
+              "desc": "لقطة 1",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-clip-im20",
+                  "src": null,
+                  "frame": {
+                    "x": 30,
+                    "y": 40,
+                    "v": 40
+                  }
+                }
+              ],
+              "coverImageId": "pr-clip-im20"
+            },
+            {
+              "id": "pr-clip-sh3-2",
+              "desc": "لقطة 2",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-clip-im21",
+                  "src": null,
+                  "frame": {
+                    "x": 45,
+                    "y": 40,
+                    "v": 41
+                  }
+                }
+              ],
+              "coverImageId": "pr-clip-im21"
+            }
+          ]
+        },
+        {
+          "id": "pr-clip-sc4",
+          "name": "مقطع 2",
+          "intExt": "int",
+          "dayNight": "night",
+          "locationId": null,
+          "characterIds": [],
+          "summary": "",
+          "goal": "",
+          "mood": "night",
+          "coverImageId": null,
+          "noteIds": [],
+          "moodboardIds": [],
+          "board": {
+            "x": 200,
+            "y": 140
+          },
+          "shots": [
+            {
+              "id": "pr-clip-sh4-1",
+              "desc": "لقطة 1",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-clip-im30",
+                  "src": null,
+                  "frame": {
+                    "x": 30,
+                    "y": 40,
+                    "v": 60
+                  }
+                }
+              ],
+              "coverImageId": "pr-clip-im30"
+            },
+            {
+              "id": "pr-clip-sh4-2",
+              "desc": "لقطة 2",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-clip-im31",
+                  "src": null,
+                  "frame": {
+                    "x": 45,
+                    "y": 40,
+                    "v": 61
+                  }
+                }
+              ],
+              "coverImageId": "pr-clip-im31"
+            },
+            {
+              "id": "pr-clip-sh4-3",
+              "desc": "لقطة 3",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-clip-im32",
+                  "src": null,
+                  "frame": {
+                    "x": 60,
+                    "y": 40,
+                    "v": 62
+                  }
+                }
+              ],
+              "coverImageId": "pr-clip-im32"
+            }
+          ]
+        },
+        {
+          "id": "pr-clip-sc5",
+          "name": "اللازمة",
+          "intExt": "ext",
+          "dayNight": "night",
+          "locationId": null,
+          "characterIds": [],
+          "summary": "",
+          "goal": "",
+          "mood": "wine",
+          "coverImageId": null,
+          "noteIds": [],
+          "moodboardIds": [],
+          "board": {
+            "x": -100,
+            "y": 80
+          },
+          "shots": [
+            {
+              "id": "pr-clip-sh5-1",
+              "desc": "لقطة 1",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-clip-im40",
+                  "src": null,
+                  "frame": {
+                    "x": 30,
+                    "y": 40,
+                    "v": 80
+                  }
+                }
+              ],
+              "coverImageId": "pr-clip-im40"
+            },
+            {
+              "id": "pr-clip-sh5-2",
+              "desc": "لقطة 2",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-clip-im41",
+                  "src": null,
+                  "frame": {
+                    "x": 45,
+                    "y": 40,
+                    "v": 81
+                  }
+                }
+              ],
+              "coverImageId": "pr-clip-im41"
+            }
+          ]
+        },
+        {
+          "id": "pr-clip-sc6",
+          "name": "الختام",
+          "intExt": "int",
+          "dayNight": "night",
+          "locationId": null,
+          "characterIds": [],
+          "summary": "",
+          "goal": "",
+          "mood": "cool",
+          "coverImageId": null,
+          "noteIds": [],
+          "moodboardIds": [],
+          "board": {
+            "x": -400,
+            "y": 140
+          },
+          "shots": [
+            {
+              "id": "pr-clip-sh6-1",
+              "desc": "لقطة 1",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-clip-im50",
+                  "src": null,
+                  "frame": {
+                    "x": 30,
+                    "y": 40,
+                    "v": 100
+                  }
+                }
+              ],
+              "coverImageId": "pr-clip-im50"
+            }
+          ]
+        }
+      ],
+      "library": {
+        "characters": [],
+        "locations": [],
+        "moodboards": [],
+        "inbox": []
+      },
+      "notes": [],
+      "board": {
+        "cards": []
+      }
+    },
+    {
+      "id": "pr-grad",
+      "name": "تغطية حفل تخرج",
+      "template": "doc",
+      "aspect": "16:9",
+      "updatedAt": "2026-09-28T19:00:00+03:00",
+      "scenes": [
+        {
+          "id": "pr-grad-sc1",
+          "name": "الوصول",
+          "intExt": "ext",
+          "dayNight": "night",
+          "locationId": null,
+          "characterIds": [],
+          "summary": "",
+          "goal": "",
+          "mood": "gold",
+          "coverImageId": null,
+          "noteIds": [],
+          "moodboardIds": [],
+          "board": {
+            "x": 1100,
+            "y": 80
+          },
+          "shots": [
+            {
+              "id": "pr-grad-sh1-1",
+              "desc": "لقطة 1",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-grad-im00",
+                  "src": null,
+                  "frame": {
+                    "x": 30,
+                    "y": 40,
+                    "v": 0
+                  }
+                }
+              ],
+              "coverImageId": "pr-grad-im00"
+            },
+            {
+              "id": "pr-grad-sh1-2",
+              "desc": "لقطة 2",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-grad-im01",
+                  "src": null,
+                  "frame": {
+                    "x": 45,
+                    "y": 40,
+                    "v": 1
+                  }
+                }
+              ],
+              "coverImageId": "pr-grad-im01"
+            },
+            {
+              "id": "pr-grad-sh1-3",
+              "desc": "لقطة 3",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-grad-im02",
+                  "src": null,
+                  "frame": {
+                    "x": 60,
+                    "y": 40,
+                    "v": 2
+                  }
+                }
+              ],
+              "coverImageId": "pr-grad-im02"
+            }
+          ]
+        },
+        {
+          "id": "pr-grad-sc2",
+          "name": "المسيرة",
+          "intExt": "int",
+          "dayNight": "night",
+          "locationId": null,
+          "characterIds": [],
+          "summary": "",
+          "goal": "",
+          "mood": "sand",
+          "coverImageId": null,
+          "noteIds": [],
+          "moodboardIds": [],
+          "board": {
+            "x": 800,
+            "y": 140
+          },
+          "shots": [
+            {
+              "id": "pr-grad-sh2-1",
+              "desc": "لقطة 1",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-grad-im10",
+                  "src": null,
+                  "frame": {
+                    "x": 30,
+                    "y": 40,
+                    "v": 20
+                  }
+                }
+              ],
+              "coverImageId": "pr-grad-im10"
+            },
+            {
+              "id": "pr-grad-sh2-2",
+              "desc": "لقطة 2",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-grad-im11",
+                  "src": null,
+                  "frame": {
+                    "x": 45,
+                    "y": 40,
+                    "v": 21
+                  }
+                }
+              ],
+              "coverImageId": "pr-grad-im11"
+            }
+          ]
+        },
+        {
+          "id": "pr-grad-sc3",
+          "name": "التكريم",
+          "intExt": "ext",
+          "dayNight": "night",
+          "locationId": null,
+          "characterIds": [],
+          "summary": "",
+          "goal": "",
+          "mood": "gold",
+          "coverImageId": null,
+          "noteIds": [],
+          "moodboardIds": [],
+          "board": {
+            "x": 500,
+            "y": 80
+          },
+          "shots": [
+            {
+              "id": "pr-grad-sh3-1",
+              "desc": "لقطة 1",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-grad-im20",
+                  "src": null,
+                  "frame": {
+                    "x": 30,
+                    "y": 40,
+                    "v": 40
+                  }
+                }
+              ],
+              "coverImageId": "pr-grad-im20"
+            },
+            {
+              "id": "pr-grad-sh3-2",
+              "desc": "لقطة 2",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-grad-im21",
+                  "src": null,
+                  "frame": {
+                    "x": 45,
+                    "y": 40,
+                    "v": 41
+                  }
+                }
+              ],
+              "coverImageId": "pr-grad-im21"
+            },
+            {
+              "id": "pr-grad-sh3-3",
+              "desc": "لقطة 3",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-grad-im22",
+                  "src": null,
+                  "frame": {
+                    "x": 60,
+                    "y": 40,
+                    "v": 42
+                  }
+                }
+              ],
+              "coverImageId": "pr-grad-im22"
+            },
+            {
+              "id": "pr-grad-sh3-4",
+              "desc": "لقطة 4",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-grad-im23",
+                  "src": null,
+                  "frame": {
+                    "x": 75,
+                    "y": 40,
+                    "v": 43
+                  }
+                }
+              ],
+              "coverImageId": "pr-grad-im23"
+            }
+          ]
+        },
+        {
+          "id": "pr-grad-sc4",
+          "name": "الختام",
+          "intExt": "int",
+          "dayNight": "night",
+          "locationId": null,
+          "characterIds": [],
+          "summary": "",
+          "goal": "",
+          "mood": "sand",
+          "coverImageId": null,
+          "noteIds": [],
+          "moodboardIds": [],
+          "board": {
+            "x": 200,
+            "y": 140
+          },
+          "shots": [
+            {
+              "id": "pr-grad-sh4-1",
+              "desc": "لقطة 1",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-grad-im30",
+                  "src": null,
+                  "frame": {
+                    "x": 30,
+                    "y": 40,
+                    "v": 60
+                  }
+                }
+              ],
+              "coverImageId": "pr-grad-im30"
+            },
+            {
+              "id": "pr-grad-sh4-2",
+              "desc": "لقطة 2",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-grad-im31",
+                  "src": null,
+                  "frame": {
+                    "x": 45,
+                    "y": 40,
+                    "v": 61
+                  }
+                }
+              ],
+              "coverImageId": "pr-grad-im31"
+            }
+          ]
+        }
+      ],
+      "library": {
+        "characters": [],
+        "locations": [],
+        "moodboards": [],
+        "inbox": []
+      },
+      "notes": [],
+      "board": {
+        "cards": []
+      }
+    },
+    {
+      "id": "pr-craft",
+      "name": "وثائقي قصير — الحرفيون",
+      "template": "doc",
+      "aspect": "2.39:1",
+      "updatedAt": "2026-09-15T11:20:00+03:00",
+      "scenes": [
+        {
+          "id": "pr-craft-sc1",
+          "name": "افتتاحية",
+          "intExt": "ext",
+          "dayNight": "night",
+          "locationId": null,
+          "characterIds": [],
+          "summary": "",
+          "goal": "",
+          "mood": "clay",
+          "coverImageId": null,
+          "noteIds": [],
+          "moodboardIds": [],
+          "board": {
+            "x": 1100,
+            "y": 80
+          },
+          "shots": [
+            {
+              "id": "pr-craft-sh1-1",
+              "desc": "لقطة 1",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-craft-im00",
+                  "src": null,
+                  "frame": {
+                    "x": 30,
+                    "y": 40,
+                    "v": 0
+                  }
+                }
+              ],
+              "coverImageId": "pr-craft-im00"
+            },
+            {
+              "id": "pr-craft-sh1-2",
+              "desc": "لقطة 2",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-craft-im01",
+                  "src": null,
+                  "frame": {
+                    "x": 45,
+                    "y": 40,
+                    "v": 1
+                  }
+                }
+              ],
+              "coverImageId": "pr-craft-im01"
+            }
+          ]
+        },
+        {
+          "id": "pr-craft-sc2",
+          "name": "تعريف",
+          "intExt": "int",
+          "dayNight": "night",
+          "locationId": null,
+          "characterIds": [],
+          "summary": "",
+          "goal": "",
+          "mood": "olive",
+          "coverImageId": null,
+          "noteIds": [],
+          "moodboardIds": [],
+          "board": {
+            "x": 800,
+            "y": 140
+          },
+          "shots": [
+            {
+              "id": "pr-craft-sh2-1",
+              "desc": "لقطة 1",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-craft-im10",
+                  "src": null,
+                  "frame": {
+                    "x": 30,
+                    "y": 40,
+                    "v": 20
+                  }
+                }
+              ],
+              "coverImageId": "pr-craft-im10"
+            }
+          ]
+        },
+        {
+          "id": "pr-craft-sc3",
+          "name": "مقابلات",
+          "intExt": "ext",
+          "dayNight": "night",
+          "locationId": null,
+          "characterIds": [],
+          "summary": "",
+          "goal": "",
+          "mood": "sand",
+          "coverImageId": null,
+          "noteIds": [],
+          "moodboardIds": [],
+          "board": {
+            "x": 500,
+            "y": 80
+          },
+          "shots": [
+            {
+              "id": "pr-craft-sh3-1",
+              "desc": "لقطة 1",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-craft-im20",
+                  "src": null,
+                  "frame": {
+                    "x": 30,
+                    "y": 40,
+                    "v": 40
+                  }
+                }
+              ],
+              "coverImageId": "pr-craft-im20"
+            },
+            {
+              "id": "pr-craft-sh3-2",
+              "desc": "لقطة 2",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-craft-im21",
+                  "src": null,
+                  "frame": {
+                    "x": 45,
+                    "y": 40,
+                    "v": 41
+                  }
+                }
+              ],
+              "coverImageId": "pr-craft-im21"
+            },
+            {
+              "id": "pr-craft-sh3-3",
+              "desc": "لقطة 3",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-craft-im22",
+                  "src": null,
+                  "frame": {
+                    "x": 60,
+                    "y": 40,
+                    "v": 42
+                  }
+                }
+              ],
+              "coverImageId": "pr-craft-im22"
+            }
+          ]
+        },
+        {
+          "id": "pr-craft-sc4",
+          "name": "لقطات داعمة",
+          "intExt": "int",
+          "dayNight": "night",
+          "locationId": null,
+          "characterIds": [],
+          "summary": "",
+          "goal": "",
+          "mood": "clay",
+          "coverImageId": null,
+          "noteIds": [],
+          "moodboardIds": [],
+          "board": {
+            "x": 200,
+            "y": 140
+          },
+          "shots": [
+            {
+              "id": "pr-craft-sh4-1",
+              "desc": "لقطة 1",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-craft-im30",
+                  "src": null,
+                  "frame": {
+                    "x": 30,
+                    "y": 40,
+                    "v": 60
+                  }
+                }
+              ],
+              "coverImageId": "pr-craft-im30"
+            },
+            {
+              "id": "pr-craft-sh4-2",
+              "desc": "لقطة 2",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-craft-im31",
+                  "src": null,
+                  "frame": {
+                    "x": 45,
+                    "y": 40,
+                    "v": 61
+                  }
+                }
+              ],
+              "coverImageId": "pr-craft-im31"
+            },
+            {
+              "id": "pr-craft-sh4-3",
+              "desc": "لقطة 3",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-craft-im32",
+                  "src": null,
+                  "frame": {
+                    "x": 60,
+                    "y": 40,
+                    "v": 62
+                  }
+                }
+              ],
+              "coverImageId": "pr-craft-im32"
+            },
+            {
+              "id": "pr-craft-sh4-4",
+              "desc": "لقطة 4",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-craft-im33",
+                  "src": null,
+                  "frame": {
+                    "x": 75,
+                    "y": 40,
+                    "v": 63
+                  }
+                }
+              ],
+              "coverImageId": "pr-craft-im33"
+            }
+          ]
+        },
+        {
+          "id": "pr-craft-sc5",
+          "name": "ختام",
+          "intExt": "ext",
+          "dayNight": "night",
+          "locationId": null,
+          "characterIds": [],
+          "summary": "",
+          "goal": "",
+          "mood": "olive",
+          "coverImageId": null,
+          "noteIds": [],
+          "moodboardIds": [],
+          "board": {
+            "x": -100,
+            "y": 80
+          },
+          "shots": [
+            {
+              "id": "pr-craft-sh5-1",
+              "desc": "لقطة 1",
+              "cameraId": "cam-zve10",
+              "lens": "lens-sigma1850",
+              "focal": 35,
+              "size": "MS",
+              "angle": "مستوى العين",
+              "movement": "ثابتة",
+              "supportId": "sup-benro",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "pr-craft-im40",
+                  "src": null,
+                  "frame": {
+                    "x": 30,
+                    "y": 40,
+                    "v": 80
+                  }
+                }
+              ],
+              "coverImageId": "pr-craft-im40"
+            }
+          ]
+        }
+      ],
+      "library": {
+        "characters": [],
+        "locations": [],
+        "moodboards": [],
+        "inbox": []
+      },
+      "notes": [],
+      "board": {
+        "cards": []
+      }
+    }
+  ],
+  "trash": [
+    {
+      "id": "tr-1",
+      "type": "scene",
+      "projectId": "pr-yasmin",
+      "label": "مشهد: المسبح عند الغروب",
+      "deletedAt": "2026-10-07T12:00:00+03:00",
+      "payload": {
+        "scene": {
+          "id": "sc-x",
+          "name": "المسبح عند الغروب",
+          "intExt": "ext",
+          "dayNight": "day",
+          "locationId": "loc-site",
+          "characterIds": [],
+          "summary": "",
+          "goal": "",
+          "mood": "amber",
+          "coverImageId": null,
+          "noteIds": [],
+          "moodboardIds": [],
+          "board": {
+            "x": 280,
+            "y": 900
+          },
+          "shots": [
+            {
+              "id": "sh-x-1",
+              "desc": "انعكاس الغروب على الماء",
+              "cameraId": "cam-mini4",
+              "lens": null,
+              "focal": 24,
+              "size": "WS",
+              "angle": "جوية",
+              "movement": "تحليق علوي",
+              "supportId": "sup-drone",
+              "lightingIds": [],
+              "lightingMood": "",
+              "audioIds": [],
+              "audioNotes": "",
+              "dialogue": "",
+              "duration": 3,
+              "status": "planned",
+              "filterId": null,
+              "images": [
+                {
+                  "id": "img-x",
+                  "src": null,
+                  "frame": {
+                    "x": 50,
+                    "y": 50,
+                    "v": 60
+                  }
+                }
+              ],
+              "coverImageId": "img-x"
+            }
+          ]
+        },
+        "index": 6
+      }
+    },
+    {
+      "id": "tr-2",
+      "type": "note",
+      "projectId": "pr-yasmin",
+      "label": "ملاحظة: «استئجار رافعة؟»",
+      "deletedAt": "2026-10-12T09:30:00+03:00",
+      "payload": {
+        "note": {
+          "id": "note-x",
+          "text": "استئجار رافعة؟"
+        },
+        "card": {
+          "id": "bc-x",
+          "kind": "note",
+          "refId": "note-x",
+          "x": 20,
+          "y": 820
+        }
+      }
+    }
+  ]
+}

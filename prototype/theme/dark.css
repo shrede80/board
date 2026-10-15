@@ -1,0 +1,38 @@
+/* Dark semantic layer — same ink/tan family, swapped via [data-sb-theme="dark"] */
+[data-sb-theme="dark"]{
+--color-bg:#141210;
+--color-surface:#1c1916;
+--color-surface-strong:#26221d;
+--color-border:#3a342c;
+--color-border-subtle:#2b2722;
+--color-text:#fdfcfa;
+--color-text-muted:#b9b9c2;
+--color-text-subtle:#6b6255;
+--color-accent:#d2a06a;
+--color-accent-soft:rgba(210,160,106,.15);
+--color-inverse-bg:#fdfcfa;
+--color-inverse-text:#141210;
+--color-info:#b9b9c2;
+--color-success:#d2a06a;
+--color-danger:#d06a58;
+--shadow-card:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.45);
+--shadow-lift:0 16px 44px rgba(0,0,0,.6);
+--card-shadow:var(--shadow-card);
+--field-bg:#1c1916;
+--table-row-bg:#1c1916;
+--table-row-bg-alt:#26221d;
+--ink-700:#e3d5b8;
+color-scheme:dark;
+}
+/* Board dot grid colour, read by inline background-image */
+:root{--board-dot:rgba(20,18,16,.16)}
+[data-sb-theme="dark"]{--board-dot:rgba(253,252,250,.09)}
+@media print{
+  body *{visibility:hidden}
+  [data-print-root],[data-print-root] *{visibility:visible}
+  [data-print-root]{position:absolute;inset:0 auto auto 0;width:100%}
+  [data-print-page]{break-after:page;box-shadow:none!important;margin:0!important}
+  [data-print-zoom]{zoom:1!important}
+  [data-print-scroll],[data-component="SceneBoardApp"],[data-component="ExportDialog"]{position:static!important;overflow:visible!important;height:auto!important;max-height:none!important;display:block!important;background:none!important}
+  @page{size:A4 landscape;margin:0}
+}
