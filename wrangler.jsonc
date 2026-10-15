@@ -1,0 +1,28 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "lawhat-almashahed",
+  "main": "worker/src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/setup", "/setup/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "lawhat-db",
+      // Replaced with the real id at deploy time (phase 6). Local dev ignores it.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "worker/migrations"
+    }
+  ],
+  "r2_buckets": [
+    { "binding": "BUCKET", "bucket_name": "lawhat-images" }
+  ],
+  "triggers": {
+    // 00:00 UTC = 03:00 Riyadh: daily backup + trash cleanup
+    "crons": ["0 0 * * *"]
+  },
+  "observability": { "enabled": true }
+}

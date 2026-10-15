@@ -1,0 +1,138 @@
+/* Design tokens extracted verbatim from the prototype (Claude Design export). */
+/* PRIMITIVES — raw scales. Values unchanged from the original system; only reorganized. */
+:root{
+/* ink / neutrals */
+--ink-900:#141210;
+--ink-700:#3a342c;
+--ink-500:#6b6255;
+--ink-300:#b9b9c2;
+--paper-0:#fdfcfa;
+--paper-50:#f7f5ef;
+--sand-100:#eee5d3;
+--sand-200:#e3d5b8;
+--sand-300:#d3bf94;
+/* brand — warm camel/tan, the desert accent */
+--tan-400:#e0bb8f;
+--tan-500:#d2a06a;
+--tan-600:#a97c49;
+--amber-500:#e1a161;
+/* type families */
+--font-display:'thmanyah Serif Display',ui-serif,serif;
+--font-serif-text:'thmanyah Serif Text',ui-serif,serif;
+--font-sans:'thmanyah Sans',ui-sans-serif,system-ui,sans-serif;
+/* type scale */
+--text-display-1:clamp(40px,6vw,72px);
+--text-display-2:clamp(32px,4.5vw,52px);
+--text-h1:34px;
+--text-h2:26px;
+--text-h3:20px;
+--text-body-lg:18px;
+--text-body:16px;
+--text-small:14px;
+--text-caption:12px;
+--lh-tight:1.1; /* @kind other */
+--lh-snug:1.3; /* @kind other */
+--lh-normal:1.6; /* @kind other */
+--lh-relaxed:1.8; /* @kind other */
+/* space */
+--space-1:4px;
+--space-2:8px;
+--space-3:12px;
+--space-4:16px;
+--space-5:24px;
+--space-6:32px;
+--space-7:48px;
+--space-8:64px;
+--space-9:96px;
+/* radii */
+--radius-sm:4px;
+--radius-md:8px;
+--radius-lg:14px;
+--radius-pill:999px;
+/* elevation */
+--shadow-card:0 1px 2px rgba(20,18,16,0.04),0 6px 20px rgba(20,18,16,0.06);
+--shadow-lift:0 10px 30px rgba(20,18,16,0.12);
+/* motion */
+--ease-standard:cubic-bezier(.4,0,.2,1); /* @kind other */
+--dur-fast:120ms; /* @kind other */
+--dur-base:200ms; /* @kind other */
+}
+
+/* SEMANTIC — meaning-level aliases. Point components at these, never at raw primitives. */
+:root{
+/* surfaces & text */
+--color-bg:var(--paper-0);
+--color-surface:var(--paper-50);
+--color-surface-strong:var(--sand-100);
+--color-border:var(--sand-300);
+--color-border-subtle:var(--sand-200);
+--color-text:var(--ink-900);
+--color-text-muted:var(--ink-500);
+--color-text-subtle:var(--ink-300);
+--color-text-on-accent:var(--ink-900);
+--color-accent:var(--tan-500);
+--color-accent-hover:var(--tan-400);
+--color-accent-press:var(--tan-600);
+--color-accent-soft:var(--sand-100);
+--color-inverse-bg:var(--ink-900);
+--color-inverse-text:var(--paper-0);
+/* status — drawn from the existing palette, no new hues */
+--color-info:var(--ink-700);
+--color-success:var(--tan-600);
+--color-warning:var(--amber-500);
+--color-danger:#a33a2a;
+--color-focus-ring:var(--tan-600);
+/* borders */
+--border-hairline:1px solid var(--color-border);
+--border-subtle:1px solid var(--color-border-subtle);
+/* type roles — which family/size/weight each kind of text uses */
+--type-display-font:var(--font-display);
+--type-heading-font:var(--font-display);
+--type-editorial-font:var(--font-serif-text);
+--type-ui-font:var(--font-sans);
+--type-heading-weight:700; /* @kind other */
+--type-label-size:var(--text-small);
+--type-label-weight:600; /* @kind other */
+--type-button-size:var(--text-body);
+--type-button-weight:600; /* @kind other */
+--type-table-size:var(--text-body);
+--type-table-head-weight:700; /* @kind other */
+--type-data-size:var(--text-caption);
+}
+body{font-family:var(--type-ui-font);color:var(--color-text);direction:rtl}
+
+/* COMPONENT TOKENS — per-component knobs. Values match what components already render. */
+:root{
+/* button */
+--button-radius:var(--radius-sm);
+--button-pad-sm:8px 16px;
+--button-pad-md:12px 22px;
+--button-pad-lg:16px 28px;
+/* card */
+--card-radius:var(--radius-lg);
+--card-pad:var(--space-5);
+--card-shadow:var(--shadow-card);
+--card-border:var(--border-hairline);
+/* table */
+--table-cell-pad:14px 16px;
+--table-head-bg:var(--color-accent);
+--table-head-fg:var(--color-text-on-accent);
+--table-row-bg:var(--paper-0);
+--table-row-bg-alt:var(--color-surface-strong);
+/* badge */
+--badge-radius:var(--radius-pill);
+--badge-pad:5px 12px;
+--badge-size:13px;
+/* form controls */
+--field-radius:var(--radius-sm);
+--field-pad:11px 14px;
+--field-bg:var(--paper-0);
+--field-border:var(--border-hairline);
+--field-height:44px;
+/* feedback */
+--alert-radius:var(--radius-md);
+--alert-pad:14px 16px;
+/* focus */
+--focus-ring:0 0 0 3px rgba(169,124,73,0.28);
+}
+
