@@ -1,6 +1,6 @@
 # لوحة المشاهد — context for Claude Code sessions
 
-**Read first in every new session:** this file, then `PROGRESS.md` (where we stopped), then `SPEC.md` (the top authority) and `prototype/HANDOFF.md`.
+**Read first in every new session:** this file, then `PROGRESS.md` (where we stopped), then `updates/update-1/UPDATE-1.md` (top authority for Update 1; wins over SPEC where they differ), then `SPEC.md` and `prototype/HANDOFF.md`.
 
 ## The user
 - A director/cinematographer, **not a programmer**. Talk to him in **simple Arabic**.
@@ -11,15 +11,20 @@
 - Ambiguity → choose what is closest to the prototype, log it in PROGRESS.md, continue. Ask only for hard-to-reverse decisions.
 - Don't change SPEC §1 decisions or §2 tech choices without asking him and explaining simply.
 
-## Fixed decisions (SPEC §1)
+## Fixed decisions (SPEC §1, as amended by Update 1 §1)
 1. Single user now; `owner_id` column on main tables (constant value) for future teams.
 2. Login = one password, no email/accounts; the device remembers the session (signed cookie, 1 year).
 3. One web app for laptop + mobile; mobile installs as a PWA (manifest + icons, `display: standalone`).
-4. Always online: **no offline mode, no service worker caching data.** Offline → clear message + disabled buttons.
-5. Mobile = shot list + status change + quick capture to «الوارد» only. No board on mobile.
+4. Online-first. Exception (U1 ق6): **ideas only** (text + compressed images) queue in IndexedDB on the phone and send when back online; a small service worker caches **only the app shell** (HTML/JS/CSS/fonts/icons, versioned) — **never `/api/*` or any data**. Every other edit needs a connection (offline → clear message + disabled buttons).
+5. (U1 ق5) **Mobile = full editor** for projects, scenes, shots, library and ideas. **The free board stays laptop-only** (no moving board items on mobile).
 6. Arabic RTL UI, prototype design system (fonts, colours, components), light + dark.
 7. Four layers against loss: undo/redo, 30-day trash, project export/import file, daily automatic backup.
-8. Out of scope: multi-user/permissions/comments, offline, board on mobile, editing, AI images, connector arrows.
+8. Out of scope (U1 ق8): multi-user/permissions, client share links, comments, AI, voice notes, copy between projects, moving board items from mobile, connector arrows, full offline work.
+9. (U1 ق1) Full control: everything the user creates can be renamed, edited, duplicated where sensible, and deleted to trash with undo — laptop and phone.
+10. (U1 ق2) The app opens on **Home** on both devices; logo and the «الرئيسية ‹ project» breadcrumb go back to it.
+11. (U1 ق3) **Ideas box replaces the inbox**: global (project/scene optional), idea = text + images + links. `inbox_items` stays in the DB (no drop) but is never written again; old clients' inbox creates are stored as ideas.
+12. (U1 ق7) New-version banner when a new deploy is live while the app is open.
+13. DB changes are **additive only** (ADD COLUMN / CREATE TABLE / copy). Before any production migration: export prod D1, test the migration on the copy locally, take an R2 backup, verify counts after.
 
 ## Architecture (SPEC §2)
 - **Cloudflare Workers** (static assets + API) · **D1** (SQLite) · **R2** (images, backups) · **Cron** `0 0 * * *` (03:00 Riyadh).
@@ -32,6 +37,7 @@
 ```
 SPEC.md, PROMPT.md          handoff instructions (do not edit)
 prototype/                  Claude Design prototype (reference only)
+updates/update-1/           Update 1 brief (UPDATE-1.md), mockups (open *.html#theme=…&clean=1), shots
 reference/screenshots/      Playwright captures of every prototype state (visual reference)
 reference/sb-logic.js       readable copy of the prototype logic (sb-core + sb-view)
 assets/equipment-icons.svg  equipment icons keyed by equipment.json `icon`
@@ -71,4 +77,4 @@ npm run size                # same bundle + size check, no deploy
 
 ## Workflow
 After each phase: run tests → commit → update PROGRESS.md → send the user a 2-line Arabic summary + what he can try.
-Branch: `claude/viewfinder-app-build-7du511`.
+Branch: work on `claude/pensive-feynman-nwosmr` (this is the deployed code). After each deployed phase, fast-forward the default branch `claude/viewfinder-app-build-7du511` to it so new sessions start from the right code.

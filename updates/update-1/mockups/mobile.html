@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-sb-theme="light">
+<head>
+<meta charset="utf-8">
+<title>الجوال — نموذج التحديث</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+body{background:#e9e1d0;padding:36px 30px 40px;display:flex;gap:34px;width:max-content;align-items:flex-start}
+[data-sb-theme="dark"] body{background:#0b0a09}
+.ph{display:flex;flex-direction:column;align-items:center;gap:14px}
+.cap{font-family:var(--font-display);font-weight:900;font-size:22px;color:#141210}
+[data-sb-theme="dark"] .cap{color:#fdfcfa}
+.phone{width:422px;height:876px;border-radius:58px;background:#141210;padding:16px;box-shadow:0 30px 60px rgba(20,18,16,.25);position:relative}
+.scr{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;background:var(--color-bg);display:flex;flex-direction:column}
+.sb{height:50px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 30px;font-size:15px;font-weight:700;direction:ltr}
+.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:120px;height:34px;border-radius:20px;background:#000;z-index:50}
+.body{flex:1;min-height:0;overflow:hidden;padding:0 16px;display:flex;flex-direction:column;gap:14px}
+.nav{height:84px;flex-shrink:0;border-top:1px solid var(--color-border-subtle);display:flex;align-items:flex-start;padding:8px 10px 0;background:var(--color-bg);position:relative;z-index:5}
+.nav b{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--color-text-muted);position:relative}
+.nav b.on{color:var(--color-text)}
+.nav .plus{width:58px;height:58px;border-radius:50%;background:var(--color-accent);color:#141210;display:flex;align-items:center;justify-content:center;margin-top:-22px;box-shadow:0 8px 20px rgba(169,124,73,.45);flex:0 0 58px}
+.nav .bd{position:absolute;top:-4px;left:calc(50% - 22px);background:var(--color-accent);color:#141210;font-size:10px;border-radius:999px;padding:1px 6px}
+.cnt{background:#141210;color:#fdfcfa;border-radius:14px;padding:16px;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden}
+.cnt .g{position:absolute;left:-50px;bottom:-70px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(210,160,106,.45),transparent 65%)}
+.cnt .big{font-family:var(--font-display);font-weight:900;font-size:58px;line-height:.9;color:#d2a06a}
+.cardx{background:var(--color-bg);border:1px solid var(--color-border-subtle);border-radius:14px;box-shadow:var(--shadow-card)}
+.row{display:flex;align-items:center;gap:10px}
+.pr{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--color-border-subtle)}
+.pr i.t{display:block;width:84px;height:54px;border-radius:6px;flex-shrink:0}
+.pr .n{font-family:var(--font-serif-text);font-weight:700;font-size:15px;line-height:1.35}
+.pr .m{font-size:11.5px;color:var(--color-text-muted)}
+.seg{display:flex;border:1px solid var(--color-border);border-radius:999px;padding:3px;gap:2px}
+.seg span{flex:1;height:34px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.seg span.on{background:var(--color-inverse-bg);color:var(--color-inverse-text)}
+.sc{display:flex;flex-direction:column;gap:8px}
+.sc .hd{display:flex;align-items:center;gap:8px}
+.sc .hd .bar4{width:4px;height:20px;border-radius:2px}
+.sc .hd .nm{font-family:var(--font-serif-text);font-weight:700;font-size:16px}
+.strip{display:flex;gap:8px;overflow:hidden}
+.tile{flex:0 0 118px;height:72px;border-radius:6px;position:relative}
+.tile b{position:absolute;top:4px;right:6px;font-family:var(--font-display);font-weight:900;font-size:16px;color:#fdfcfa;text-shadow:0 1px 5px rgba(0,0,0,.6)}
+.tile .st{position:absolute;bottom:5px;left:6px;width:10px;height:10px;border-radius:50%;border:1.5px solid #fdfcfa}
+.tile.add{border:1.5px dashed var(--color-border);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;color:var(--color-text-muted);font-size:12px;font-weight:700}
+.toast{position:absolute;bottom:96px;left:16px;right:16px;background:var(--color-inverse-bg);color:var(--color-inverse-text);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;box-shadow:var(--shadow-lift);z-index:20}
+.fld{display:flex;flex-direction:column;gap:5px}
+.fld>span{font-size:12px;font-weight:700;color:var(--color-text-muted)}
+.inp{min-height:44px;border:1px solid var(--color-border);border-radius:6px;padding:10px 12px;font-size:14px;display:flex;align-items:center;gap:8px;background:var(--field-bg)}
+.inp .cv{margin-inline-start:auto;color:var(--color-text-muted)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat3{display:flex;gap:6px}
+.stat3 span{flex:1;height:42px;border-radius:999px;border:1.5px solid var(--color-border);display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:700}
+.stat3 span.on{background:var(--color-inverse-bg);color:var(--color-inverse-text);border-color:transparent}
+.idea{background:var(--color-bg);border:1px solid var(--color-border-subtle);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.idea .tx{font-family:var(--font-serif-text);font-size:15px;line-height:1.6}
+.idea .ft{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--color-text-muted)}
+.dim{position:absolute;inset:0;background:rgba(20,18,16,.45);z-index:30}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--color-bg);border-radius:22px 22px 0 0;z-index:40;padding:10px 18px 30px;display:flex;flex-direction:column;gap:6px;box-shadow:0 -10px 40px rgba(0,0,0,.25)}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--color-border);margin:0 auto 8px}
+.opt{display:flex;align-items:center;gap:12px;height:50px;font-size:15px;font-weight:700;border-bottom:1px solid var(--color-border-subtle)}
+.opt .ico{width:34px;height:34px;border-radius:50%;background:var(--color-surface-strong);display:flex;align-items:center;justify-content:center;color:var(--ink-700)}
+.opt .ar{margin-inline-start:auto;color:var(--color-text-muted);font-size:13px;font-weight:400}
+.opt.danger{color:var(--color-danger);border:none}
+.mini{font-size:12px;color:var(--color-text-muted)}
+.note-tag{font-size:11.5px}
+html.clean .note-tag{display:none}
+</style>
+</head>
+<body>
+
+<!-- 1. HOME -->
+<div class="ph" data-set="a">
+  <span class="cap">1 — الرئيسية</span>
+  <div class="phone"><div class="scr">
+    <div class="island"></div>
+    <div class="sb"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div class="body">
+      <div class="row" style="justify-content:space-between;padding-top:4px">
+        <div style="display:flex;flex-direction:column"><span class="mini">مساء الخير</span><span class="display" style="font-weight:900;font-size:30px;line-height:1.15">إبراهيم</span></div>
+        <img data-logo alt="" style="width:56px;height:34px;object-fit:cover;mix-blend-mode:multiply">
+      </div>
+      <div class="cnt">
+        <div class="g"></div>
+        <div style="display:flex;flex-direction:column;gap:4px;flex:1;position:relative">
+          <span style="font-size:12px;font-weight:700;color:#d2a06a">التصوير القادم</span>
+          <span class="serif" style="font-weight:700;font-size:16px">إعلان مطعم — الرياض</span>
+          <span style="font-size:12px;color:#b9b9c2">الخميس 22 أكتوبر · 14 لقطة مخططة</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:6px;position:relative"><span class="big">3</span><span class="display" style="font-weight:700;font-size:18px">أيام</span></div>
+      </div>
+      <div class="cardx" style="padding:12px;display:flex;gap:12px;align-items:center">
+        <i data-f="#c9a14f,38,40,8" style="display:block;width:96px;height:64px;border-radius:8px;flex-shrink:0"></i>
+        <div style="flex:1;display:flex;flex-direction:column;gap:5px;min-width:0">
+          <span style="font-size:11px;font-weight:700;color:var(--tan-600)">كمّل من حيث وقفت</span>
+          <span class="serif" style="font-weight:700;font-size:15px;line-height:1.3">إعلان مشروع سكني — حي الياسمين</span>
+          <div class="bar" style="height:5px"><i class="appr" style="width:18%"></i><i class="shot" style="width:32%"></i></div>
+          <span class="mini">11 من 22 تصوّرت</span>
+        </div>
+      </div>
+      <div class="row" style="justify-content:space-between;margin-top:2px"><span class="display" style="font-weight:900;font-size:22px">مشاريعي</span><span class="mini">+ مشروع</span></div>
+      <div class="row" style="gap:6px;overflow:hidden"><span class="chip on">الكل</span><span class="chip">تصوير</span><span class="chip">تحضير</span><span class="chip">مونتاج</span><span class="chip">منتهي</span></div>
+      <div style="display:flex;flex-direction:column">
+        <div class="pr"><i class="t" data-f="#c9a14f,38,40,8"></i><div style="flex:1"><div class="n">إعلان مشروع سكني — حي الياسمين</div><div class="m">تصوير · 6 مشاهد · اليوم</div></div><span class="dots">⋯</span></div>
+        <div class="pr"><i class="t" data-f="#c27a32,62,30,-12"></i><div style="flex:1"><div class="n">إعلان مطعم — الرياض</div><div class="m">تحضير · التصوير بعد 3 أيام</div></div><span class="dots">⋯</span></div>
+        <div class="pr" style="border:none"><i class="t" data-f="#2e3d5c,30,55,20"></i><div style="flex:1"><div class="n">فيديو كليب «ليل الرياض»</div><div class="m">مونتاج · 8 مشاهد · أمس</div></div><span class="dots">⋯</span></div>
+      </div>
+    </div>
+    <nav class="nav">
+      <b class="on"><span data-i="home" style="--s:22px"></span>الرئيسية</b>
+      <b><span data-i="film" style="--s:22px"></span>المشروع</b>
+      <span class="plus"><span data-i="plus" style="--s:28px"></span></span>
+      <b><span data-i="sparkles" style="--s:22px"></span>الأفكار<span class="bd">5</span></b>
+      <b><span style="font-size:22px;line-height:22px">⋯</span>المزيد</b>
+    </nav>
+  </div></div>
+</div>
+
+<!-- 2. PROJECT / SCENES -->
+<div class="ph" data-set="a">
+  <span class="cap">2 — المشروع: تعديل كامل</span>
+  <div class="phone"><div class="scr">
+    <div class="island"></div>
+    <div class="sb"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div class="body" style="gap:12px">
+      <div class="row" style="justify-content:space-between">
+        <span class="serif" style="font-weight:700;font-size:17px;display:flex;align-items:center;gap:6px">إعلان مشروع سكني<span data-i="chevron-down" style="--s:16px"></span></span>
+        <span class="row" style="gap:4px"><span class="dots"><span data-i="arrow-right" style="--s:18px"></span></span><span class="dots">⋯</span></span>
+      </div>
+      <div class="seg"><span class="on">المشاهد</span><span>اللقطات</span><span>المكتبة</span></div>
+      <div class="row mini" style="justify-content:space-between"><span><b style="color:var(--color-text)">6 مشاهد · 22 لقطة</b> · 01:03</span><span>11 تصوّرت</span></div>
+      <div class="sc">
+        <div class="hd"><i class="bar4" style="background:#c9a14f"></i><span class="nm">01 · الافتتاحية الجوية</span><span class="mini" style="margin-inline-start:auto">3 لقطات · 00:12</span><span class="dots">⋯</span></div>
+        <div class="strip"><div class="tile" data-f="#c9a14f,30,40,0"><b>1.1</b><i class="st" style="background:#d2a06a"></i></div><div class="tile" data-f="#c9a14f,60,50,10"><b>1.2</b><i class="st" style="background:#d2a06a"></i></div><div class="tile" data-f="#c9a14f,45,30,-5"><b>1.3</b><i class="st" style="background:#141210"></i></div></div>
+      </div>
+      <div class="sc" style="position:relative">
+        <div class="hd"><i class="bar4" style="background:#cdb488"></i><span class="nm">02 · الوصول</span><span class="mini" style="margin-inline-start:auto">4 لقطات · 00:11</span><span class="dots" style="background:var(--color-surface-strong)">⋯</span></div>
+        <div class="strip"><div class="tile" data-f="#cdb488,30,40,0"><b>2.1</b><i class="st" style="background:#141210"></i></div><div class="tile" data-f="#cdb488,60,50,10" style="box-shadow:0 0 0 2px var(--color-accent)"><b>2.2</b><i class="st" style="background:#141210"></i></div><div class="tile add"><span data-i="plus" style="--s:18px"></span>لقطة</div></div>
+        <div class="menu" style="top:30px;left:0;min-width:210px">
+          <div class="it"><span data-i="edit" style="--s:16px"></span>تعديل المشهد</div>
+          <div class="it"><span data-i="plus" style="--s:16px"></span>لقطة جديدة</div>
+          <div class="it"><span data-i="repeat" style="--s:16px"></span>تكرار المشهد</div>
+          <div class="it"><span data-i="chevron-up" style="--s:16px"></span>نقل لأعلى</div>
+          <div class="it"><span data-i="chevron-down" style="--s:16px"></span>نقل لأسفل</div>
+          <div class="sep"></div>
+          <div class="it danger"><span data-i="trash" style="--s:16px"></span>حذف المشهد</div>
+        </div>
+      </div>
+      <div class="sc">
+        <div class="hd"><i class="bar4" style="background:#c27a32"></i><span class="nm">03 · جولة الشقة</span><span class="mini" style="margin-inline-start:auto">4 لقطات · 00:12</span><span class="dots">⋯</span></div>
+        <div class="strip"><div class="tile" data-f="#c27a32,30,40,0"><b>3.1</b><i class="st"></i></div><div class="tile" data-f="#c27a32,60,50,10"><b>3.2</b><i class="st"></i></div><div class="tile" data-f="#c27a32,45,30,-5"><b>3.3</b><i class="st"></i></div></div>
+      </div>
+      <div style="height:46px;border:1.5px dashed var(--color-border);border-radius:10px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:700;font-size:14px;color:var(--color-text-muted)"><span data-i="plus" style="--s:16px"></span>مشهد جديد</div>
+    </div>
+    <div class="toast"><span data-i="trash" style="--s:16px"></span>حُذفت اللقطة 2.3<span style="margin-inline-start:auto;color:var(--color-accent)">تراجع</span></div>
+    <span class="note-tag" data-n="1" style="top:300px;right:150px">⋯ على كل مشهد ولقطة</span>
+    <span class="note-tag" data-n="2" style="bottom:150px;right:20px">تراجع بعد أي حذف</span>
+    <nav class="nav">
+      <b><span data-i="home" style="--s:22px"></span>الرئيسية</b>
+      <b class="on"><span data-i="film" style="--s:22px"></span>المشروع</b>
+      <span class="plus"><span data-i="plus" style="--s:28px"></span></span>
+      <b><span data-i="sparkles" style="--s:22px"></span>الأفكار<span class="bd">5</span></b>
+      <b><span style="font-size:22px;line-height:22px">⋯</span>المزيد</b>
+    </nav>
+  </div></div>
+</div>
+
+<!-- 3. SHOT EDITOR -->
+<div class="ph" data-set="a">
+  <span class="cap">3 — محرر اللقطة على الجوال</span>
+  <div class="phone"><div class="scr">
+    <div class="island"></div>
+    <div class="sb"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div class="row" style="padding:0 12px 8px;justify-content:space-between">
+      <span class="dots" style="width:40px;height:40px"><span data-i="x" style="--s:20px"></span></span>
+      <div style="display:flex;flex-direction:column;align-items:center"><span class="display" style="font-weight:900;font-size:22px;line-height:1">2.2</span><span class="mini">المشهد 02 · الوصول</span></div>
+      <span class="dots" style="width:40px;height:40px;font-size:20px">⋯</span>
+    </div>
+    <div class="body" style="gap:12px;padding-bottom:10px">
+      <div style="display:flex;gap:8px">
+        <i data-f="#cdb488,60,50,10" style="display:block;flex:1;height:180px;border-radius:10px"></i>
+      </div>
+      <div class="row" style="gap:8px">
+        <i data-f="#cdb488,35,45,-8" style="display:block;width:64px;height:40px;border-radius:5px;box-shadow:0 0 0 2px var(--color-accent)"></i>
+        <i data-f="#cdb488,55,30,6" style="display:block;width:64px;height:40px;border-radius:5px"></i>
+        <span style="width:64px;height:40px;border-radius:5px;border:1.5px dashed var(--color-border);display:flex;align-items:center;justify-content:center"><span data-i="camera" style="--s:18px"></span></span>
+        <span style="width:64px;height:40px;border-radius:5px;border:1.5px dashed var(--color-border);display:flex;align-items:center;justify-content:center"><span data-i="image" style="--s:18px"></span></span>
+      </div>
+      <div class="fld"><span>الوصف</span><div class="inp serif" style="min-height:62px;align-items:flex-start;font-size:15px;line-height:1.5">السيارة تتوقف أمام البوابة، لقطة واسعة من الرصيف المقابل</div></div>
+      <div class="g2">
+        <div class="fld"><span>الحجم</span><div class="inp">WS · واسعة<span class="cv" data-i="chevron-down" style="--s:15px"></span></div></div>
+        <div class="fld"><span>الزاوية</span><div class="inp">مستوى العين<span class="cv" data-i="chevron-down" style="--s:15px"></span></div></div>
+      </div>
+      <div class="fld"><span>الكاميرا والعدسة</span><div class="inp"><span data-i="camera" style="--s:16px"></span>ZV-E10 · Sigma 18-50 · 24mm<span class="cv" data-i="chevron-down" style="--s:15px"></span></div></div>
+      <div class="g2">
+        <div class="fld"><span>الحركة</span><div class="inp">ثابتة<span class="cv" data-i="chevron-down" style="--s:15px"></span></div></div>
+        <div class="fld"><span>المدة</span><div class="inp" style="justify-content:space-between;padding:0 6px"><span class="dots" style="background:var(--color-surface-strong)">−</span><b style="direction:ltr">00:04</b><span class="dots" style="background:var(--color-surface-strong)">+</span></div></div>
+      </div>
+      <div class="stat3"><span>مخططة</span><span class="on"><i style="width:8px;height:8px;border-radius:50%;background:#fdfcfa;display:block"></i>تصوّرت</span><span>معتمدة</span></div>
+    </div>
+    <div class="row" style="height:64px;border-top:1px solid var(--color-border-subtle);padding:0 16px;justify-content:space-between;font-size:14px;font-weight:700">
+      <span>› السابقة</span><span class="mini" style="display:flex;align-items:center;gap:5px"><span data-i="check" style="--s:14px"></span>محفوظ</span><span>التالية ‹</span>
+    </div>
+    <span class="note-tag" data-n="3" style="top:322px;left:12px">نفس حقول اللابتوب</span>
+  </div></div>
+</div>
+
+<!-- 4. IDEAS + CONVERT SHEET -->
+<div class="ph" data-set="b">
+  <span class="cap">4 — الأفكار: تحكم كامل</span>
+  <div class="phone"><div class="scr">
+    <div class="island"></div>
+    <div class="sb"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div class="body">
+      <div class="row" style="justify-content:space-between"><span class="display" style="font-weight:900;font-size:30px">الأفكار</span><span class="badge accent">5 جديدة</span></div>
+      <div class="row" style="gap:6px;overflow:hidden"><span class="chip on">الكل</span><span class="chip">هذا المشروع</span><span class="chip">بدون مشروع</span><span class="chip">بانتظار الإرسال 1</span></div>
+      <div class="idea">
+        <div class="row" style="gap:6px"><i data-f="#c27a32,55,40,0" style="display:block;width:96px;height:62px;border-radius:6px"></i><i data-f="#cdb488,30,60,10" style="display:block;width:96px;height:62px;border-radius:6px"></i></div>
+        <span class="tx">لقطة درون من فوق للعائلة وهي تمشي على الممشى وقت الغروب، ارتفاع 40م</span>
+        <div class="ft"><span class="new-dot" style="width:8px;height:8px;border-radius:50%;background:var(--color-accent);display:inline-block"></span>أمس 9:41م · بدون مشروع<span style="flex:1"></span><span class="dots" style="background:var(--color-surface-strong)">⋯</span></div>
+      </div>
+      <div class="idea">
+        <span class="tx">صوت المكيّف عالي في الشقة — نحتاج نطفيه وقت التصوير</span>
+        <div class="ft"><span data-i="clock" style="--s:13px"></span>بانتظار الإنترنت — تُرسل تلقائياً</div>
+      </div>
+    </div>
+    <div class="dim"></div>
+    <div class="sheet">
+      <div class="grab"></div>
+      <span class="display" style="font-weight:900;font-size:20px;margin-bottom:4px">حوّل الفكرة إلى</span>
+      <div class="opt"><span class="ico"><span data-i="film" style="--s:16px"></span></span>لقطة جديدة<span class="ar">اختر المشهد ‹</span></div>
+      <div class="opt"><span class="ico"><span data-i="plus" style="--s:16px"></span></span>مشهد جديد</div>
+      <div class="opt"><span class="ico"><span data-i="image" style="--s:16px"></span></span>صور مرجعية للقطة موجودة<span class="ar">‹</span></div>
+      <div class="opt"><span class="ico"><span data-i="file" style="--s:16px"></span></span>ملاحظة على اللوحة</div>
+      <div class="opt"><span class="ico"><span data-i="sparkles" style="--s:16px"></span></span>لوحة مزاج</div>
+      <div class="row" style="gap:8px;margin-top:10px">
+        <button class="btn outline" style="flex:1;justify-content:center"><span data-i="edit" style="--s:16px"></span>تعديل</button>
+        <button class="btn outline" style="flex:1;justify-content:center"><span data-i="folder" style="--s:16px"></span>نقل لمشروع</button>
+        <button class="btn outline" style="flex:1;justify-content:center;color:var(--color-danger)"><span data-i="trash" style="--s:16px"></span>حذف</button>
+      </div>
+    </div>
+    <span class="note-tag" data-n="4" style="top:452px;left:16px">الفكرة تصير لقطة أو مشهد بضغطة</span>
+  </div></div>
+</div>
+
+<!-- 5. QUICK IDEA (+) -->
+<div class="ph" data-set="b">
+  <span class="cap">5 — زر ＋: فكرة في ثوانٍ</span>
+  <div class="phone"><div class="scr">
+    <div class="island"></div>
+    <div class="sb"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div class="body" style="opacity:.5">
+      <span class="display" style="font-weight:900;font-size:30px">إبراهيم</span>
+      <div class="cnt"><div style="flex:1;color:#d2a06a;font-weight:700;font-size:12px">التصوير القادم</div><span class="big" style="font-size:40px">3</span></div>
+    </div>
+    <div class="dim"></div>
+    <div class="sheet" style="top:96px;gap:10px">
+      <div class="grab"></div>
+      <div class="seg"><span class="on">فكرة</span><span>لقطة</span><span>مشهد</span></div>
+      <div class="inp serif" style="min-height:120px;align-items:flex-start;font-size:17px;line-height:1.6;border-color:var(--color-accent);box-shadow:var(--focus-ring)">افتتاحية بالدرون: نطلع من بين النخل ونكشف المشروع كامل<span style="width:2px;height:22px;background:var(--color-accent);display:inline-block;margin-top:4px"></span></div>
+      <div class="row" style="gap:8px">
+        <span style="position:relative"><i data-f="#6c6a3c,50,35,4" style="display:block;width:70px;height:50px;border-radius:6px"></i><span style="position:absolute;top:-6px;left:-6px;width:20px;height:20px;border-radius:50%;background:#141210;color:#fff;display:flex;align-items:center;justify-content:center"><span data-i="x" style="--s:10px"></span></span></span>
+        <span style="flex:1"></span>
+        <span class="dots" style="width:46px;height:46px;border:1px solid var(--color-border)"><span data-i="camera" style="--s:20px"></span></span>
+        <span class="dots" style="width:46px;height:46px;border:1px solid var(--color-border)"><span data-i="image" style="--s:20px"></span></span>
+        <span class="dots" style="width:46px;height:46px;border:1px solid var(--color-border)"><span data-i="link" style="--s:20px"></span></span>
+      </div>
+      <div class="g2">
+        <div class="fld"><span>المشروع</span><div class="inp" style="font-size:13px">مشروع سكني<span class="cv" data-i="chevron-down" style="--s:14px"></span></div></div>
+        <div class="fld"><span>المشهد</span><div class="inp" style="font-size:13px">01 · الافتتاحية<span class="cv" data-i="chevron-down" style="--s:14px"></span></div></div>
+      </div>
+      <button class="btn primary lg" style="justify-content:center;width:100%"><span data-i="check" style="--s:18px"></span>احفظ الفكرة</button>
+      <span class="mini" style="text-align:center">تنحفظ على جوالك حتى لو النت ضعيف، وتُرسل أول ما يرجع</span>
+      <div style="margin:auto -18px -30px;padding:8px 4px 34px;background:#d1d3d9;display:flex;flex-direction:column;gap:9px;direction:ltr">
+        <div style="display:flex;gap:4px;justify-content:center;direction:rtl"><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ض</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ص</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ث</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ق</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ف</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">غ</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ع</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ه</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">خ</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ح</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ج</span></div><div style="display:flex;gap:4px;justify-content:center;direction:rtl"><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ش</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">س</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ي</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ب</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ل</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ا</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ت</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ن</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">م</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ك</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ط</span></div><div style="display:flex;gap:4px;justify-content:center;direction:rtl"><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ئ</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ء</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ؤ</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ر</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ى</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ة</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">و</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ز</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">ظ</span><span style="width:30px;height:40px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;color:#141210;box-shadow:0 1px 0 rgba(0,0,0,.3)">د</span></div><div style="display:flex;gap:6px;justify-content:center"><span style="width:84px;height:40px;border-radius:5px;background:#abb0ba"></span><span style="width:190px;height:40px;border-radius:5px;background:#fff"></span><span style="width:84px;height:40px;border-radius:5px;background:#abb0ba"></span></div>
+      </div>
+    </div>
+    <span class="note-tag" data-n="5" style="top:84px;right:20px">من فتح البرنامج إلى الحفظ: ضغطتين</span>
+  </div></div>
+</div>
+
+<script src="icons.js"></script>
+<script src="common.js"></script>
+<script>
+  const set = new URLSearchParams(location.hash.slice(1)).get('set');
+  if (set) document.querySelectorAll('.ph').forEach((el) => { if (el.dataset.set !== set) el.style.display = 'none'; });
+</script>
+</body>
+</html>

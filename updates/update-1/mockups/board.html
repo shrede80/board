@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-sb-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440">
+<title>لوحة الأفكار — نموذج التحديث</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+body{width:1440px;height:900px;overflow:hidden}
+.top{height:60px;display:flex;align-items:center;gap:10px;padding:0 14px;border-bottom:1px solid var(--color-border-subtle);position:relative;z-index:5}
+.top img{width:62px;height:38px;object-fit:cover}
+.crumb{display:flex;align-items:center;gap:8px;font-family:var(--font-serif-text);font-weight:700;font-size:16px}
+.crumb .home{display:inline-flex;align-items:center;gap:6px;color:var(--color-text-muted);font-family:var(--font-sans);font-size:14px;padding:6px 8px;border-radius:8px;background:var(--color-surface)}
+.tabs{display:flex;gap:4px;margin:0 auto}
+.tab{height:40px;padding:0 18px;border-radius:999px;display:flex;align-items:center;font-size:15px;font-weight:700;color:var(--color-text-muted)}
+.tab.on{background:var(--color-accent);color:#141210}
+.ib{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;color:var(--color-text)}
+.main{position:absolute;top:60px;bottom:0;left:0;right:300px;overflow:hidden;background-color:var(--color-bg);background-image:radial-gradient(circle,var(--board-dot) 1.2px,transparent 1.7px);background-size:22px 22px}
+.lib{position:absolute;top:60px;bottom:0;right:0;width:300px;background:var(--color-surface);border-inline-end:1px solid var(--color-border-subtle);padding:14px 12px;display:flex;flex-direction:column;gap:10px}
+.libtabs{display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
+.libtabs span{height:34px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;color:var(--color-text-muted)}
+.libtabs span.on{background:var(--color-accent);color:#141210}
+.idea{background:var(--color-bg);border:1px solid var(--color-border-subtle);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:7px}
+.idea .tx{font-family:var(--font-serif-text);font-size:14px;line-height:1.55}
+.idea .ft{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--color-text-muted)}
+.idea .row{display:flex;gap:6px;align-items:center}
+.grp{font-size:12px;font-weight:700;color:var(--color-text-muted);margin:4px 2px 0}
+/* board items */
+.bi{position:absolute}
+.scene{background:var(--color-bg);border:1px solid var(--color-border-subtle);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-card)}
+.scene .cv{position:relative}
+.scene .n{position:absolute;top:10px;left:14px;font-family:var(--font-display);font-weight:900;font-size:46px;line-height:1;color:#fdfcfa;text-shadow:0 2px 10px rgba(0,0,0,.55)}
+.scene .bd{padding:12px 14px 14px;display:flex;flex-direction:column;gap:9px}
+.scene .nm{font-family:var(--font-serif-text);font-weight:700;font-size:19px;line-height:1.3}
+.scene .r{display:flex;align-items:center;gap:10px;font-size:13px}
+.av{width:24px;height:24px;border-radius:50%;background:#d2a06a;border:2px solid var(--color-bg);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#141210;margin-inline-end:-7px}
+.strip{display:flex;gap:4px;margin-top:8px;padding-inline-start:4px}
+.strip i{display:block;width:46px;height:26px;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.sel{position:absolute;inset:-4px;border:2px solid var(--color-accent);border-radius:16px;pointer-events:none}
+.h{position:absolute;width:11px;height:11px;background:var(--color-bg);border:2px solid var(--color-accent);border-radius:3px}
+.size-tip{position:absolute;background:var(--color-accent);color:#141210;font-size:12px;font-weight:700;border-radius:6px;padding:3px 8px;direction:ltr}
+.guide{position:absolute;background:var(--tan-500);z-index:20}
+.fr{position:absolute;border-radius:18px;background:rgba(210,160,106,.07);border:1.5px solid rgba(210,160,106,.35)}
+.fr .ttl{position:absolute;top:-16px;right:18px;background:var(--color-bg);border:1.5px solid rgba(210,160,106,.55);border-radius:999px;padding:4px 14px;font-family:var(--font-serif-text);font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px}
+.note{border-radius:4px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow-card)}
+.note .k{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;opacity:.75}
+.note .t{font-family:var(--font-serif-text);font-size:16px;line-height:1.6}
+.imgc{background:var(--color-bg);border:1px solid var(--color-border-subtle);border-radius:10px;overflow:hidden;box-shadow:var(--shadow-card)}
+.imgc .cap{padding:8px 12px;font-size:13px;color:var(--color-text-muted)}
+.heading{font-family:var(--font-display);font-weight:900;font-size:40px;line-height:1.1}
+.dock{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:2px;padding:6px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:14px;box-shadow:var(--shadow-lift);z-index:30}
+.dock b{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 10px 6px;font-size:12px;font-weight:700;min-width:66px;border-radius:8px}
+.dock b span.c{width:34px;height:34px;border-radius:50%;background:var(--color-surface-strong);display:flex;align-items:center;justify-content:center;color:var(--ink-700)}
+.dock b.new span.c{box-shadow:0 0 0 2px var(--color-accent)}
+.zoom{position:absolute;bottom:22px;left:18px;display:flex;align-items:center;gap:4px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:8px;padding:4px 8px;font-size:13px;font-weight:700;box-shadow:var(--shadow-card);z-index:30}
+html.clean .note-tag{display:none}
+</style>
+</head>
+<body>
+<header class="top">
+  <img data-logo alt="الشعار">
+  <div class="crumb"><span class="home"><span data-i="home" style="--s:15px"></span>الرئيسية</span><span class="muted">‹</span>إعلان مشروع سكني — حي الياسمين<span data-i="chevron-down" style="--s:15px"></span></div>
+  <div class="tabs"><span class="tab on">لوحة الأفكار</span><span class="tab">الستوري بورد</span></div>
+  <span style="font-size:13px;color:var(--color-text-muted)"><b class="display" style="font-size:20px;color:var(--color-text);font-weight:900;margin-inline-end:10px">01:03</b> 6 مشاهد · 22 لقطة</span>
+  <span class="ib"><span data-i="arrow-right" style="--s:17px"></span></span><span class="ib" style="opacity:.35"><span data-i="arrow-left" style="--s:17px"></span></span>
+  <span style="font-size:13px;font-weight:700;color:var(--color-text-muted);display:flex;align-items:center;gap:6px"><i style="width:7px;height:7px;border-radius:50%;background:var(--color-text-muted)"></i>محفوظ</span>
+  <button class="btn outline sm"><span data-i="play" style="--s:15px"></span>عرض</button>
+  <button class="btn primary sm"><span data-i="download" style="--s:15px"></span>تصدير</button>
+  <span class="ib" style="border:1px solid var(--color-border);border-radius:50%"><span data-i="sun" style="--s:17px"></span></span>
+  <span class="ib">☰</span>
+  <span class="note-tag" data-n="9" style="top:44px;right:120px">الرجوع للرئيسية + قائمة المشروع (تسمية، إعدادات، حذف)</span>
+</header>
+
+<aside class="lib">
+  <div style="display:flex;align-items:center;justify-content:space-between"><h2 class="display" style="margin:0;font-weight:900;font-size:22px">المكتبة</h2><span data-i="arrow-right" style="--s:17px;color:var(--color-text-muted)"></span></div>
+  <div class="libtabs"><span>الشخصيات</span><span>المواقع</span><span>المزاج</span><span class="on">الأفكار 3</span></div>
+  <div class="grp">لهذا المشروع</div>
+  <div class="idea">
+    <div class="row"><i data-f="#c27a32,55,40,0" style="display:block;width:100%;height:84px;border-radius:5px"></i></div>
+    <span class="tx">الواجهة وقت الغروب — نفس زاوية هذي الصورة</span>
+    <div class="ft"><span data-i="phone" style="--s:12px"></span>من الجوال · أمس 6:12م · المشهد 03</div>
+    <div class="row"><button class="btn outline sm" style="height:28px">حوّلها إلى…</button><span style="flex:1"></span><span data-i="edit" style="--s:15px"></span><span data-i="trash" style="--s:15px;margin-inline-start:8px"></span></div>
+  </div>
+  <div class="idea">
+    <span class="tx">العميل يبي لقطة للوبي قبل الافتتاح — اسأل عن التصريح</span>
+    <div class="ft"><span data-i="home" style="--s:12px"></span>من اللابتوب · 12 أكتوبر</div>
+  </div>
+  <div class="grp">غير مصنّفة (من كل المشاريع)</div>
+  <div class="idea" style="position:relative">
+    <span class="tx">لقطة درون للعائلة على الممشى وقت الغروب، ارتفاع 40م</span>
+    <div class="ft"><span data-i="phone" style="--s:12px"></span>من الجوال · أمس 9:41م</div>
+    <div class="row"><button class="btn outline sm" style="height:28px">انقلها لهذا المشروع</button></div>
+  </div>
+  <span class="note-tag" data-n="8" style="bottom:18px;right:14px">«الأفكار» بدل «الوارد»: تعديل، حذف، تحويل</span>
+</aside>
+
+<main class="main">
+  <!-- frame -->
+  <div class="fr" style="left:470px;top:40px;width:650px;height:440px">
+    <span class="ttl"><i style="width:9px;height:9px;border-radius:50%;background:#c9a14f;display:block"></i>الفصل الأول — الوصول</span>
+  </div>
+  <span class="note-tag" data-n="3" style="left:520px;top:16px">إطار يجمع المشاهد ويتحرك بها</span>
+
+  <!-- scene 01 -->
+  <div class="bi" style="left:830px;top:84px;width:260px">
+    <div class="scene" style="border-inline-start:4px solid #c9a14f">
+      <div class="cv" data-f="#c9a14f,40,40,8" style="height:140px"><span class="n">01</span></div>
+      <div class="bd"><span class="nm">الافتتاحية الجوية</span><div class="r"><span class="badge outline" style="height:22px">خارجي · نهار</span><span class="muted" style="display:flex;align-items:center;gap:4px"><span data-i="map-pin" style="--s:13px"></span>موقع المشروع</span></div><div class="r" style="justify-content:space-between"><span><span class="av">ف</span><span class="av">س</span></span><span class="muted">3 لقطات · 00:12</span></div></div>
+    </div>
+    <div class="strip"><i data-f="#c9a14f,30,40,0"></i><i data-f="#c9a14f,60,50,10"></i><i data-f="#c9a14f,45,30,-5"></i></div>
+  </div>
+  <!-- scene 02 -->
+  <div class="bi" style="left:520px;top:84px;width:260px">
+    <div class="scene" style="border-inline-start:4px solid #cdb488">
+      <div class="cv" data-f="#cdb488,55,45,-8" style="height:140px"><span class="n">02</span></div>
+      <div class="bd"><span class="nm">الوصول</span><div class="r"><span class="badge outline" style="height:22px">خارجي · نهار</span><span class="muted" style="display:flex;align-items:center;gap:4px"><span data-i="map-pin" style="--s:13px"></span>موقع المشروع</span></div><div class="r" style="justify-content:space-between"><span><span class="av">ف</span><span class="av">س</span><span class="av">ل</span></span><span class="muted">4 لقطات · 00:11</span></div></div>
+    </div>
+    <div class="strip"><i data-f="#cdb488,30,40,0"></i><i data-f="#cdb488,60,50,10"></i><i data-f="#cdb488,45,30,-5"></i><i data-f="#cdb488,35,55,5"></i></div>
+  </div>
+
+  <!-- guide line while resizing scene 03 -->
+  <div class="guide" style="left:100px;top:84px;width:990px;height:1px"></div>
+  <span class="note-tag" data-n="2" style="left:280px;top:66px">خط محاذاة مع المشاهد</span>
+
+  <!-- scene 03 resized + selected -->
+  <div class="bi" style="left:100px;top:84px;width:340px">
+    <div class="scene" style="border-inline-start:4px solid #c27a32">
+      <div class="cv" data-f="#c27a32,45,45,6" style="height:183px"><span class="n">03</span></div>
+      <div class="bd"><span class="nm">جولة الشقة</span><div class="r"><span class="badge outline" style="height:22px">داخلي · نهار</span><span class="muted" style="display:flex;align-items:center;gap:4px"><span data-i="map-pin" style="--s:13px"></span>الشقة النموذجية</span></div><div class="r" style="justify-content:space-between"><span><span class="av">س</span><span class="av">ل</span></span><span class="muted">4 لقطات · 00:12</span></div></div>
+    </div>
+    <div class="strip"><i data-f="#c27a32,30,40,0"></i><i data-f="#c27a32,60,50,10"></i><i data-f="#c27a32,45,30,-5"></i><i data-f="#c27a32,35,55,5"></i></div>
+    <div class="sel" style="bottom:30px"></div>
+    <i class="h" style="top:-9px;right:-9px"></i><i class="h" style="top:-9px;left:-9px"></i>
+    <i class="h" style="bottom:25px;right:-9px"></i><i class="h" style="bottom:25px;left:-9px;width:14px;height:14px"></i>
+    <i class="h" style="top:45%;right:-8px;width:8px;height:22px"></i><i class="h" style="top:45%;left:-8px;width:8px;height:22px"></i>
+    <span class="size-tip" style="bottom:-2px;left:-36px">340 px</span>
+  </div>
+  <span class="note-tag" data-n="1" style="left:20px;top:436px">اسحب الزاوية لتكبير أي عنصر</span>
+
+  <!-- coloured note + context menu -->
+  <div class="bi note" style="left:130px;top:470px;width:230px;background:#4a2228;color:#fdfcfa;box-shadow:0 0 0 2px var(--color-accent),var(--shadow-lift)">
+    <span class="k"><span data-i="file" style="--s:13px"></span>ملاحظة</span>
+    <span class="t">تأكيد تصريح الطيران من الهيئة قبل الثلاثاء</span>
+  </div>
+  <div class="menu" style="left:300px;top:418px;width:250px">
+    <div class="it hl"><span data-i="edit" style="--s:16px"></span>فتح وتعديل<span class="k">Enter</span></div>
+    <div class="it"><span data-i="repeat" style="--s:16px"></span>تكرار<span class="k">Ctrl D</span></div>
+    <div class="it"><span data-i="paperclip" style="--s:16px"></span>نسخ<span class="k">Ctrl C</span></div>
+    <div class="sw" style="padding-top:8px"><span style="background:#26221d"></span><span style="background:#5a4a2e"></span><span class="on" style="background:#4a2228"></span><span style="background:#3d3c24"></span><span style="background:#22304a"></span><span style="background:#44484d"></span></div>
+    <div class="it"><span data-i="chevron-up" style="--s:16px"></span>الترتيب (أمام / خلف)<span class="k">‹</span></div>
+    <div class="it"><span data-i="lock" style="--s:16px"></span>قفل الموضع والحجم</div>
+    <div class="sep"></div>
+    <div class="it danger"><span data-i="trash" style="--s:16px"></span>حذف<span class="k">Del</span></div>
+  </div>
+  <span class="note-tag" data-n="4" style="left:330px;top:392px">زر أيمن (أو ⋯) على أي عنصر</span>
+
+  <!-- free image card -->
+  <div class="bi imgc" style="left:580px;top:520px;width:270px">
+    <div data-f="#c27a32,62,35,-10" style="height:152px;position:relative"><span style="position:absolute;top:8px;left:8px;width:24px;height:24px;border-radius:50%;background:rgba(20,18,16,.6);display:flex;align-items:center;justify-content:center;color:#fdfcfa"><span data-i="lock" style="--s:13px"></span></span></div>
+    <div class="cap">مرجع: ضوء الغروب على الواجهة</div>
+  </div>
+  <span class="note-tag" data-n="5" style="left:600px;top:500px">صورة حرة على اللوحة</span>
+
+  <!-- heading + notes -->
+  <div class="bi heading" style="left:890px;top:500px;width:240px">خيارات النهاية</div>
+  <div class="bi note" style="left:900px;top:565px;width:220px;background:#5a4a2e;color:#fdfcfa">
+    <span class="k"><span data-i="file" style="--s:13px"></span>ملاحظة</span><span class="t">العائلة على السطح والإضاءة دافية</span>
+  </div>
+  <div class="bi note" style="left:900px;top:668px;width:220px;background:#3d3c24;color:#fdfcfa;padding:10px 16px">
+    <span class="t">درون يبتعد ويكشف الحي كامل</span>
+  </div>
+  <span class="note-tag" data-n="6" style="left:930px;top:470px">عناوين + ملاحظات ملوّنة</span>
+
+  <div class="dock">
+    <b><span class="c"><span data-i="film" style="--s:17px"></span></span>مشهد</b>
+    <b><span class="c"><span data-i="file" style="--s:17px"></span></span>ملاحظة</b>
+    <b class="new"><span class="c" style="font-family:var(--font-display);font-weight:900;font-size:17px">ع</span>عنوان</b>
+    <b class="new"><span class="c"><span data-i="image" style="--s:17px"></span></span>صورة</b>
+    <b class="new"><span class="c"><span style="width:17px;height:13px;border:1.75px dashed currentColor;border-radius:3px;display:block"></span></span>إطار</b>
+    <b><span class="c"><span data-i="user" style="--s:17px"></span></span>شخصية</b>
+    <b><span class="c"><span data-i="map-pin" style="--s:17px"></span></span>موقع</b>
+    <b><span class="c"><span data-i="image" style="--s:17px"></span></span>لوحة مزاج</b>
+  </div>
+  <span class="note-tag" data-n="7" style="left:250px;bottom:110px">قوالب جديدة: عنوان · صورة · إطار</span>
+  <div class="zoom">ملاءمة الكل <span class="muted">|</span> + 72% −</div>
+</main>
+<script src="icons.js"></script>
+<script src="common.js"></script>
+</body>
+</html>
