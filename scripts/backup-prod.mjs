@@ -9,7 +9,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 const label = (process.argv[2] || 'manual').replace(/[^a-z0-9-]/gi, '');
 const BUCKET = 'lawhat-images';
-const TABLES = ['settings', 'images', 'trash', 'projects', 'scenes', 'shots', 'characters', 'locations', 'moodboards', 'notes', 'board_cards', 'inbox_items', 'scene_characters', 'scene_links', 'item_images', 'equipment', 'ideas'];
+const TABLES = ['settings', 'images', 'trash', 'projects', 'scenes', 'shots', 'characters', 'locations', 'moodboards', 'notes', 'board_cards', 'inbox_items', 'scene_characters', 'scene_links', 'item_images', 'equipment', 'ideas', 'challenge_runs', 'challenge_days'];
 
 const wrangler = (args, opts = {}) => execFileSync('npx', ['wrangler', ...args], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, ...opts });
 const existing = new Set(
