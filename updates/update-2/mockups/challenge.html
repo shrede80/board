@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-sb-theme="light">
+<head>
+<meta charset="utf-8">
+<title>تحدي العشرين إطاراً — نموذج</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+body{background:#e9e1d0;padding:36px 30px 40px;display:flex;gap:34px;width:max-content;align-items:flex-start}
+.ph{display:flex;flex-direction:column;align-items:center;gap:14px}
+.cap{font-family:var(--font-display);font-weight:900;font-size:22px;color:#141210}
+.phone{width:422px;height:876px;border-radius:58px;background:#141210;padding:16px;box-shadow:0 30px 60px rgba(20,18,16,.25);position:relative}
+.scr{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;background:var(--color-bg);display:flex;flex-direction:column}
+.scr.dark{background:#141210;color:#fdfcfa}
+.sb{height:50px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 30px;font-size:15px;font-weight:700;direction:ltr}
+.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:120px;height:34px;border-radius:20px;background:#000;z-index:50}
+.body{flex:1;min-height:0;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:16px}
+.nav{height:84px;flex-shrink:0;border-top:1px solid var(--color-border-subtle);display:flex;align-items:flex-start;padding:8px 10px 0;background:var(--color-bg)}
+.nav b{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--color-text-muted)}
+.nav b.on{color:var(--color-text)}
+.nav .plus{width:58px;height:58px;border-radius:50%;background:var(--color-accent);color:#141210;display:flex;align-items:center;justify-content:center;margin-top:-22px;flex:0 0 58px}
+.sk{display:block;height:11px;border-radius:6px;background:var(--color-surface-strong)}
+.dark .sk{background:#2b2722}
+.lbl{font-size:12px;font-weight:700;color:var(--color-text-muted);letter-spacing:.2px}
+.strip{display:flex;gap:3px;direction:rtl}
+.strip i{flex:1;height:16px;border-radius:2px;background:var(--color-surface-strong)}
+.strip i.d{background:var(--color-text)}
+.strip i.c{background:var(--color-accent)}
+.ch{background:#141210;color:#fdfcfa;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden}
+.ch .strip i{background:#2b2722;height:20px}
+.ch .strip i.d{background:#d3bf94}
+.ch .strip i.c{background:#d2a06a;box-shadow:0 0 0 2px #141210,0 0 0 3px #d2a06a}
+.top{display:flex;align-items:center;justify-content:space-between;padding:0 14px 6px}
+.ib{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+.sec{display:flex;flex-direction:column;gap:8px}
+.k{display:flex;gap:10px;align-items:flex-start}
+.chip2{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;background:var(--color-surface);border:1px solid var(--color-border-subtle);font-size:12.5px;font-weight:700}
+.cta{position:absolute;left:20px;right:20px;bottom:30px;height:54px;border-radius:12px;background:var(--color-accent);color:#141210;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:700;font-size:16px;box-shadow:0 10px 24px rgba(169,124,73,.35)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;direction:rtl}
+.fr{aspect-ratio:3/2;border-radius:6px;position:relative;overflow:hidden;background:#1c1916}
+.fr b{position:absolute;top:5px;right:7px;font-family:var(--font-display);font-weight:900;font-size:15px;color:#fdfcfa;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+.fr.future{background:var(--color-surface-strong)}
+.fr.future b{color:var(--color-text-subtle);text-shadow:none}
+.fr.future::after{content:'···';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--color-text-subtle);letter-spacing:3px;font-weight:700}
+.fr.cur{background:var(--color-bg);box-shadow:inset 0 0 0 2px var(--color-accent)}
+.fr.cur b{color:var(--tan-600);text-shadow:none}
+.fr.burn::after{content:'';position:absolute;inset:0;background:linear-gradient(to top left,transparent calc(50% - 1px),rgba(253,252,250,.7) 50%,transparent calc(50% + 1px))}
+.dots6{display:flex;gap:6px;justify-content:center}
+.dots6 i{width:7px;height:7px;border-radius:50%;background:var(--color-surface-strong)}
+.dots6 i.on{background:var(--color-accent);width:20px;border-radius:4px}
+.note-tag{font-size:11.5px}
+html.clean .note-tag{display:none}
+</style>
+</head>
+<body>
+
+<!-- 1. HOME CARD -->
+<div class="ph" data-set="a">
+  <span class="cap">1 — كرت في الرئيسية</span>
+  <div class="phone"><div class="scr">
+    <div class="island"></div>
+    <div class="sb"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div class="body">
+      <div style="display:flex;flex-direction:column;padding-top:4px"><span class="muted" style="font-size:13px">صباح الخير</span><span class="display" style="font-weight:900;font-size:30px;line-height:1.15">إبراهيم</span></div>
+      <div class="ch">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <span class="display" style="font-weight:900;font-size:21px">تحدي العشرين إطاراً</span>
+          <span style="font-size:12px;color:#b9b9c2">الأساس</span>
+        </div>
+        <div class="strip"><i class="d"></i><i class="d"></i><i class="c"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:14px"><b class="display" style="font-size:26px;font-weight:900;color:#d2a06a;margin-inline-end:6px">3</b>من 20</span>
+          <span style="background:#d2a06a;color:#141210;border-radius:8px;padding:9px 16px;font-size:14px;font-weight:700">اسحب بطاقة اليوم</span>
+        </div>
+      </div>
+      <div class="cardx" style="border:1px solid var(--color-border-subtle);border-radius:14px;padding:12px;display:flex;gap:12px;align-items:center;opacity:.55">
+        <i data-f="#c9a14f,38,40,8" style="display:block;width:84px;height:56px;border-radius:8px"></i>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px"><span class="lbl">كمّل من حيث وقفت</span><span class="serif" style="font-weight:700;font-size:15px">إعلان مشروع سكني</span></div>
+      </div>
+      <div style="opacity:.4;display:flex;flex-direction:column;gap:10px"><span class="display" style="font-weight:900;font-size:22px">مشاريعي</span><span class="sk" style="width:80%"></span><span class="sk" style="width:60%"></span></div>
+    </div>
+    <span class="note-tag" data-n="1" style="top:388px;left:18px">كرت واحد هادئ: الشريط = 20 إطار</span>
+    <nav class="nav"><b class="on"><span data-i="home" style="--s:22px"></span>الرئيسية</b><b><span data-i="film" style="--s:22px"></span>المشروع</b><span class="plus"><span data-i="plus" style="--s:28px"></span></span><b><span data-i="sparkles" style="--s:22px"></span>الأفكار</b><b><span style="font-size:22px;line-height:22px">⋯</span>المزيد</b></nav>
+  </div></div>
+</div>
+
+<!-- 2. DRAW -->
+<div class="ph" data-set="a">
+  <span class="cap">2 — لحظة السحب</span>
+  <div class="phone"><div class="scr dark">
+    <div class="island"></div>
+    <div class="sb"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div class="top"><span class="ib"><span data-i="x" style="--s:20px"></span></span><span style="font-size:13px;color:#b9b9c2">اليوم 3</span><span class="ib"></span></div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px;padding:0 40px 60px">
+      <div style="position:relative;width:250px;height:350px">
+        <div style="position:absolute;inset:0;transform:rotate(-7deg) translate(-14px,6px);border-radius:16px;background:#a97c49;opacity:.45"></div>
+        <div style="position:absolute;inset:0;transform:rotate(4deg) translate(10px,4px);border-radius:16px;background:#a97c49;opacity:.7"></div>
+        <div style="position:absolute;inset:0;border-radius:16px;background:#d2a06a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;box-shadow:0 30px 60px rgba(0,0,0,.5)">
+          <div style="position:absolute;top:14px;bottom:14px;right:12px;width:8px;display:flex;flex-direction:column;justify-content:space-between">
+            <i style="display:block;height:10px;border-radius:2px;background:#141210;opacity:.25"></i><i style="display:block;height:10px;border-radius:2px;background:#141210;opacity:.25"></i><i style="display:block;height:10px;border-radius:2px;background:#141210;opacity:.25"></i><i style="display:block;height:10px;border-radius:2px;background:#141210;opacity:.25"></i><i style="display:block;height:10px;border-radius:2px;background:#141210;opacity:.25"></i><i style="display:block;height:10px;border-radius:2px;background:#141210;opacity:.25"></i><i style="display:block;height:10px;border-radius:2px;background:#141210;opacity:.25"></i>
+          </div>
+          <div style="position:absolute;top:14px;bottom:14px;left:12px;width:8px;display:flex;flex-direction:column;justify-content:space-between">
+            <i style="display:block;height:10px;border-radius:2px;background:#141210;opacity:.25"></i><i style="display:block;height:10px;border-radius:2px;background:#141210;opacity:.25"></i><i style="display:block;height:10px;border-radius:2px;background:#141210;opacity:.25"></i><i style="display:block;height:10px;border-radius:2px;background:#141210;opacity:.25"></i><i style="display:block;height:10px;border-radius:2px;background:#141210;opacity:.25"></i><i style="display:block;height:10px;border-radius:2px;background:#141210;opacity:.25"></i><i style="display:block;height:10px;border-radius:2px;background:#141210;opacity:.25"></i>
+          </div>
+          <span style="font-size:13px;font-weight:700;color:#3a342c">المرحلة الأولى</span>
+          <span class="display" style="font-weight:900;font-size:74px;line-height:1;color:#141210">?</span>
+          <span style="font-size:13px;font-weight:700;color:#3a342c">5 بطاقات باقية</span>
+        </div>
+      </div>
+      <span style="width:100%;height:56px;border-radius:12px;background:#fdfcfa;color:#141210;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px">اسحب</span>
+    </div>
+    <span class="note-tag" data-n="2" style="bottom:140px;right:30px">الكومة بلون المرحلة، والبطاقة تنقلب</span>
+  </div></div>
+</div>
+
+<!-- 3. CARD FRONT -->
+<div class="ph" data-set="a">
+  <span class="cap">3 — بطاقة اليوم: مرتّبة وهادئة</span>
+  <div class="phone"><div class="scr">
+    <div class="island"></div>
+    <div class="sb"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div class="top"><span class="ib"><span data-i="x" style="--s:20px"></span></span><span class="lbl">اليوم 3 · الأساس</span><span class="ib" style="font-size:20px">⋯</span></div>
+    <div class="body" style="gap:18px;padding-bottom:100px">
+      <div style="background:var(--color-accent-soft);border-radius:10px;padding:10px 12px;display:flex;gap:8px;align-items:center"><span data-i="repeat" style="--s:15px;color:var(--tan-600)"></span><span style="font-size:12.5px;font-weight:700;color:var(--tan-600);white-space:nowrap">قرارك من أمس</span><span class="sk" style="flex:1;background:rgba(169,124,73,.25)"></span></div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span class="display" style="font-weight:900;font-size:36px;line-height:1.1">عنوان البطاقة</span>
+        <span class="muted" style="font-size:16px">سطر واحد يلخّص الفكرة</span>
+      </div>
+      <div class="sec"><span class="lbl">الفكرة</span><span class="sk" style="width:100%"></span><span class="sk" style="width:92%"></span><span class="sk" style="width:60%"></span></div>
+      <div class="sec" style="border-inline-start:3px solid var(--color-accent);padding-inline-start:12px"><span class="lbl" style="color:var(--tan-600)">القيد</span><span class="sk" style="width:100%"></span><span class="sk" style="width:74%"></span></div>
+      <div class="sec"><span class="lbl">المطلوب</span>
+        <div class="k"><span style="width:6px;height:6px;border-radius:50%;background:var(--color-text);margin-top:3px"></span><span class="sk" style="flex:1"></span></div>
+        <div class="k"><span style="width:6px;height:6px;border-radius:50%;background:var(--color-text);margin-top:3px"></span><span class="sk" style="flex:1;max-width:70%"></span></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px"><span class="chip2"><span data-i="clock" style="--s:14px"></span>الزمن</span><span class="chip2">الصعوبة ●●○</span><span class="chip2"><span data-i="camera" style="--s:14px"></span>العدّة<span data-i="chevron-down" style="--s:13px"></span></span></div>
+      <div style="display:flex;justify-content:space-between;border-top:1px solid var(--color-border-subtle);padding-top:12px;font-size:12.5px" class="muted"><span><span data-i="sun" style="--s:13px"></span> الشروق 6:02</span><span>الذهبية 5:18م</span><span>الغروب 5:51م</span></div>
+    </div>
+    <span class="cta">أنهيت — اقلب البطاقة</span>
+    <span class="note-tag" data-n="3" style="top:262px;left:14px">عنوان ← سطر ← أقسام قصيرة</span>
+    <span class="note-tag" data-n="4" style="top:104px;left:14px">⋯ فيها «أجّل» و«احرق»</span>
+  </div></div>
+</div>
+
+<!-- 4. DAY LOG (one question per screen) -->
+<div class="ph" data-set="b">
+  <span class="cap">4 — الدفتر: سؤال واحد كل مرة</span>
+  <div class="phone"><div class="scr">
+    <div class="island"></div>
+    <div class="sb"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div class="top"><span class="ib"><span data-i="x" style="--s:20px"></span></span><div class="dots6"><i></i><i class="on"></i><i></i><i></i><i></i><i></i></div><span class="ib"></span></div>
+    <div class="body" style="padding-top:40px;gap:22px">
+      <span class="lbl">دفتر اليوم 3 · 2 من 6</span>
+      <span class="display" style="font-weight:900;font-size:32px;line-height:1.25">وش اللي نجح اليوم؟</span>
+      <div style="min-height:150px;border:1px solid var(--color-accent);box-shadow:var(--focus-ring);border-radius:10px;padding:14px;font-family:var(--font-serif-text);font-size:17px;line-height:1.7;color:var(--color-text-subtle)">اكتب سطر أو سطرين…</div>
+      <span class="muted" style="font-size:12.5px">جاوب على 3 أسئلة على الأقل من 5.</span>
+    </div>
+    <div style="display:flex;gap:10px;padding:0 20px 34px">
+      <span style="flex:1;height:52px;border-radius:12px;border:1px solid var(--color-border);display:flex;align-items:center;justify-content:center;font-weight:700">تخطّي</span>
+      <span style="flex:2;height:52px;border-radius:12px;background:var(--color-accent);color:#141210;display:flex;align-items:center;justify-content:center;font-weight:700">التالي</span>
+    </div>
+    <span class="note-tag" data-n="5" style="top:120px;left:16px">بدل 5 خانات مكدّسة</span>
+  </div></div>
+</div>
+
+<!-- 5. JOURNEY (contact sheet) -->
+<div class="ph" data-set="b">
+  <span class="cap">5 — رحلتك: ورقة إطارات</span>
+  <div class="phone"><div class="scr">
+    <div class="island"></div>
+    <div class="sb"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div class="top"><span class="ib"><span data-i="arrow-right" style="--s:20px"></span></span><span class="lbl">رحلتك</span><span class="ib"></span></div>
+    <div class="body" style="gap:14px">
+      <div style="display:flex;align-items:baseline;gap:10px"><span class="display" style="font-weight:900;font-size:44px;line-height:1">7</span><span class="muted" style="font-size:14px">من 20 · محروقة 1 · الحرق مستخدم</span></div>
+      <div class="grid">
+        <div class="fr" data-f="#94603f,40,50,0"><b>1</b></div>
+        <div class="fr" data-f="#c9a14f,60,40,8"><b>2</b></div>
+        <div class="fr" data-f="#c27a32,40,35,-6"><b>3</b></div>
+        <div class="fr" data-f="#cdb488,55,55,4"><b>4</b></div>
+        <div class="fr burn" data-f="#6b6255,50,50,0"><b>5</b></div>
+        <div class="fr" data-f="#c9a14f,35,45,10"><b>6</b></div>
+        <div class="fr" data-f="#d2a06a,50,40,-4"><b>7</b></div>
+        <div class="fr cur"><b>8</b></div>
+        <div class="fr future"><b>9</b></div>
+        <div class="fr future"><b>10</b></div><div class="fr future"><b>11</b></div><div class="fr future"><b>12</b></div>
+        <div class="fr future"><b>13</b></div><div class="fr future"><b>14</b></div><div class="fr future"><b>15</b></div>
+        <div class="fr future"><b>16</b></div><div class="fr future"><b>17</b></div><div class="fr future"><b>18</b></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:center"><span class="chip2">الدفتر</span><span class="chip2">القواعد العشر</span></div>
+    </div>
+    <span class="note-tag" data-n="6" style="top:150px;left:14px">كل يوم يصير إطار من فيلمك</span>
+  </div></div>
+</div>
+
+<!-- 6. MIRROR -->
+<div class="ph" data-set="b">
+  <span class="cap">6 — اليوم العشرين</span>
+  <div class="phone"><div class="scr dark">
+    <div class="island"></div>
+    <div class="sb"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div class="top"><span class="ib"><span data-i="x" style="--s:20px"></span></span><span style="font-size:13px;color:#b9b9c2">المرآة</span><span class="ib"></span></div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:18px;padding:10px 20px 30px">
+      <div style="position:relative;height:250px;border-radius:12px;overflow:hidden">
+        <div data-f="#6b6255,40,50,0" style="position:absolute;inset:0;filter:saturate(.4)"></div>
+        <div data-f="#c27a32,55,45,8" style="position:absolute;top:0;bottom:0;left:0;width:50%"></div>
+        <div style="position:absolute;top:0;bottom:0;left:50%;width:2px;background:#fdfcfa"></div>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:#fdfcfa;color:#141210;display:flex;align-items:center;justify-content:center;font-weight:700">↔</div>
+        <span style="position:absolute;top:10px;right:12px;font-size:12px;font-weight:700;background:rgba(20,18,16,.6);padding:3px 9px;border-radius:999px">اليوم 1</span>
+        <span style="position:absolute;top:10px;left:12px;font-size:12px;font-weight:700;background:rgba(20,18,16,.6);padding:3px 9px;border-radius:999px">اليوم 20</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:center;gap:12px;background:#1c1916;border:1px solid #3a342c;border-radius:12px;padding:12px">
+          <span style="width:38px;height:38px;border-radius:50%;background:#d2a06a;color:#141210;display:flex;align-items:center;justify-content:center"><span data-i="play" style="--s:18px"></span></span>
+          <div style="flex:1;display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:700">صوتك في اليوم 1</span><span style="display:flex;gap:2px;align-items:center;height:16px">
+            <i style="width:3px;height:6px;background:#6b6255;border-radius:2px"></i><i style="width:3px;height:12px;background:#6b6255;border-radius:2px"></i><i style="width:3px;height:9px;background:#6b6255;border-radius:2px"></i><i style="width:3px;height:15px;background:#6b6255;border-radius:2px"></i><i style="width:3px;height:7px;background:#6b6255;border-radius:2px"></i><i style="width:3px;height:13px;background:#6b6255;border-radius:2px"></i><i style="width:3px;height:5px;background:#6b6255;border-radius:2px"></i><i style="width:3px;height:11px;background:#6b6255;border-radius:2px"></i><i style="width:3px;height:14px;background:#6b6255;border-radius:2px"></i><i style="width:3px;height:8px;background:#6b6255;border-radius:2px"></i><i style="width:3px;height:12px;background:#6b6255;border-radius:2px"></i><i style="width:3px;height:6px;background:#6b6255;border-radius:2px"></i></span></div>
+          <span style="font-size:12px;color:#b9b9c2;direction:ltr">0:30</span>
+        </div>
+        <div style="display:flex;gap:8px">
+          <span style="flex:1;border:1px solid #3a342c;border-radius:10px;padding:10px;text-align:center"><b class="display" style="font-size:24px;display:block">19</b><span style="font-size:11px;color:#b9b9c2">يوم مكتمل</span></span>
+          <span style="flex:1;border:1px solid #3a342c;border-radius:10px;padding:10px;text-align:center"><b class="display" style="font-size:24px;display:block">84%</b><span style="font-size:11px;color:#b9b9c2">التزام الكواليس</span></span>
+          <span style="flex:1;border:1px solid #3a342c;border-radius:10px;padding:10px;text-align:center"><b class="display" style="font-size:24px;display:block">18</b><span style="font-size:11px;color:#b9b9c2">قرار مكتوب</span></span>
+        </div>
+      </div>
+    </div>
+    <span class="note-tag" data-n="7" style="top:300px;right:24px">اسحب الخط: بدايتك ونهايتك</span>
+  </div></div>
+</div>
+
+<script src="icons.js"></script>
+<script src="common.js"></script>
+<script>
+  const set = new URLSearchParams(location.hash.slice(1)).get('set');
+  if (set) document.querySelectorAll('.ph').forEach((el) => { if (el.dataset.set !== set) el.style.display = 'none'; });
+</script>
+</body>
+</html>

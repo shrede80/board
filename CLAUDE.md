@@ -1,6 +1,15 @@
 # لوحة المشاهد — context for Claude Code sessions
 
-**Read first in every new session:** this file, then `PROGRESS.md` (where we stopped), then `updates/update-1/UPDATE-1.md` (top authority for Update 1; wins over SPEC where they differ), then `SPEC.md` and `prototype/HANDOFF.md`.
+**Read first in every new session:** this file, then `PROGRESS.md` (where we stopped), then `updates/update-2/UPDATE-2.md` (top authority for Update 2), `updates/update-1/UPDATE-1.md` (Update 1; wins over SPEC where they differ), then `SPEC.md` and `prototype/HANDOFF.md`.
+
+## ⚠️ Rule one (Update 2): challenge cards are SECRET
+The 20 cards of «تحدي العشرين إطاراً» are hidden from the user on purpose — the daily surprise is the point.
+1. **Never quote or summarise any card content** (titles, ideas, constraints, deliverables, hooks, card backs, gear, requirements of a given card, integration details) in any message to the user, report, plan, `PROGRESS.md`, commit message, PR text or code comment. Refer to a card **only by its number in the file** («البطاقة 7»). Avoid printing card text in tool output too (inspect structure, not text).
+2. An undrawn card reveals nothing in the UI: no title, no requirement icons, no hint — only the stage name and «···».
+3. Card content never reaches the browser before it is drawn: the server sends a card's text only when it is drawn in the current run. The deck lives server-side only (never imported by `web/`). Tested.
+4. The card back (success mark, skill, BTS, publish) shows only after «أنهيت».
+5. `updates/update-2/data/` and `updates/update-2/reference/` are for Claude only. Never ask the user to open them.
+6. After phase A the user's run is live: later changes must never touch his current run or reorder his cards.
 
 ## The user
 - A director/cinematographer, **not a programmer**. Talk to him in **simple Arabic**.
@@ -19,7 +28,7 @@
 5. (U1 ق5) **Mobile = full editor** for projects, scenes, shots, library and ideas. **The free board stays laptop-only** (no moving board items on mobile).
 6. Arabic RTL UI, prototype design system (fonts, colours, components), light + dark.
 7. Four layers against loss: undo/redo, 30-day trash, project export/import file, daily automatic backup.
-8. Out of scope (U1 ق8): multi-user/permissions, client share links, comments, AI, voice notes, copy between projects, moving board items from mobile, connector arrows, full offline work.
+8. Out of scope (U1 ق8): multi-user/permissions, client share links, comments, AI, voice notes (exception U2 ق5: a short voice memo inside the challenge journal only), copy between projects, moving board items from mobile, connector arrows, full offline work.
 9. (U1 ق1) Full control: everything the user creates can be renamed, edited, duplicated where sensible, and deleted to trash with undo — laptop and phone.
 10. (U1 ق2) The app opens on **Home** on both devices; logo and the «الرئيسية ‹ project» breadcrumb go back to it.
 11. (U1 ق3) **Ideas box replaces the inbox**: global (project/scene optional), idea = text + images + links. `inbox_items` stays in the DB (no drop) but is never written again; old clients' inbox creates are stored as ideas.
@@ -38,6 +47,7 @@
 SPEC.md, PROMPT.md          handoff instructions (do not edit)
 prototype/                  Claude Design prototype (reference only)
 updates/update-1/           Update 1 brief (UPDATE-1.md), mockups (open *.html#theme=…&clean=1), shots
+updates/update-2/           Update 2 brief (UPDATE-2.md), mockups/challenge.html (#set=a|b&clean=1), shots; data/ + reference/ are SECRET (see rule one)
 reference/screenshots/      Playwright captures of every prototype state (visual reference)
 reference/sb-logic.js       readable copy of the prototype logic (sb-core + sb-view)
 assets/equipment-icons.svg  equipment icons keyed by equipment.json `icon`
@@ -79,4 +89,4 @@ node scripts/check-offline.mjs          # offline start + idea queue against `vi
 
 ## Workflow
 After each phase: run tests → commit → update PROGRESS.md → send the user a 2-line Arabic summary + what he can try.
-Branch: work on `claude/pensive-feynman-nwosmr` (this is the deployed code). After each deployed phase, fast-forward the default branch `claude/viewfinder-app-build-7du511` to it so new sessions start from the right code.
+Branch: work on `claude/sharp-cray-o2h154` (Update 2; continues the deployed code of `claude/pensive-feynman-nwosmr`). After each deployed phase, fast-forward the default branch `claude/viewfinder-app-build-7du511` to it so new sessions start from the right code.
