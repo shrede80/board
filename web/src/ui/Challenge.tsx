@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Row } from '../../../shared/schema';
 import {
-  answers, burnCard, cardOf, cardsLeft, closeCh, completeDay, drawCard, folderName, getMeta, hoursLeft, journalOf, JOURNAL_MIN, LIMITS, openActions,
+  answers, archivedRuns, burnCard, cardOf, runDays, setMyLocation, startNewRun, cardsLeft, closeCh, completeDay, drawCard, folderName, getMeta, hoursLeft, journalOf, JOURNAL_MIN, LIMITS, openActions,
   popCh, postponeCard, pushCh, remainingInStage, replaceCh, setDayField, setJournal, stageColor, stageNames, stageOfSeq, startChallenge, syncRegretIdea,
   TOTAL_DAYS, useChallenge, view, type ChCard, type ChRoute, type ChView,
 } from '../app/challenge';
 import { uploadFile } from '../app/images';
-import { engine, getState, setState, toast, useApp } from '../app/state';
+import { askConfirm, engine, getState, setState, toast, useApp } from '../app/state';
+import { commit, openProject } from '../app/actions';
+import { clock, RIYADH, sunToday } from '../../../shared/sun';
+import { useSummaries } from './Home';
 import { Icon, Switch, Textarea } from '../ds/ds';
 import { api } from '../data/api';
 import { useIsMobile } from '../lib/device';
@@ -58,8 +61,7 @@ function homeButton(v: ChView, now: number): { text: string; run?: () => void; d
   if (s.kind === 'open') return { text: 'افتح بطاقة اليوم', run: () => setState({ ch: [{ v: 'card', dayId: s.day.id }] }) };
   if (s.kind === 'draw') return { text: 'اسحب بطاقة اليوم', run: () => setState({ ch: [{ v: 'draw' }] }) };
   if (s.kind === 'locked') return { text: `بطاقة بكرة ${hoursLeft(s.until, now)}`, disabled: true };
-  // the mirror arrives with phase B; until then the journey
-  return { text: 'المرآة', run: () => setState({ ch: [{ v: 'journey' }] }) };
+  return { text: 'المرآة', run: () => setState({ ch: [{ v: 'mirror' }] }) };
 }
 
 /** 20 small frames: finished / current / coming. Nothing about a coming card. */
@@ -159,7 +161,7 @@ export function ChallengeLayer() {
   const SHEETS = ['rules', 'menu', 'burn'];
   const top = stack[stack.length - 1];
   const base = [...stack].reverse().find((r) => !SHEETS.includes(r.v));
-  const dark = base?.v === 'draw';
+  const dark = base?.v === 'draw' || base?.v === 'mirror';
   return (
     <div data-component="ChallengeLayer" data-testid="ch-layer" {...(dark ? { 'data-sb-theme': 'dark' } : {})}
       style={{ position: 'fixed', inset: 0, zIndex: 60, background: dark ? DARK : 'var(--color-bg)', color: dark ? PAPER : 'var(--color-text)', display: 'flex', justifyContent: 'center', paddingTop: 'env(safe-area-inset-top)' }}>
@@ -172,7 +174,7 @@ export function ChallengeLayer() {
   );
 }
 
-const routeKey = (r: ChRoute) => `${r.v}:${'dayId' in r ? r.dayId : ''}`;
+const routeKey = (r: ChRoute) => `${r.v}:${'dayId' in r ? r.dayId : 'runId' in r ? r.runId ?? '' : ''}`;
 
 function Screen({ r }: { r: ChRoute }) {
   switch (r.v) {
@@ -183,7 +185,9 @@ function Screen({ r }: { r: ChRoute }) {
     case 'journal':
       return <JournalScreen dayId={r.dayId} />;
     case 'journey':
-      return <JourneyScreen />;
+      return <JourneyScreen runId={r.runId} />;
+    case 'mirror':
+      return <MirrorScreen runId={r.runId} />;
     case 'log':
       return <LogScreen />;
     default:
@@ -402,11 +406,14 @@ function CardScreen({ dayId, flippedAtStart }: { dayId: string; flippedAtStart: 
             ))}
           </div>
           {kit && card.gear && <div data-testid="ch-kit-text" style={{ fontSize: 14, lineHeight: 1.8, color: 'var(--color-text-muted)' }}>{card.gear}</div>}
+          {card.planning && <PlanningBox day={day} />}
+          {card.executionOf != null && <CommitmentBox day={day} card={card} />}
+          {(card.requirements.includes('clock') || card.requirements.includes('drone')) && <SunRow day={day} />}
         </>
       )}
     </div>
   );
-  const partner = card.double != null ? v.days.find((d) => d.cardId === card.double) : undefined;
+  const partner = card.double != null ? runDays(day.runId as string).find((d) => d.cardId === card.double) : undefined;
   const partnerCard = partner ? cardOf(partner.cardId as number) : undefined;
   const back = seen && backAllowed && (
     <div data-testid="ch-back" style={{ display: 'flex', flexDirection: 'column', gap: 18, padding: '4px 20px 120px' }}>
@@ -592,7 +599,7 @@ function JournalScreen({ dayId }: { dayId: string }) {
         <h1 data-testid="ch-q" style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, lineHeight: 1.25 }}>{s.q}</h1>
         {s.kind === 'bts' && <BtsStep day={day} />}
         {(s.kind === 'worked' || s.kind === 'failed' || s.kind === 'regret' || s.kind === 'tomorrow') && <TextStep day={day} k={s.kind} key={s.kind} />}
-        {s.kind === 'film' && <FilmStep day={day} title={card.title} />}
+        {s.kind === 'film' && <FilmStep day={day} title={card.title} card={card} />}
         <span data-testid="ch-answers" style={{ fontSize: 12.5, color: 'var(--color-text-muted)' }}>{`جاوب على 3 أسئلة على الأقل من 5 · جاوبت ${n}`}</span>
       </div>
       <div style={{ display: 'flex', gap: 10, padding: '10px 20px calc(24px + env(safe-area-inset-bottom))', flexShrink: 0 }}>
@@ -664,8 +671,15 @@ function BtsStep({ day }: { day: Row }) {
   );
 }
 
-function FilmStep({ day, title }: { day: Row; title: string }) {
+function FilmStep({ day, title, card }: { day: Row; title: string; card: ChCard }) {
   const live = dayRow(day.id) ?? day;
+  const c = useCommitment(live, card);
+  // the live ratio is kept on the day (UPDATE-2 §5.2), so the journal shows what it was
+  useEffect(() => {
+    if (!c) return;
+    const saved = live.commitment as { shot: number; total: number } | null;
+    if (!saved || saved.shot !== c.shot || saved.total !== c.total) setDayField(live, { commitment: { shot: c.shot, total: c.total } });
+  }, [c?.shot, c?.total]); // eslint-disable-line react-hooks/exhaustive-deps
   const [film, setFilm] = useState((live.filmUrl as string) ?? '');
   const [pub, setPub] = useState((live.publishUrl as string) ?? '');
   const [folder, setFolder] = useState(journalOf(live).folder ?? '');
@@ -683,6 +697,7 @@ function FilmStep({ day, title }: { day: Row; title: string }) {
   };
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      {c && <CommitmentLine c={c} />}
       <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <span style={label}>رابط الفيلم</span>
         <input data-testid="ch-film" style={input} type="url" inputMode="url" placeholder="https://" value={film}
@@ -873,12 +888,14 @@ export function Voice({ day }: { day: Row }) {
 // Your journey (§4.6): a contact sheet of 20 frames
 // ======================================================================
 
-function JourneyScreen() {
-  const v = useChallenge();
+function JourneyScreen({ runId }: { runId?: string }) {
+  const v = useChallenge(runId);
   const prep = v.bySeq.get(0);
+  const past = runId ? [] : archivedRuns();
+  const finishedRun = v.run && v.run.status !== 'active';
   return (
     <div data-testid="ch-journey" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-      <TopBar start={<button aria-label="رجوع" data-testid="ch-close" onClick={popCh} style={ib}><Icon name="arrow-right" size={20} /></button>} mid="رحلتك" />
+      <TopBar start={<button aria-label="رجوع" data-testid="ch-close" onClick={popCh} style={ib}><Icon name="arrow-right" size={20} /></button>} mid={runId && v.run ? `دورة ${dateLabel(v.run.startedAt as number)}` : 'رحلتك'} />
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '0 20px 30px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
           <span data-testid="ch-done-count" style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 44, lineHeight: 1 }}>{v.done}</span>
@@ -892,9 +909,15 @@ function JourneyScreen() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, direction: 'rtl' }}>
           {Array.from({ length: TOTAL_DAYS }, (_, i) => <Frame key={i + 1} v={v} seq={i + 1} />)}
         </div>
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', paddingTop: 6 }}>
-          <button data-testid="ch-open-log" onClick={() => pushCh({ v: 'log' })} style={{ ...chip, cursor: 'pointer' }}>الدفتر</button>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', paddingTop: 6 }}>
+          {finishedRun && <button data-testid="ch-open-mirror" onClick={() => pushCh({ v: 'mirror', runId })} style={{ ...chip, cursor: 'pointer' }}>المرآة</button>}
+          {!runId && <button data-testid="ch-open-log" onClick={() => pushCh({ v: 'log' })} style={{ ...chip, cursor: 'pointer' }}>الدفتر</button>}
           <button data-testid="ch-open-rules" onClick={() => pushCh({ v: 'rules' })} style={{ ...chip, cursor: 'pointer' }}>القواعد العشر</button>
+          {past.length > 0 && (
+            <button data-testid="ch-open-archive" style={{ ...chip, cursor: 'pointer' }} onClick={() => setState({
+              choice: { title: 'الدورات السابقة', groups: [{ options: past.map((r) => ({ label: `دورة ${dateLabel(r.startedAt as number)}`, sub: `${runDays(r.id).filter((d) => d.state === 'done' && d.cardId !== 0).length} من ${TOTAL_DAYS}`, run: () => pushCh({ v: 'journey', runId: r.id }), testid: 'ch-archive-run' })) }] },
+            })}>الدورات السابقة</button>
+          )}
         </div>
       </div>
     </div>
@@ -912,7 +935,8 @@ function Frame({ v, seq }: { v: ChView; seq: number }) {
   if (finished) {
     const still = ((d!.stillImageIds as string[]) ?? [])[0];
     const card = cardOf(d!.cardId as number);
-    const g = stageColor(card?.stageId);
+    const c0 = stageColor(card?.stageId);
+    const g = c0.includes('ink-900') ? '#6b6255' : c0;
     const bg = still ? `center/cover url(/api/images/${still}/thumb)` : `radial-gradient(circle at 40% 45%, ${g}, #1c1916 75%)`;
     return (
       <button data-testid="ch-frame" data-state={d!.state} onClick={() => pushCh({ v: 'card', dayId: d!.id })} style={{ ...base, background: bg, cursor: 'pointer' }}>
@@ -963,6 +987,226 @@ function LogScreen() {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+
+// ======================================================================
+// Phase B: sun times, the two linked cards, the mirror (UPDATE-2 §4.3.7, §4.7, §5)
+// ======================================================================
+
+const dateLabel = (t: number) => new Date(t).toLocaleDateString('ar-SA-u-nu-latn-ca-gregory', { day: 'numeric', month: 'long', year: 'numeric' });
+
+/** «الشروق · الذهبية · الغروب» for today at the run's place (Riyadh until «استخدم موقعي»). */
+function SunRow({ day }: { day: Row }) {
+  useApp((s) => s.dataVersion);
+  const run = engine.store.challengeRuns.get(day.runId as string);
+  const loc = (run?.location as { lat: number; lng: number; label?: string } | null) ?? RIYADH;
+  const t = sunToday(new Date(), loc.lat, loc.lng);
+  return (
+    <div data-testid="ch-sun" style={{ display: 'flex', flexDirection: 'column', gap: 8, borderTop: '1px solid var(--color-border-subtle)', paddingTop: 12 }}>
+      {t ? (
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 12.5, color: 'var(--color-text-muted)', flexWrap: 'wrap' }}>
+          <span><Icon name="sun" size={13} /> الشروق <b data-testid="ch-sunrise" style={{ direction: 'ltr', display: 'inline-block' }}>{clock(t.sunrise)}</b></span>
+          <span>الذهبية <b data-testid="ch-golden" style={{ direction: 'ltr', display: 'inline-block' }}>{clock(t.golden)}</b></span>
+          <span>الغروب <b data-testid="ch-sunset" style={{ direction: 'ltr', display: 'inline-block' }}>{clock(t.sunset)}</b></span>
+        </div>
+      ) : <span style={{ fontSize: 12.5, color: 'var(--color-text-muted)' }}>لا شروق ولا غروب اليوم هنا</span>}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--color-text-muted)' }}>
+        <Icon name="map-pin" size={12} /><span data-testid="ch-place">{loc.label || 'موقعي'}</span>
+        {run && run.status === 'active' && (
+          <button data-testid="ch-use-location" onClick={() => setMyLocation(run)} style={{ border: 'none', background: 'transparent', color: 'var(--tan-600)', fontSize: 12, fontWeight: 700, textDecoration: 'underline', padding: '4px 0', cursor: 'pointer' }}>استخدم موقعي</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function liveProject(id: unknown): Row | undefined {
+  if (typeof id !== 'string' || !id) return undefined;
+  const p = engine.store.projects.get(id);
+  return p && !p.deletedAt ? p : undefined;
+}
+
+async function openLinked(projectId: string, storyboard: boolean) {
+  closeCh();
+  await openProject(projectId);
+  if (storyboard) setState({ mode: 'storyboard', mTab: 'scenes' });
+}
+
+/** The planning card: «افتح مشروع التخطيط» — a new empty project, or one that exists. */
+function PlanningBox({ day }: { day: Row }) {
+  useApp((s) => s.dataVersion);
+  const offline = useApp((s) => s.offline);
+  const list = useSummaries();
+  const live = dayRow(day.id) ?? day;
+  const linked = liveProject(live.projectId) ?? (list ?? []).find((p) => p.id === live.projectId);
+  const name = `التحدي — اليوم ${live.seq}`;
+  const createNew = async () => {
+    const id = `pr-${crypto.randomUUID()}`;
+    commit([
+      { op: 'create', entity: 'projects', id, fields: { name, template: 'blank', aspect: '16:9', stage: 'prep', client: '' } },
+      { op: 'update', entity: 'challengeDays', id: live.id, fields: { projectId: id } },
+    ], { history: 'مشروع التخطيط' });
+    await engine.idle();
+    void openLinked(id, false);
+  };
+  const choose = () =>
+    setState({
+      choice: {
+        title: 'مشروع التخطيط',
+        groups: [
+          { options: [{ label: `مشروع جديد: ${name}`, sub: 'فارغ · 16:9', run: () => void createNew(), testid: 'ch-plan-new' }] },
+          { label: 'أو اربطه بمشروع موجود', options: (list ?? []).filter((p) => !p.archived).map((p) => ({ label: p.name, run: () => (setDayField(live, { projectId: p.id }), void openLinked(p.id, false)), testid: 'ch-plan-existing' })) },
+        ],
+      },
+    });
+  return (
+    <div data-testid="ch-plan" style={{ border: '1px solid var(--color-border)', borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {linked && <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>{`مربوط بـ «${(linked as { name: unknown }).name as string}»`}</span>}
+      <button data-testid="ch-plan-open" disabled={offline} onClick={() => (linked ? void openLinked(linked.id as string, false) : choose())} style={{ ...ghost, height: 46 }}>
+        <Icon name="grid" size={16} />&nbsp;افتح مشروع التخطيط
+      </button>
+    </div>
+  );
+}
+
+interface Commitment { shot: number; total: number; projectId: string }
+
+/** The execution card: shots «تصوّرت» or «معتمدة» ÷ all shots of the planning card's project. */
+function useCommitment(day: Row, card: ChCard): Commitment | null {
+  const list = useSummaries();
+  useApp((s) => s.dataVersion);
+  if (card.executionOf == null) return null;
+  const partner = runDays(day.runId as string).find((d) => d.cardId === card.executionOf);
+  const pid = partner?.projectId as string | null | undefined;
+  if (!pid) return null;
+  const s = (list ?? []).find((p) => p.id === pid);
+  if (!s) return null;
+  return { shot: s.shotsShot + s.shotsApproved, total: s.shots, projectId: pid };
+}
+
+function CommitmentLine({ c }: { c: Commitment }) {
+  const pct = c.total ? Math.round((100 * c.shot) / c.total) : 0;
+  return (
+    <div data-testid="ch-commitment" style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+      <b style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, color: pct >= 80 ? 'var(--tan-600)' : 'var(--color-text)' }}>{`${pct}%`}</b>
+      <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>{`الالتزام بالخطة · ${c.shot} من ${c.total} لقطة`}</span>
+    </div>
+  );
+}
+
+function CommitmentBox({ day, card }: { day: Row; card: ChCard }) {
+  const c = useCommitment(day, card);
+  if (!c) return null; // no planning project: nothing (no blame)
+  return (
+    <div data-testid="ch-exec" style={{ border: '1px solid var(--color-border)', borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <CommitmentLine c={c} />
+      <button data-testid="ch-exec-open" onClick={() => void openLinked(c.projectId, true)} style={{ ...ghost, height: 46 }}>افتح الستوري بورد</button>
+    </div>
+  );
+}
+
+/** Day 20 (§4.7): first still of day 1 against day 20, both voice memos, three numbers, both films. */
+function MirrorScreen({ runId }: { runId?: string }) {
+  const v = useChallenge(runId);
+  const d1 = v.bySeq.get(1);
+  const d20 = v.bySeq.get(TOTAL_DAYS);
+  const still = (d?: Row) => ((d?.stillImageIds as string[] | undefined) ?? [])[0];
+  const done = v.days.filter((d) => d.state === 'done' && d.cardId !== 0);
+  const bts = done.reduce((n, d) => n + ((d.bts as boolean[] | undefined) ?? []).filter(Boolean).length, 0);
+  const btsPct = done.length ? Math.round((100 * bts) / (done.length * 5)) : 0;
+  const decisions = done.filter((d) => (journalOf(d).tomorrow ?? '').trim()).length;
+  const canRestart = !runId && v.run?.status === 'done';
+  const box: React.CSSProperties = { flex: 1, border: '1px solid #3a342c', borderRadius: 10, padding: 10, textAlign: 'center' };
+  const films = [d1, d20].filter((d) => d && (d.filmUrl as string));
+  return (
+    <div data-testid="ch-mirror" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', color: PAPER }}>
+      <TopBar start={<Close />} mid={<span style={{ color: '#b9b9c2' }}>المرآة</span>} />
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 18, padding: '10px 20px 30px' }}>
+        <Compare a={still(d1)} b={still(d20)} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <VoicePlay id={d1?.voiceId as string | null} label="صوتك في اليوم 1" testid="ch-mirror-voice-1" />
+          <VoicePlay id={d20?.voiceId as string | null} label={`صوتك في اليوم ${TOTAL_DAYS}`} testid="ch-mirror-voice-20" />
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <span style={box}><b data-testid="ch-mirror-done" style={{ fontFamily: 'var(--font-display)', fontSize: 24, display: 'block' }}>{done.length}</b><span style={{ fontSize: 11, color: '#b9b9c2' }}>يوم مكتمل</span></span>
+          <span style={box}><b data-testid="ch-mirror-bts" style={{ fontFamily: 'var(--font-display)', fontSize: 24, display: 'block' }}>{`${btsPct}%`}</b><span style={{ fontSize: 11, color: '#b9b9c2' }}>التزام الكواليس</span></span>
+          <span style={box}><b data-testid="ch-mirror-decisions" style={{ fontFamily: 'var(--font-display)', fontSize: 24, display: 'block' }}>{decisions}</b><span style={{ fontSize: 11, color: '#b9b9c2' }}>قرار مكتوب</span></span>
+        </div>
+        {films.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[d1, d20].map((d, i) => d && (d.filmUrl as string) ? (
+              <a key={i} data-testid="ch-mirror-film" href={d.filmUrl as string} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, border: '1px solid #3a342c', borderRadius: 10, padding: '12px 14px', color: PAPER, textDecoration: 'none', fontSize: 14, fontWeight: 700 }}>
+                {`فيلم اليوم ${i === 0 ? 1 : TOTAL_DAYS}`}<Icon name="arrow-up-right" size={16} />
+              </a>
+            ) : null)}
+          </div>
+        )}
+        {canRestart && (
+          <button data-testid="ch-new-run" onClick={() => askConfirm({ title: 'دورة جديدة؟', msg: 'هذي الدورة تنحفظ في الأرشيف، والبطاقات تنخلط من جديد.', ok: 'ابدأ', onOk: () => void startNewRun() })}
+            style={{ ...cta, marginTop: 6 }}>دورة جديدة</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Drag the line: day 1 on the right, day 20 on the left. */
+function Compare({ a, b }: { a?: string; b?: string }) {
+  const [x, setX] = useState(50);
+  const ref = useRef<HTMLDivElement>(null);
+  const move = (clientX: number) => {
+    const r = ref.current?.getBoundingClientRect();
+    if (r) setX(Math.max(0, Math.min(100, ((clientX - r.left) / r.width) * 100)));
+  };
+  const bg = (id?: string, tone = '#6b6255') => (id ? `center/cover url(/api/images/${id})` : `radial-gradient(circle at 45% 45%, ${tone}, #1c1916 75%)`);
+  const tag: React.CSSProperties = { position: 'absolute', top: 10, fontSize: 12, fontWeight: 700, background: 'rgba(20,18,16,.6)', padding: '3px 9px', borderRadius: 999 };
+  return (
+    <div ref={ref} data-testid="ch-compare" onPointerDown={(e) => ((e.target as HTMLElement).setPointerCapture?.(e.pointerId), move(e.clientX))} onPointerMove={(e) => e.buttons && move(e.clientX)}
+      style={{ position: 'relative', height: 250, borderRadius: 12, overflow: 'hidden', touchAction: 'none', cursor: 'ew-resize', userSelect: 'none' }}>
+      <div style={{ position: 'absolute', inset: 0, background: bg(a), filter: a ? undefined : 'saturate(.4)' }} />
+      <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${x}%`, overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: ref.current?.clientWidth ?? 350, background: bg(b, '#c27a32') }} />
+      </div>
+      <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${x}%`, width: 2, background: PAPER, transform: 'translateX(-1px)' }} />
+      <div style={{ position: 'absolute', top: '50%', left: `${x}%`, transform: 'translate(-50%,-50%)', width: 34, height: 34, borderRadius: '50%', background: PAPER, color: DARK, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>↔</div>
+      <span style={{ ...tag, right: 12 }}>اليوم 1</span>
+      <span style={{ ...tag, left: 12 }}>{`اليوم ${TOTAL_DAYS}`}</span>
+    </div>
+  );
+}
+
+function VoicePlay({ id, label: text, testid }: { id: string | null; label: string; testid: string }) {
+  const [playing, setPlaying] = useState(false);
+  const [len, setLen] = useState<number | null>(null);
+  const audio = useRef<HTMLAudioElement | null>(null);
+  useEffect(() => () => audio.current?.pause(), []);
+  const play = async () => {
+    if (!id) return;
+    if (playing) return (audio.current?.pause(), setPlaying(false));
+    try {
+      if (!audio.current) {
+        const res = await fetch(`/api/images/${id}`, { credentials: 'same-origin' });
+        const a = new Audio(URL.createObjectURL(await res.blob()));
+        a.onended = () => setPlaying(false);
+        a.onloadedmetadata = () => Number.isFinite(a.duration) && setLen(a.duration);
+        audio.current = a;
+      }
+      await audio.current.play();
+      setPlaying(true);
+    } catch {
+      toast('تعذّر التشغيل', { tone: 'danger' });
+    }
+  };
+  return (
+    <div data-testid={testid} style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#1c1916', border: '1px solid #3a342c', borderRadius: 12, padding: 12, opacity: id ? 1 : 0.5 }}>
+      <button aria-label="تشغيل" disabled={!id} onClick={() => void play()} style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: '#d2a06a', color: DARK, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: id ? 'pointer' : 'default' }}>
+        <Icon name={playing ? 'pause' : 'play'} size={18} />
+      </button>
+      <span style={{ flex: 1, fontSize: 13, fontWeight: 700 }}>{id ? text : `${text} · ما فيه مذكرة`}</span>
+      {len != null && <span style={{ fontSize: 12, color: '#b9b9c2', direction: 'ltr' }}>{mmss(len)}</span>}
     </div>
   );
 }

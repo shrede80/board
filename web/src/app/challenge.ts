@@ -35,6 +35,10 @@ export interface ChCard {
   setupItems?: string[];
   gearGaps?: string[];
   fixed?: boolean;
+  /** the planning half of the double pair: linked to a project of this app */
+  planning?: boolean;
+  /** the execution half: number of its planning card */
+  executionOf?: number;
 }
 export interface ChMeta {
   deckVersion: number;
@@ -56,7 +60,8 @@ export type ChRoute =
   | { v: 'draw'; override?: boolean }
   | { v: 'card'; dayId: string; flipped?: boolean }
   | { v: 'journal'; dayId: string }
-  | { v: 'journey' }
+  | { v: 'journey'; runId?: string }
+  | { v: 'mirror'; runId?: string }
   | { v: 'log' }
   | { v: 'rules' }
   | { v: 'menu'; dayId: string }
@@ -89,18 +94,28 @@ export async function loadMeta() {
   bump();
 }
 
-/** Reads the current run with its drawn cards (again). */
-export function refresh(): Promise<void> {
+/** Reads the current run (or an archived one) with its drawn cards (again). */
+export function refresh(runId?: string): Promise<void> {
   if (loading) return loading;
   loading = (async () => {
     try {
       await loadMeta();
-      ingest(await api<ServerState>('/api/challenge'));
+      const s = await api<ServerState>(runId ? `/api/challenge?run=${encodeURIComponent(runId)}` : '/api/challenge');
+      if (runId) {
+        // an archived run: its cards only (never the open-card actions of the current run)
+        for (const [k, c] of Object.entries(s.cards)) cards.set(Number(k), c);
+        bump();
+      } else ingest(s);
     } finally {
       loading = null;
     }
   })();
   return loading;
+}
+
+/** Finished runs, newest first (UPDATE-2 §3.7: the archive can be viewed). */
+export function archivedRuns(): Row[] {
+  return [...engine.store.challengeRuns.values()].filter((r) => !r.deletedAt && r.status === 'archived').sort((a, b) => (b.startedAt as number) - (a.startedAt as number));
 }
 
 // ---------- selectors ----------
@@ -147,8 +162,8 @@ export interface ChView {
   burned: number;
 }
 
-export function view(now = Date.now()): ChView {
-  const run = currentRun();
+export function view(now = Date.now(), runId?: string): ChView {
+  const run = runId ? engine.store.challengeRuns.get(runId) ?? null : currentRun();
   const days = runDays(run?.id);
   const bySeq = new Map<number, Row>();
   for (const d of days) if (d.seq != null) bySeq.set(d.seq as number, d);
@@ -159,7 +174,7 @@ export function view(now = Date.now()): ChView {
   const burned = counted.filter((d) => d.state === 'burned').length;
   let status: HomeStatus;
   if (!run) status = { kind: 'start' };
-  else if (run.status === 'done') status = { kind: 'mirror' };
+  else if (run.status !== 'active') status = { kind: 'mirror' };
   else if (open) status = { kind: 'open', day: open };
   else {
     const until = lockedUntil(LOCK_SHAPE, days.map(lite), now, new Date(now).getTimezoneOffset());
@@ -169,15 +184,15 @@ export function view(now = Date.now()): ChView {
 }
 
 /** Re-renders on data, routes and card cache; fetches card text that is missing. */
-export function useChallenge(): ChView {
+export function useChallenge(runId?: string): ChView {
   useApp((s) => s.dataVersion);
   useApp((s) => s.chVersion);
-  const v = view();
+  const v = view(Date.now(), runId);
   const missing = v.days.some((d) => !cards.has(d.cardId as number)) || !meta;
   const offline = useApp((s) => s.offline);
   useEffect(() => {
-    if (missing && !offline) void refresh().catch(() => {});
-  }, [missing, offline]);
+    if (missing && !offline) void refresh(runId).catch(() => {});
+  }, [missing, offline, runId]);
   return v;
 }
 
@@ -286,6 +301,27 @@ export async function completeDay(day: Row): Promise<boolean> {
   closeCh();
   toast(day.cardId === 0 ? 'التجهيز تمّ' : `سُجّل اليوم ${day.seq}`);
   return true;
+}
+
+/** «دورة جديدة» after the last card: this run goes to the archive, a new order starts with prep. */
+export async function startNewRun() {
+  const s = await action('new-run');
+  const d = s?.days.find((x) => x.state === 'drawn');
+  if (d) setState({ ch: [{ v: 'card', dayId: d.id }] });
+}
+
+/** «استخدم موقعي»: asks once, saved on the run (the sun times use it). */
+export function setMyLocation(run: Row) {
+  if (!('geolocation' in navigator)) return toast('الموقع غير متاح', { tone: 'danger' });
+  navigator.geolocation.getCurrentPosition(
+    (p) => {
+      const location = { lat: Math.round(p.coords.latitude * 1e4) / 1e4, lng: Math.round(p.coords.longitude * 1e4) / 1e4, label: 'موقعي' };
+      commit([{ op: 'update', entity: 'challengeRuns', id: run.id, fields: { location } }], { history: 'الموقع' });
+      toast('انحفظ موقعك');
+    },
+    () => toast('ما وصلنا للموقع', { tone: 'danger' }),
+    { timeout: 15_000, maximumAge: 3_600_000 },
+  );
 }
 
 // ---------- journal edits (ordinary synced ops) ----------
