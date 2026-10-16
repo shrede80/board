@@ -262,7 +262,7 @@ export function SettingsPage() {
     try {
       await api('/api/auth/password', { method: 'POST', json: { current: pw.cur, next: pw.next } });
       setPw({ cur: '', next: '', conf: '', err: '' });
-      toast('تغيّرت، والأجهزة الأخرى خرجت');
+      toast('تغيّرت كلمة السر، الأجهزة الأخرى خرجت');
     } catch (e) {
       setPw({ ...pw, err: e instanceof ApiError && e.status === 401 ? 'كلمة السر الحالية غير صحيحة' : 'تعذّر الحفظ، حاول مرة أخرى' });
     } finally {

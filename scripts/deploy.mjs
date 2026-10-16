@@ -38,7 +38,12 @@ function walk(dir) {
   const deck = JSON.parse(readFileSync('updates/update-2/data/challenge-deck.json', 'utf8'));
   const brief = readFileSync('updates/update-2/UPDATE-2.md', 'utf8');
   const stageNames = Object.values(deck.stages).map((s) => s.label);
-  const secrets = deck.days.flatMap((d) => [d.hook, d.idea, d.constraint, d.successMark, ...(stageNames.includes(d.title) || brief.includes(d.title) ? [] : [d.title])].filter(Boolean));
+  // every text of every card (lists and the note included); short strings are skipped (they are ordinary words)
+  const texts = (v) => (typeof v === 'string' ? [v] : Array.isArray(v) ? v.flatMap(texts) : v && typeof v === 'object' ? Object.values(v).flatMap(texts) : []);
+  const secrets = deck.days.flatMap((d) => [
+    ...texts({ ...d, title: undefined, stageId: undefined, type: undefined, requirements: undefined }).filter((t) => t.length >= 12),
+    ...(stageNames.includes(d.title) || brief.includes(d.title) ? [] : [d.title]),
+  ]);
   const leaks = walk(CLIENT).filter((f) => {
     const text = readFileSync(f, 'latin1');
     const utf = Buffer.from(text, 'latin1').toString('utf8');

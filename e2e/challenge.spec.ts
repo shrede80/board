@@ -255,3 +255,21 @@ test('phone: the back gesture closes the focus screens one by one', async ({ pag
   await expect(page.getByTestId('ch-layer')).toHaveCount(0);
   await expect(page.getByTestId('ch-home')).toBeVisible();
 });
+
+test('offline: the journal fields are disabled instead of losing what is typed', async ({ page, context }) => {
+  await login(page);
+  await openHome(page);
+  await page.getByTestId('ch-home-btn').click();
+  await page.getByTestId('ch-prep-done').click();
+  await page.getByTestId('ch-home-btn').click();
+  await page.getByTestId('ch-draw-btn').click();
+  await page.getByTestId('ch-flip').click();
+  await page.getByTestId('ch-log-day').click();
+  await expect(page.getByTestId('ch-bts-item').first().locator('input')).toBeEnabled();
+  await page.getByTestId('ch-next').click();
+  await expect(page.getByTestId('ch-a-worked')).toBeEnabled();
+  await context.setOffline(true);
+  await expect(page.getByTestId('ch-a-worked')).toBeDisabled();
+  await context.setOffline(false);
+  await expect(page.getByTestId('ch-a-worked')).toBeEnabled();
+});

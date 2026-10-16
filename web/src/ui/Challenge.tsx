@@ -150,7 +150,7 @@ export function ChallengeLayer() {
     if (!stack.length) return;
     const onKey = (e: KeyboardEvent) => {
       const s = getState();
-      if (e.key !== 'Escape' || s.confirm || s.popMenu || s.addSheet || s.modal) return;
+      if (e.key !== 'Escape' || s.confirm || s.popMenu || s.addSheet || s.modal || s.choice || s.ideaEdit || s.pick) return;
       e.stopImmediatePropagation();
       popCh();
     };
@@ -351,7 +351,7 @@ function CardScreen({ dayId, flippedAtStart }: { dayId: string; flippedAtStart: 
   const seq = day.seq as number | null;
   const open = day.state === 'drawn';
   const prep = card.type === 'prep';
-  const backAllowed = !prep && day.state !== 'burned';
+  const backAllowed = !prep && day.state !== 'burned' && day.state !== 'postponed';
   const flip = () => {
     setSeen(true);
     setFlipped(true);
@@ -468,6 +468,7 @@ function CardScreen({ dayId, flippedAtStart }: { dayId: string; flippedAtStart: 
 
 /** Prep card: the setup items are a checklist that is saved; then the gaps worth filling. */
 function PrepList({ day, card }: { day: Row; card: ChCard }) {
+  const offline = useApp((s) => s.offline);
   const live = dayRow(day.id) ?? day;
   useApp((s) => s.dataVersion);
   const marks = journalOf(live).setup ?? [];
@@ -482,7 +483,7 @@ function PrepList({ day, card }: { day: Row; card: ChCard }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {items.map((t, i) => (
             <label key={i} data-testid="ch-setup-item" data-checked={marks[i] ? '1' : '0'} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid var(--color-border-subtle)', cursor: 'pointer' }}>
-              <input type="checkbox" checked={!!marks[i]} onChange={() => toggle(i)} style={{ width: 22, height: 22, accentColor: 'var(--tan-600)', flexShrink: 0, marginTop: 3 }} />
+              <input type="checkbox" disabled={offline} checked={!!marks[i]} onChange={() => toggle(i)} style={{ width: 22, height: 22, accentColor: 'var(--tan-600)', flexShrink: 0, marginTop: 3 }} />
               <span style={{ fontSize: 15, lineHeight: 1.75, fontFamily: 'var(--font-serif-text)', textDecoration: marks[i] ? 'line-through' : 'none', color: marks[i] ? 'var(--color-text-muted)' : undefined }}>{t}</span>
             </label>
           ))}
@@ -587,7 +588,7 @@ function JournalScreen({ dayId }: { dayId: string }) {
   };
   return (
     <div data-testid="ch-journal" data-step={step} style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-      <TopBar start={<Close />} mid={
+      <TopBar start={<Close onClick={() => (day.state === 'done' && syncRegretIdea(day), popCh())} />} mid={
         <span style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
           {STEPS.map((_, i) => (
             <button key={i} aria-label={`سؤال ${i + 1}`} onClick={() => setStep(i)} style={{ width: i === step ? 20 : 7, height: 7, padding: 0, border: 'none', borderRadius: 4, background: i === step ? 'var(--color-accent)' : 'var(--color-surface-strong)', cursor: 'pointer' }} />
@@ -622,6 +623,7 @@ function JournalScreen({ dayId }: { dayId: string }) {
 
 /** A text answer: typed locally, saved as you type (one undo step per pause). */
 function TextStep({ day, k }: { day: Row; k: TextKey }) {
+  const offline = useApp((s) => s.offline);
   const [val, setVal] = useState(() => journalOf(day)[k] ?? '');
   const ref = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
@@ -631,7 +633,7 @@ function TextStep({ day, k }: { day: Row; k: TextKey }) {
   const send = journalOf(live).sendRegret !== false;
   return (
     <>
-      <Textarea ref={ref} data-testid={`ch-a-${k}`} value={val} rows={5} placeholder="اكتب سطر أو سطرين…"
+      <Textarea ref={ref} data-testid={`ch-a-${k}`} value={val} rows={5} placeholder="اكتب سطر أو سطرين…" disabled={offline}
         onChange={(e) => {
           setVal(e.target.value);
           setJournal(live, { [k]: e.target.value }, k);
@@ -639,7 +641,7 @@ function TextStep({ day, k }: { day: Row; k: TextKey }) {
         style={{ fontFamily: 'var(--font-serif-text)', fontSize: 17, lineHeight: 1.7, minHeight: 150 }} />
       {k === 'regret' && (
         <div data-testid="ch-send-regret" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Switch checked={send} onChange={(v) => setJournal(live, { sendRegret: v })} label="أرسلها لصندوق الأفكار" />
+          <Switch checked={send} disabled={offline} onChange={(v) => setJournal(live, { sendRegret: v })} label="أرسلها لصندوق الأفكار" />
         </div>
       )}
     </>
@@ -648,19 +650,21 @@ function TextStep({ day, k }: { day: Row; k: TextKey }) {
 
 function BtsStep({ day }: { day: Row }) {
   useApp((s) => s.dataVersion);
+  const offline = useApp((s) => s.offline);
   const live = dayRow(day.id) ?? day;
   const list = getMeta()?.btsChecklist ?? [];
   const marks = (Array.isArray(live.bts) ? live.bts : [false, false, false, false, false]) as boolean[];
+  const vi = voiceItem(list);
   const toggle = (i: number) => setDayField(live, { bts: marks.map((m, k) => (k === i ? !m : m)) });
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       {list.map((t, i) => (
         <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '12px 0', borderBottom: '1px solid var(--color-border-subtle)' }}>
           <label data-testid="ch-bts-item" data-checked={marks[i] ? '1' : '0'} style={{ display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer' }}>
-            <input type="checkbox" checked={!!marks[i]} onChange={() => toggle(i)} style={{ width: 22, height: 22, accentColor: 'var(--tan-600)', flexShrink: 0 }} />
+            <input type="checkbox" disabled={offline} checked={!!marks[i]} onChange={() => toggle(i)} style={{ width: 22, height: 22, accentColor: 'var(--tan-600)', flexShrink: 0 }} />
             <span style={{ fontSize: 15, lineHeight: 1.6 }}>{t}</span>
           </label>
-          {i === 2 && <Voice day={live} />}
+          {i === vi && <Voice day={live} item={vi} />}
         </div>
       ))}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 14 }}>
@@ -673,10 +677,11 @@ function BtsStep({ day }: { day: Row }) {
 
 function FilmStep({ day, title, card }: { day: Row; title: string; card: ChCard }) {
   const live = dayRow(day.id) ?? day;
+  const offline = useApp((s) => s.offline);
   const c = useCommitment(live, card);
   // the live ratio is kept on the day (UPDATE-2 §5.2), so the journal shows what it was
   useEffect(() => {
-    if (!c) return;
+    if (!c || live.state !== 'drawn') return;
     const saved = live.commitment as { shot: number; total: number } | null;
     if (!saved || saved.shot !== c.shot || saved.total !== c.total) setDayField(live, { commitment: { shot: c.shot, total: c.total } });
   }, [c?.shot, c?.total]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -700,7 +705,7 @@ function FilmStep({ day, title, card }: { day: Row; title: string; card: ChCard 
       {c && <CommitmentLine c={c} />}
       <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <span style={label}>رابط الفيلم</span>
-        <input data-testid="ch-film" style={input} type="url" inputMode="url" placeholder="https://" value={film}
+        <input data-testid="ch-film" disabled={offline} style={input} type="url" inputMode="url" placeholder="https://" value={film}
           onChange={(e) => (setFilm(e.target.value), setDayField(live, { filmUrl: e.target.value.trim() }, 'film'))} />
       </label>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -709,15 +714,15 @@ function FilmStep({ day, title, card }: { day: Row; title: string; card: ChCard 
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <span style={label}>المجلد</span>
-        <button data-testid="ch-folder-copy" onClick={() => void copy()} style={{ ...chip, alignSelf: 'flex-start', cursor: 'pointer', direction: 'ltr' }}>
+        <button data-testid="ch-folder-copy" disabled={offline} onClick={() => void copy()} style={{ ...chip, alignSelf: 'flex-start', cursor: 'pointer', direction: 'ltr' }}>
           <Icon name="copy" size={14} />{suggested}
         </button>
-        <input data-testid="ch-folder" style={input} value={folder} placeholder={suggested}
+        <input data-testid="ch-folder" disabled={offline} style={input} value={folder} placeholder={suggested}
           onChange={(e) => (setFolder(e.target.value), setJournal(live, { folder: e.target.value }, 'folder'))} />
       </div>
       <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <span style={label}>رابط النشر (اختياري)</span>
-        <input data-testid="ch-publish" style={input} type="url" inputMode="url" placeholder="https://" value={pub}
+        <input data-testid="ch-publish" disabled={offline} style={input} type="url" inputMode="url" placeholder="https://" value={pub}
           onChange={(e) => (setPub(e.target.value), setDayField(live, { publishUrl: e.target.value.trim() }, 'pub'))} />
       </label>
     </div>
@@ -769,6 +774,11 @@ function Pics({ day, field, max, testid }: { day: Row; field: 'stillImageIds' | 
 // ---------- voice memo (§2.2): record, listen, record again, delete ----------
 
 const MAX_SECONDS = 120;
+/** The BTS checklist line of the voice memo: the one that mentions «صوتية» (the third otherwise). */
+export function voiceItem(list: string[]) {
+  const i = list.findIndex((t) => t.includes('صوتية'));
+  return i >= 0 ? i : 2;
+}
 function pickMime(): string {
   const list = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/aac'];
   if (typeof MediaRecorder === 'undefined') return '';
@@ -776,7 +786,7 @@ function pickMime(): string {
 }
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
-export function Voice({ day }: { day: Row }) {
+export function Voice({ day, item }: { day: Row; item: number }) {
   const offline = useApp((s) => s.offline);
   const [state, setStateV] = useState<'idle' | 'rec' | 'saving'>('idle');
   const [secs, setSecs] = useState(0);
@@ -797,7 +807,13 @@ export function Voice({ day }: { day: Row }) {
       return toast('اسمح بالمايك من إعدادات المتصفح', { tone: 'danger' });
     }
     const mime = pickMime();
-    const r = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+    let r: MediaRecorder;
+    try {
+      r = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+    } catch {
+      stream.getTracks().forEach((t) => t.stop());
+      return toast('التسجيل غير مدعوم هنا', { tone: 'danger' });
+    }
     const chunks: Blob[] = [];
     r.ondataavailable = (e) => e.data.size && chunks.push(e.data);
     r.onstop = async () => {
@@ -816,7 +832,7 @@ export function Voice({ day }: { day: Row }) {
         const res = await api<{ id: string }>('/api/challenge/voice', { method: 'POST', body: fd });
         const live = dayRow(day.id) ?? day;
         const bts = (Array.isArray(live.bts) ? [...(live.bts as boolean[])] : [false, false, false, false, false]);
-        bts[2] = true;
+        bts[item] = true;
         setDayField(live, { voiceId: res.id, bts });
         toast('انحفظت المذكرة');
       } catch {
@@ -875,7 +891,12 @@ export function Voice({ day }: { day: Row }) {
         <>
           <button data-testid="ch-voice-play" onClick={() => void play()} style={small}><Icon name={playing ? 'pause' : 'play'} size={14} />{playing ? 'إيقاف' : 'استمع'}</button>
           <button data-testid="ch-voice-again" disabled={offline} onClick={() => void start()} style={small}><Icon name="mic" size={14} />سجّل من جديد</button>
-          <button data-testid="ch-voice-delete" onClick={() => setDayField(dayRow(day.id) ?? day, { voiceId: null })} style={{ ...small, color: 'var(--color-danger)' }}><Icon name="trash" size={14} />حذف</button>
+          <button data-testid="ch-voice-delete" onClick={() => {
+            const live = dayRow(day.id) ?? day;
+            const bts = Array.isArray(live.bts) ? [...(live.bts as boolean[])] : [false, false, false, false, false];
+            bts[item] = false;
+            setDayField(live, { voiceId: null, bts });
+          }} style={{ ...small, color: 'var(--color-danger)' }}><Icon name="trash" size={14} />حذف</button>
         </>
       ) : (
         <button data-testid="ch-voice-rec" disabled={offline} onClick={() => void start()} style={small}><Icon name="mic" size={14} />سجّل</button>

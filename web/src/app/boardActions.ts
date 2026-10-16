@@ -197,7 +197,7 @@ export function deleteLib(type: LibType, id: string) {
   const label = { character: 'شخصية', location: 'موقع', moodboard: 'لوحة مزاج' }[type];
   askConfirm({
     title: `حذف ${LIB_WORD[type]}؟`,
-    msg: n ? `«${name}» مرتبطة بـ ${n} ${n === 1 ? 'مشهد' : 'مشاهد'}، وتبقى في السلة.` : `«${name}» تبقى في السلة 30 يوماً.`,
+    msg: n ? `«${name}» تختفي من ${n} ${n === 1 ? 'مشهد' : 'مشاهد'}، وتبقى في السلة.` : `«${name}» تبقى في السلة 30 يوماً.`,
     ok: 'حذف',
     danger: true,
     onOk: () => {

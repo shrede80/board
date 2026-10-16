@@ -71,7 +71,8 @@ export type ChRoute =
 let meta: ChMeta | null = null;
 const cards = new Map<number, ChCard>();
 let openInfo: ServerState['open'] = null;
-let loading: Promise<void> | null = null;
+/** one request in flight per run ('' = the current run) */
+const loading = new Map<string, Promise<void>>();
 
 const bump = () => setState((s) => ({ chVersion: s.chVersion + 1 }));
 
@@ -96,8 +97,10 @@ export async function loadMeta() {
 
 /** Reads the current run (or an archived one) with its drawn cards (again). */
 export function refresh(runId?: string): Promise<void> {
-  if (loading) return loading;
-  loading = (async () => {
+  const key = runId ?? '';
+  const busy = loading.get(key);
+  if (busy) return busy;
+  const p = (async () => {
     try {
       await loadMeta();
       const s = await api<ServerState>(runId ? `/api/challenge?run=${encodeURIComponent(runId)}` : '/api/challenge');
@@ -107,10 +110,11 @@ export function refresh(runId?: string): Promise<void> {
         bump();
       } else ingest(s);
     } finally {
-      loading = null;
+      loading.delete(key);
     }
   })();
-  return loading;
+  loading.set(key, p);
+  return p;
 }
 
 /** Finished runs, newest first (UPDATE-2 §3.7: the archive can be viewed). */
@@ -188,11 +192,14 @@ export function useChallenge(runId?: string): ChView {
   useApp((s) => s.dataVersion);
   useApp((s) => s.chVersion);
   const v = view(Date.now(), runId);
-  const missing = v.days.some((d) => !cards.has(d.cardId as number)) || !meta;
+  // card text missing, or the open card changed elsewhere (its postpone/burn options come with it)
+  const openId = !runId && v.open ? (v.open.cardId as number) : null;
+  const stale = openId != null && openInfo?.cardId !== openId;
+  const missing = v.days.some((d) => !cards.has(d.cardId as number)) || !meta || stale;
   const offline = useApp((s) => s.offline);
   useEffect(() => {
     if (missing && !offline) void refresh(runId).catch(() => {});
-  }, [missing, offline, runId]);
+  }, [missing, offline, runId, openId]);
   return v;
 }
 

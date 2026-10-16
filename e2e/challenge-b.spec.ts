@@ -12,7 +12,7 @@ import { login } from './helpers';
 const sql = (q: string) => execSync(`npx wrangler d1 execute DB --local --persist-to .wrangler/e2e --command ${JSON.stringify(q)}`, { stdio: 'ignore' });
 test.beforeEach(() => sql('DELETE FROM challenge_days; DELETE FROM challenge_runs;'));
 
-const deck = JSON.parse(readFileSync('updates/update-2/data/challenge-deck.json', 'utf8')) as { days: { day: number; stageId: string; double?: number; planning?: boolean; executionOf?: number }[] };
+const deck = JSON.parse(readFileSync('updates/update-2/data/challenge-deck.json', 'utf8')) as { days: { day: number; stageId: string; double?: number; planning?: boolean; executionOf?: number }[]; sequence: { stagesInOrder: string[] } };
 const planning = deck.days.find((d) => d.planning)!.day;
 const execution = deck.days.find((d) => d.executionOf != null)!.day;
 const byStage = (st: string) => deck.days.filter((d) => d.stageId === st).map((d) => d.day);
@@ -33,8 +33,11 @@ function seedRun(order: number[], open?: number, status = 'active') {
       `INSERT INTO challenge_days (id, owner_id, run_id, card_id, seq, state, drawn_at, completed_at, journal, bts, film_url, created_at, updated_at) VALUES ${rows.join(',')};`,
   );
 }
-/** Prep, card 1, stage 1, stage 2 — then the rest. */
-const upToStage3 = () => [0, 1, ...byStage('stage1'), ...byStage('stage2')];
+/** Every day before the stage that holds the linked pair (read from the file, not assumed). */
+const pairStage = deck.days.find((d) => d.day === planning)!.stageId;
+const order = deck.sequence.stagesInOrder;
+const beforePair = () => [0, 1, ...order.slice(0, order.indexOf(pairStage)).flatMap(byStage)];
+const afterPair = () => order.slice(order.indexOf(pairStage) + 1).flatMap(byStage);
 
 async function home(page: Page) {
   await login(page);
@@ -71,7 +74,7 @@ test('sun times on a time-bound card, «استخدم موقعي», and «فكر�
 });
 
 test('the planning card makes a project; its pair shows the live commitment and keeps it', async ({ page }) => {
-  seedRun(upToStage3(), planning);
+  seedRun(beforePair(), planning);
   await home(page);
   await page.getByTestId('ch-home-btn').click();
   await page.getByTestId('ch-plan-open').click();
@@ -84,7 +87,7 @@ test('the planning card makes a project; its pair shows the live commitment and 
   });
   expect(projectId).toBeTruthy();
   const p = await page.evaluate(async (id) => (await (await fetch(`/api/projects/${id}`)).json()) as { project: { name: string; aspect: string; stage: string } }, projectId);
-  expect(p.project).toMatchObject({ name: 'التحدي — اليوم 15', aspect: '16:9', stage: 'prep' });
+  expect(p.project).toMatchObject({ name: `التحدي — اليوم ${beforePair().length}`, aspect: '16:9', stage: 'prep' });
   // plan 4 shots, 3 of them shot or approved
   await page.evaluate(async (pid) => {
     const ops: unknown[] = [{ op: 'create', entity: 'scenes', id: 'sc-ch', fields: { projectId: pid, name: 'م' } }];
@@ -92,7 +95,7 @@ test('the planning card makes a project; its pair shows the live commitment and 
     await fetch('/api/ops', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ops }) });
   }, projectId);
   // the planning day is finished (yesterday) and its pair is drawn
-  const n = upToStage3().length;
+  const n = beforePair().length;
   sql(`UPDATE challenge_days SET state = 'done', completed_at = ${Date.now() - DAY} WHERE id = 'd${n}';` +
     `INSERT INTO challenge_days (id, owner_id, run_id, card_id, seq, state, drawn_at, created_at, updated_at) VALUES ('dx', 'owner', 'run1', ${execution}, ${n + 1}, 'drawn', ${Date.now()}, ${Date.now()}, ${Date.now()});`);
   await page.goto('/');
@@ -116,7 +119,7 @@ test('the planning card makes a project; its pair shows the live commitment and 
 });
 
 test('without a planning project the pair shows nothing about it', async ({ page }) => {
-  const order = [...upToStage3(), planning];
+  const order = [...beforePair(), planning];
   seedRun(order, execution);
   await home(page);
   await page.getByTestId('ch-home-btn').click();
@@ -125,8 +128,8 @@ test('without a planning project the pair shows nothing about it', async ({ page
 });
 
 test('the mirror after the last card, then «دورة جديدة» and the archive', async ({ page }) => {
-  const rest = byStage('stage3').filter((c) => c !== planning && c !== execution);
-  seedRun([...upToStage3(), planning, execution, ...rest, 20], undefined, 'done');
+  const rest = byStage(pairStage).filter((c) => c !== planning && c !== execution);
+  seedRun([...beforePair(), planning, execution, ...rest, ...afterPair(), 20], undefined, 'done');
   await home(page);
   await expect(page.getByTestId('ch-home-btn')).toHaveText('المرآة');
   await page.getByTestId('ch-home-btn').click();
