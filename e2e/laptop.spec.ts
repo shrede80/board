@@ -128,3 +128,49 @@ test('drag a character and a location onto a scene row: linked and filterable', 
   await page.getByTestId('lib-location').first().click();
   await expect(page.getByTestId('filter-banner')).toContainText('تعرض: مشاهد السطح (1)');
 });
+
+test('a character with a photo shows the photo alone; without one, its first letter', async ({ page }) => {
+  await login(page);
+  await newProject(page, 'دوائر الشخصيات', 'short');
+  await page.getByText('الستوري بورد').click();
+  const png = await page.evaluate(async () => {
+    const cv = document.createElement('canvas');
+    cv.width = 300;
+    cv.height = 300;
+    const g = cv.getContext('2d')!;
+    g.fillStyle = '#7a4a2e';
+    g.fillRect(0, 0, 300, 300);
+    const b: Blob = await new Promise((r) => cv.toBlob((x) => r(x!), 'image/png'));
+    return Array.from(new Uint8Array(await b.arrayBuffer()));
+  });
+  // فارس with a photo, خالد without
+  await page.getByRole('button', { name: '+ شخصية' }).click();
+  await page.getByTestId('lib-name').fill('فارس');
+  await page.getByTestId('gallery-input').setInputFiles({ name: 'faris.png', mimeType: 'image/png', buffer: Buffer.from(png) });
+  await expect(page.getByTestId('gallery-tile')).toHaveCount(1);
+  await page.getByTestId('editor-close').click();
+  await page.getByRole('button', { name: '+ شخصية' }).click();
+  await page.getByTestId('lib-name').fill('خالد');
+  await page.getByTestId('editor-close').click();
+  await saved(page);
+
+  const lib = page.locator('[data-where=library]');
+  await expect(lib).toHaveText(['', 'خ']);
+
+  // link both to the first scene, then look at the board: scene dots + a character card
+  const rows = page.getByTestId('sb-row');
+  await page.getByTestId('lib-character').nth(0).dragTo(rows.nth(0));
+  await page.getByTestId('lib-character').nth(1).dragTo(rows.nth(0));
+  await saved(page);
+  await rows.nth(0).getByTestId('sb-row-head').click();
+  await expect(page.locator('[data-where=editor]')).toHaveText(['', 'خ']);
+  await page.getByTestId('editor-close').click();
+
+  await page.getByText('لوحة الأفكار').click();
+  await expect(page.locator('[data-where=scene]')).toHaveText(['', 'خ']);
+  const board = page.getByTestId('board');
+  const bb = (await board.boundingBox())!;
+  await page.getByTestId('lib-character').nth(0).dragTo(board, { targetPosition: { x: 120, y: bb.height - 140 } });
+  await expect(page.locator('[data-where=card]')).toHaveText(['']);
+  await expect(page.locator('[data-where=card]')).toHaveCSS('background-image', /url\(/);
+});

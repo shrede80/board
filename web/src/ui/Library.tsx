@@ -10,9 +10,10 @@ import { frameBg } from '../lib/util';
 
 type Tab = 'characters' | 'locations' | 'moodboards' | 'ideas';
 
+/** Character circle: the photo alone when there is one, else the first letter on the accent colour. */
 export function avatar(c: PLib) {
   const im = coverOf(c);
-  return { init: ((c.name as string) || '؟').replace('م. ', '').slice(0, 1), bg: im ? frameBg(im, '#d2a06a') : 'var(--color-accent)' };
+  return { init: im ? '' : ((c.name as string) || '؟').replace('م. ', '').slice(0, 1), bg: im ? frameBg(im, '#d2a06a') : 'var(--color-accent)', hasImage: !!im };
 }
 
 const rail: [Tab, string, string][] = [
@@ -72,7 +73,7 @@ function Open({ p, tab, filterId, offline }: { p: PProject; tab: Tab; filterId: 
         {tab !== 'ideas' && items.map((it) => (
           <div key={it.id} draggable onDragStart={(e) => dragStart(e, { kind: 'lib', type: it.type, id: it.id })} onDragEnd={dragEnd} onClick={it.onClick} className="h-strong" data-testid={`lib-${it.type}`}
             style={{ display: 'flex', gap: 12, alignItems: 'center', padding: 10, borderRadius: 8, cursor: 'pointer', background: it.on ? 'var(--color-accent-soft)' : 'transparent', border: `1px solid ${it.on ? 'var(--color-accent)' : 'transparent'}` }}>
-            {it.avatar && <span style={{ width: 44, height: 44, borderRadius: '50%', flexShrink: 0, background: it.avatar.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 19, color: '#141210' }}>{it.avatar.init}</span>}
+            {it.avatar && <span data-testid="char-avatar" data-where="library" style={{ width: 44, height: 44, borderRadius: '50%', flexShrink: 0, background: it.avatar.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 19, color: '#141210' }}>{it.avatar.init}</span>}
             {it.img && <span style={{ width: 58, height: 42, borderRadius: 4, flexShrink: 0, background: it.img }} />}
             <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
               <span style={{ fontSize: 15, fontWeight: 700 }}>{it.title}</span>

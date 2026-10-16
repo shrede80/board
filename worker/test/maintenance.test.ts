@@ -23,12 +23,16 @@ describe('daily backup', () => {
   it('writes every table to R2 without the password hash and records the time', async () => {
     const cookie = await setupAndLogin();
     await withProject(cookie);
+    await ops(cookie, [{ op: 'create', entity: 'ideas', id: 'idea-1', fields: { text: 'فكرة', imageIds: [] } }]);
     const now = Date.parse('2026-10-15T00:00:00Z');
     const key = await backup(env.DB, env.BUCKET, now);
     expect(key).toBe('backups/2026-10-15.json');
     const obj = await env.BUCKET.get(key);
     const data = (await obj!.json()) as { tables: Record<string, Record<string, unknown>[]> };
     expect(data.tables.shots).toHaveLength(1);
+    expect(data.tables.ideas).toHaveLength(1);
+    expect(data.tables.ideas[0].text).toBe('فكرة');
+    expect(data.tables.inbox_items).toEqual([]); // still backed up (kept, never written)
     expect(data.tables.equipment.length).toBe(74);
     expect(data.tables.settings[0].password_hash).toBeNull();
     expect((await getJson('/api/settings', cookie)).lastBackupAt).toBe(now);

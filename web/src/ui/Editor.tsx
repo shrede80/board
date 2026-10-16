@@ -414,7 +414,7 @@ function SceneEditor({ p, sc, si }: { p: PProject; sc: PScene; si: number }) {
             const on = sc.characterIds.includes(c.id), av = avatar(c);
             return (
               <button key={c.id} onClick={() => toggleCharacter(sc, c.id)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-text)', opacity: on ? 1 : 0.45, padding: 0 }}>
-                <span style={{ width: 46, height: 46, borderRadius: '50%', background: av.bg, boxShadow: `0 0 0 2px var(--color-bg),0 0 0 4px ${on ? 'var(--color-accent)' : 'transparent'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 19, color: '#141210' }}>{av.init}</span>
+                <span data-testid="char-avatar" data-where="editor" style={{ width: 46, height: 46, borderRadius: '50%', background: av.bg, boxShadow: `0 0 0 2px var(--color-bg),0 0 0 4px ${on ? 'var(--color-accent)' : 'transparent'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 19, color: '#141210' }}>{av.init}</span>
                 <span style={{ fontSize: 12, fontWeight: 600 }}>{c.name as string}</span>
               </button>
             );

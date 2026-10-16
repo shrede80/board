@@ -252,7 +252,7 @@ const CardBody = memo(function CardBody({ p, c, on, theme, size, renaming }: { p
     const av = avatar(ch);
     return (
       <div data-component="CharacterCard" style={{ width: W, background: 'var(--color-bg)', border: '1px solid var(--color-border-subtle)', borderRadius: 14, boxShadow: shadow, padding: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textAlign: 'center', cursor: 'grab', boxSizing: 'border-box' }}>
-        <span style={{ width: 64, height: 64, borderRadius: '50%', background: av.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 26, color: '#141210' }}>{av.init}</span>
+        <span data-testid="char-avatar" data-where="card" style={{ width: 64, height: 64, borderRadius: '50%', background: av.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 26, color: '#141210' }}>{av.init}</span>
         <span style={{ fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 18 }}>{ch.name as string}</span>
         <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>{ch.role as string}</span>
         <span style={{ fontSize: 13, lineHeight: 1.6 }}>{ch.description as string}</span>
@@ -361,7 +361,7 @@ const SceneBody = memo(function SceneBody({ p, sc, si, on, w, renaming }: { p: P
             <div style={{ display: 'flex', paddingInlineEnd: 6 }}>
               {sc.characterIds.map((id) => p.library.characters.find((c) => c.id === id)).filter(Boolean).map((c) => {
                 const a = avatar(c!);
-                return <span key={c!.id} style={{ width: 26, height: 26, borderRadius: '50%', background: a.bg, border: '2px solid var(--color-bg)', marginInlineEnd: -7, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#141210' }}>{a.init}</span>;
+                return <span key={c!.id} data-testid="char-avatar" data-where="scene" style={{ width: 26, height: 26, borderRadius: '50%', background: a.bg, border: '2px solid var(--color-bg)', marginInlineEnd: -7, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#141210' }}>{a.init}</span>;
               })}
             </div>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: 'var(--color-text-muted)' }}><Icon name="film" size={14} />{`${n} ${n === 1 ? 'لقطة' : 'لقطات'} · ${mmss(sceneDur(sc))}`}</span>
