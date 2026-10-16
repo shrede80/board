@@ -33,7 +33,7 @@ export function renameProject(name: string, id = openId()) {
 export function archiveProject(on: boolean, id = openId()) {
   if (!id) return;
   updateProject({ archived: on }, on ? 'أرشفة' : 'إلغاء الأرشفة', undefined, id);
-  toast(on ? 'أُرشف المشروع — يبقى في «المؤرشفة»' : 'أُلغيت الأرشفة', { undo: true });
+  toast(on ? 'أُرشف المشروع' : 'أُلغيت الأرشفة', { undo: true });
 }
 
 /** «تكرار المشروع…» for any project. */
@@ -67,7 +67,7 @@ export async function openWith(id: string, modal: 'projectSettings' | 'export') 
 export function deleteProject(id: string, name: string) {
   askConfirm({
     title: 'حذف المشروع؟',
-    msg: `سيذهب «${name}» إلى السلة 30 يوماً ويمكنك استعادته.`,
+    msg: `«${name}» يبقى في السلة 30 يوماً.`,
     ok: 'حذف',
     danger: true,
     onOk: () => void doDelete(id, name),
@@ -98,7 +98,7 @@ async function doDelete(id: string, name: string) {
       label: 'تراجع', testid: 'toast-undo-project',
       run: () => void api(`/api/trash/${encodeURIComponent(trashId)}/restore`, { method: 'POST' })
         .then(() => (wasOpen ? openProject(id) : pollNow()))
-        .catch(() => toast('تعذّرت الاستعادة — جرّب من السلة', { tone: 'danger' })),
+        .catch(() => toast('تعذّرت الاستعادة، جرّب السلة', { tone: 'danger' })),
     }],
   });
 }
@@ -109,7 +109,7 @@ export function askLogout() {
   setState({ menu: false });
   askConfirm({
     title: 'تسجيل الخروج؟',
-    msg: 'ستحتاج كلمة السر للدخول مرة أخرى على هذا الجهاز.',
+    msg: 'تحتاج كلمة السر للدخول مرة ثانية.',
     ok: 'تسجيل الخروج',
     danger: true,
     onOk: () => void logout(),

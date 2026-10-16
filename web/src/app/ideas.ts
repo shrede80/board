@@ -32,7 +32,7 @@ export async function addIdea(o: { text: string; files?: File[]; imageIds?: stri
   const files = (o.files ?? []).slice(0, MAX_IDEA_IMAGES);
   if (!text && !files.length && !o.imageIds?.length) return null;
   if (getState().offline) {
-    toast('لا يوجد اتصال، الفكرة لم تُحفظ', { tone: 'danger' });
+    toast('لا يوجد اتصال، لم تُحفظ', { tone: 'danger' });
     return null;
   }
   let imageIds = o.imageIds ?? [];
@@ -40,7 +40,7 @@ export async function addIdea(o: { text: string; files?: File[]; imageIds?: stri
     try {
       imageIds = [...imageIds, ...(await Promise.all(files.map((f) => uploadFile(f))))].slice(0, MAX_IDEA_IMAGES);
     } catch {
-      toast('فشل رفع صورة — أعد المحاولة', { tone: 'danger' });
+      toast('فشل رفع الصورة', { tone: 'danger' });
       return null;
     }
   }
@@ -81,7 +81,7 @@ async function chooseProject(title: string): Promise<string | null> {
     setState({
       choice: {
         title,
-        empty: 'لا مشاريع بعد — أنشئ مشروعاً أولاً.',
+        empty: 'أنشئ مشروعاً أولاً.',
         groups: [{
           options: list.filter((p) => !p.archived).map((p) => ({
             label: p.name, testid: 'choose-project',
@@ -107,7 +107,7 @@ function chooseScene(p: PProject, title: string): Promise<string | null> {
   return new Promise((resolve) => {
     setState({
       choice: {
-        title, empty: 'لا مشاهد في المشروع بعد — أضف مشهداً أولاً.',
+        title, empty: 'أضف مشهداً أولاً.',
         groups: [{ options: p.scenes.map((sc, i) => ({ label: `${pad2(i + 1)} · ${sc.name}`, sub: `${sc.shots.length} لقطات`, bg: moodHex(sc.mood), run: () => resolve(sc.id), testid: 'choose-scene' })) }],
       },
     });
@@ -143,7 +143,7 @@ export const CONVERT_LABEL: Record<ConvertKind, string> = {
 export async function convertIdea(id: string, kind: ConvertKind, target: { sceneId?: string; shotId?: string; pos?: { x: number; y: number } } = {}): Promise<boolean> {
   const idea0 = engine.store.ideas.get(id);
   if (!idea0 || idea0.deletedAt) return false;
-  if (getState().offline) return (toast('لا يوجد اتصال، التغييرات لن تُحفظ', { tone: 'danger' }), false);
+  if (getState().offline) return (toast('لا يوجد اتصال، لم يُحفظ', { tone: 'danger' }), false);
   // a drop onto this project's board/storyboard converts here; otherwise the idea's own project
   const dropped = !!(target.sceneId || target.shotId || target.pos);
   let pid = dropped ? getState().projectId : ideaProject(idea0);

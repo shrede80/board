@@ -129,7 +129,7 @@ export async function openProject(id: string) {
     await engine.load(id);
   } catch (e) {
     // deleted elsewhere, or no connection: back to Home instead of an endless loading screen
-    toast(e instanceof ApiError && e.status === 404 ? 'المشروع غير موجود — ربما حُذف' : 'تعذّر فتح المشروع، تأكد من الاتصال', { tone: 'danger' });
+    toast(e instanceof ApiError && e.status === 404 ? 'المشروع غير موجود' : 'تعذّر فتح المشروع', { tone: 'danger' });
     await showHome().catch(() => setState({ loaded: true, projectId: null, screen: 'home' }));
     return;
   }
@@ -186,7 +186,7 @@ function fitAllSoon() {
 /** Refuses writes while offline (SPEC §1.4), like the prototype. */
 export function commit(ops: Op[], opts: { history?: string | false; key?: string; inverse?: Op[]; flip?: boolean } = {}): boolean {
   if (getState().offline) {
-    toast('لا يوجد اتصال، التغييرات لن تُحفظ', { tone: 'danger' });
+    toast('لا يوجد اتصال، لم يُحفظ', { tone: 'danger' });
     return false;
   }
   if (opts.flip && getState().mode === 'storyboard') {
@@ -441,7 +441,7 @@ export function createFromTemplate(type: 'scene' | LibType, ctx: { where: 'board
   if (ctx.where === 'row' && type === 'location' && !ctx.force) {
     const sc = p.scenes.find((s) => s.id === ctx.sceneId);
     if (sc?.locationId) {
-      askConfirm({ title: 'استبدال الموقع؟', msg: 'للمشهد موقع مسبقاً. هل تريد استبداله بموقع جديد؟', ok: 'استبدال', onOk: () => createFromTemplate(type, { ...ctx, force: true }) });
+      askConfirm({ title: 'استبدال الموقع؟', msg: 'الموقع الحالي يُستبدل بالجديد.', ok: 'استبدال', onOk: () => createFromTemplate(type, { ...ctx, force: true }) });
       return;
     }
   }
@@ -460,7 +460,7 @@ export function createFromTemplate(type: 'scene' | LibType, ctx: { where: 'board
     else ops.push({ op: 'create', entity: 'sceneLinks', id: `${sc.id}:${type}:${id}`, fields: { projectId: p.id, sceneId: sc.id, kind: type, refId: id } });
   }
   if (!commit(ops, { history: 'إضافة' })) return;
-  if (ctx.where === 'row' && ctx.sceneId) toast(`رُبطت ${LABEL[type]} الجديدة بالمشهد ${pad2(p.scenes.findIndex((s) => s.id === ctx.sceneId) + 1)}`);
+  if (ctx.where === 'row' && ctx.sceneId) toast(`رُبطت بالمشهد ${pad2(p.scenes.findIndex((s) => s.id === ctx.sceneId) + 1)}`);
   if (ctx.where === 'library') toast(type === 'note' ? 'أُضيفت الملاحظة إلى لوحة الأفكار' : `أُضيفت ${LABEL[type]} إلى المكتبة فقط`);
   openEditor(type, id);
 }

@@ -48,7 +48,7 @@ function NewProjectDialog() {
         <AspectPicker value={np.aspect} onChange={(a) => setNp({ ...np, aspect: a })} />
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-muted)' }}>قالب البداية — مشاهد هيكلية فارغة يمكن حذفها</span>
+        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-muted)' }}>قالب البداية</span>
         {TEMPLATES.map((t) => {
           const on = np.template === t.id;
           return (
@@ -197,7 +197,7 @@ function ExportDialog() {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 8 }}>
                     {summary.map(([k, v]) => <div key={k} style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: 10, background: 'var(--color-surface-strong)', borderRadius: 8 }}><span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22 }}>{String(v)}</span><span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{k}</span></div>)}
                   </div>
-                  <span style={{ fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>ملف واحد فيه كل المشاهد واللقطات والمكتبة والصور الأصلية، يُحفظ على جهازك.</span>
+                  <span style={{ fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>ملف واحد بكل المشروع وصوره.</span>
                   <div style={{ display: 'flex' }}><Button variant="primary" icon="download" loading={busy === 'zip'} onClick={() => void run('zip', () => exportProjectZip(p))} data-testid="export-zip">حفظ نسخة المشروع</Button></div>
                 </div>
               </Card>

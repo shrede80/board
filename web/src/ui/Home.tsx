@@ -69,7 +69,7 @@ export function projectMenu(s: Summary, startRename: () => void): MenuEntry[] {
     { label: 'تصدير نسخة ‎.zip', icon: 'download', run: () => void openWith(s.id, 'export'), testid: 'hm-export' },
     { label: s.archived ? 'إلغاء الأرشفة' : 'أرشفة', icon: 'folder', run: () => archiveProject(!s.archived, s.id), testid: 'hm-archive' },
     'sep',
-    { label: 'حذف (يبقى في السلة 30 يوماً)', icon: 'trash', danger: true, run: () => deleteProject(s.id, s.name), testid: 'hm-delete' },
+    { label: 'حذف', icon: 'trash', danger: true, run: () => deleteProject(s.id, s.name), testid: 'hm-delete' },
   ];
 }
 
@@ -112,8 +112,8 @@ export function HomeScreen() {
         {first && (
           <section data-testid="home-welcome" style={{ border: '1px solid var(--color-border-subtle)', borderRadius: 14, background: 'var(--color-surface)', padding: '48px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, textAlign: 'center' }}>
             <span style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--color-accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--tan-600)' }}><Icon name="film" size={28} /></span>
-            <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30 }}>أهلاً بك في لوحة المشاهد</h2>
-            <p style={{ margin: 0, fontSize: 15, color: 'var(--color-text-muted)', lineHeight: 1.7 }}>ابدأ أول مشروع من قالب أو فارغ، أو استورد نسخة مشروع محفوظة.</p>
+            <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30 }}>ابدأ مشروعك</h2>
+            <p style={{ margin: 0, fontSize: 15, color: 'var(--color-text-muted)', lineHeight: 1.7 }}>من قالب أو فارغ، أو استورد نسخة.</p>
             <div style={{ display: 'flex', gap: 10 }}>
               <Button variant="primary" icon="plus" onClick={() => setState({ modal: 'newProject' })} data-testid="home-first">ابدأ أول مشروع</Button>
               <Button variant="outline" icon="upload" onClick={() => setState({ modal: 'import' })}>استيراد</Button>
@@ -138,7 +138,7 @@ export function HomeScreen() {
             </div>
             <IdeaQuickAdd inputRef={quickRef} />
             {ideas.slice(0, 8).map((i) => <IdeaCard key={i.id} idea={i} />)}
-            {!ideas.length && <span style={{ fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.7 }}>اكتب أي فكرة تخطر لك — لقطة، مرجع، رابط. تقدر تحوّلها لاحقاً إلى لقطة أو مشهد.</span>}
+            {!ideas.length && <span style={{ fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.7 }}>أي فكرة: لقطة، مرجع، رابط.</span>}
             {ideas.length > 8 && <button onClick={() => setState({ screen: 'ideas' })} style={{ border: 'none', background: 'transparent', color: 'var(--tan-600)', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>{`عرض كل الأفكار (${ideas.length})`}</button>}
           </aside>
         </section>

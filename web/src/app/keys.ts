@@ -128,7 +128,7 @@ export function onPaste(e: ClipboardEvent) {
       void addImageCards(files);
       return;
     }
-    toast('حدّد لقطة أولاً ثم الصق الصورة');
+    toast('حدّد لقطة أولاً');
     return;
   }
   e.preventDefault();

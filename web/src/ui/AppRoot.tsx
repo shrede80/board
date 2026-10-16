@@ -67,8 +67,8 @@ export function AppRoot() {
       {auth === 'app' && loaded && mobile && <MobileApp />}
       {auth === 'app' && loaded && !mobile && bootOffline && (
         <div data-testid="offline-start" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, textAlign: 'center' }}>
-          <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 34 }}>لا يوجد اتصال بالإنترنت</h1>
-          <p style={{ margin: 0, fontSize: 15, color: 'var(--color-text-muted)', lineHeight: 1.8 }}>البرنامج يحتاج إنترنت على اللابتوب. يفتح لحاله أول ما يرجع الاتصال.</p>
+          <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 34 }}>لا يوجد اتصال</h1>
+          <p style={{ margin: 0, fontSize: 15, color: 'var(--color-text-muted)', lineHeight: 1.8 }}>يفتح لحاله مع الاتصال.</p>
           <button onClick={() => void retryStart()} style={{ height: 44, padding: '0 20px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-text)', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>حاول الآن</button>
         </div>
       )}
@@ -77,7 +77,7 @@ export function AppRoot() {
           <TopBar />
           {offline && (
             <div data-component="OfflineBanner" data-testid="offline-banner" style={{ flexShrink: 0, padding: '8px 16px', background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border-subtle)' }}>
-              <Alert tone="danger" title="لا يوجد اتصال، التغييرات لن تُحفظ">البرنامج يحتاج إنترنت. الأزرار معطّلة حتى يعود الاتصال.</Alert>
+              <Alert tone="danger" title="لا يوجد اتصال">التعديل متوقف حتى يرجع.</Alert>
             </div>
           )}
           {screen === 'app' && <Workspace />}

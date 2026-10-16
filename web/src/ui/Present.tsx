@@ -139,7 +139,7 @@ function PhonePresent() {
           <div style={{ display: 'flex', gap: 3, height: 4 }}>
             {list.map((y, j) => <i key={y.sh.id} style={{ flex: 1, borderRadius: 2, background: j <= i ? moodHex(y.sc.mood) : '#3a342c' }} />)}
           </div>
-          <span style={{ fontSize: 12, color: '#b9b9c2', textAlign: 'center' }}>{`لقطة ${i + 1} من ${list.length} · ${mmss(x.sh.durationS)} · اسحب للتنقّل`}</span>
+          <span style={{ fontSize: 12, color: '#b9b9c2', textAlign: 'center' }}>{`لقطة ${i + 1} من ${list.length} · ${mmss(x.sh.durationS)}`}</span>
         </div>
       )}
     </div>

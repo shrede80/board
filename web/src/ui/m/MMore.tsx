@@ -17,7 +17,7 @@ export function MMore() {
             <Icon name="arrow-right" size={17} />المزيد
           </button>
         </div>
-        {bootOffline ? <span style={{ padding: 20, fontSize: 14, color: 'var(--color-text-muted)' }}>هذه الصفحة تحتاج اتصال بالإنترنت.</span>
+        {bootOffline ? <span style={{ padding: 20, fontSize: 14, color: 'var(--color-text-muted)' }}>تحتاج اتصال.</span>
           : screen === 'equipment' ? <EquipmentPage /> : screen === 'trash' ? <TrashPage /> : <SettingsPage />}
       </div>
     );

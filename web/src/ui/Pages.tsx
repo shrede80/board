@@ -96,7 +96,7 @@ export function EquipmentPage() {
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <h1 style={h1}>معداتي</h1>
-            <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>{`${total} قطعة · مشتركة بين كل المشاريع. الدور يحدد في أي قائمة تظهر القطعة داخل بطاقة اللقطة.`}</span>
+            <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>{`${total} قطعة · لكل المشاريع`}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', width: phone ? '100%' : undefined }}>
             <div style={{ width: phone ? '100%' : 260 }}><Search value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث في المعدات…" /></div>
@@ -125,13 +125,13 @@ export function EquipmentPage() {
                 {!phone && <span><Badge tone="accent">{roles[it.role as string] ?? (it.role as string)}</Badge></span>}
                 <div style={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                   <button title="تعديل" className="h-strong" style={cell} onClick={() => setEdit({ id: it.id, name: it.name as string, brand: (it.brand as string) || '', model: (it.model as string) || '', use: (it.use as string) || '', qty: (it.qty as number) || 1, role: it.role as string, category: it.category as string, icon: (it.icon as string) || 'box' })}><Icon name="edit" size={15} /></button>
-                  <button title="حذف" className="h-strong" style={cell} onClick={() => askConfirm({ title: 'حذف القطعة؟', msg: `ستُحذف «${it.name}» من معداتي ولن تظهر في قوائم اللقطات.`, ok: 'حذف', danger: true, onOk: () => commit([{ op: 'delete', entity: 'equipment', id: it.id }], { history: 'حذف قطعة' }) })}><Icon name="trash" size={15} /></button>
+                  <button title="حذف" className="h-strong" style={cell} onClick={() => askConfirm({ title: 'حذف القطعة؟', msg: `«${it.name}» تختفي من قوائم اللقطات.`, ok: 'حذف', danger: true, onOk: () => commit([{ op: 'delete', entity: 'equipment', id: it.id }], { history: 'حذف قطعة' }) })}><Icon name="trash" size={15} /></button>
                 </div>
               </div>
             ))}
           </section>
         ))}
-        {!groups.length && <EmptyState icon="search" title="لا نتائج" description="جرّب كلمة أخرى، مثل اسم الشركة أو الموديل." />}
+        {!groups.length && <EmptyState icon="search" title="لا نتائج" description="جرّب كلمة أخرى." />}
       </div>
       {edit && (
         <Overlay z={62}>
@@ -207,7 +207,7 @@ export function TrashPage() {
   };
   const purge = (t: TrashItem) =>
     askConfirm({
-      title: 'حذف نهائي؟', msg: 'لا يمكن التراجع عن الحذف النهائي.', ok: 'حذف نهائي', danger: true,
+      title: 'حذف نهائي؟', msg: 'ما له تراجع.', ok: 'حذف نهائي', danger: true,
       onOk: async () => {
         try {
           await api(`/api/trash/${encodeURIComponent(t.id)}`, { method: 'DELETE' });
@@ -223,7 +223,7 @@ export function TrashPage() {
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '12px clamp(16px, 4vw, 32px) 80px', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <h1 style={h1}>سلة المحذوفات</h1>
-          <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>تبقى العناصر 30 يوماً ثم تُحذف نهائياً. المشهد يُستعاد بلقطاته.</span>
+          <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>تبقى 30 يوماً ثم تُحذف.</span>
         </div>
         {(items ?? []).map((t) => {
           const left = daysLeft(t.deletedAt);
@@ -241,7 +241,7 @@ export function TrashPage() {
             </div>
           );
         })}
-        {items && !items.length && <EmptyState icon="trash" title="السلة فارغة" description="العناصر المحذوفة تظهر هنا لمدة 30 يوماً." />}
+        {items && !items.length && <EmptyState icon="trash" title="السلة فارغة" description="المحذوف يظهر هنا 30 يوماً." />}
       </div>
     </div>
   );
@@ -262,7 +262,7 @@ export function SettingsPage() {
     try {
       await api('/api/auth/password', { method: 'POST', json: { current: pw.cur, next: pw.next } });
       setPw({ cur: '', next: '', conf: '', err: '' });
-      toast('تغيّرت كلمة السر — خرجت الأجهزة الأخرى');
+      toast('تغيّرت، والأجهزة الأخرى خرجت');
     } catch (e) {
       setPw({ ...pw, err: e instanceof ApiError && e.status === 401 ? 'كلمة السر الحالية غير صحيحة' : 'تعذّر الحفظ، حاول مرة أخرى' });
     } finally {
@@ -300,7 +300,7 @@ export function SettingsPage() {
             </div>
           </div>
         </Card>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--color-text-muted)' }}><Icon name="clock" size={16} />{`${backup} · يتم النسخ يومياً على الخادم`}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--color-text-muted)' }}><Icon name="clock" size={16} />{`${backup} · نسخة كل يوم`}</div>
       </div>
     </div>
   );

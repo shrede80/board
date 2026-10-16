@@ -161,7 +161,7 @@ export async function flushQueue() {
     running = false;
     await refreshPending();
     if (sent) {
-      if (waited) toast(waited === 1 ? 'أُرسلت الفكرة اللي كانت بانتظار الإنترنت' : `أُرسلت ${waited} أفكار كانت بانتظار الإنترنت`);
+      if (waited) toast(waited === 1 ? 'أُرسلت الفكرة المنتظرة' : `أُرسلت ${waited} أفكار منتظرة`);
       const { pollNow } = await import('./actions');
       void pollNow();
     }

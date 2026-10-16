@@ -33,7 +33,7 @@ export function MProject() {
     if (renaming) setTimeout(() => (ref.current?.focus(), ref.current?.select()), 0);
   }, [renaming]);
   if (bootOffline || !p) {
-    return <EmptyState icon="x-circle" title={bootOffline ? 'المشروع يحتاج اتصال' : 'لا مشروع مفتوح'} description={bootOffline ? 'لما يرجع الإنترنت يفتح المشروع هنا. الأفكار تشتغل الآن من زر ＋.' : 'افتح مشروعاً من الرئيسية.'} />;
+    return <EmptyState icon="x-circle" title={bootOffline ? 'المشروع يحتاج اتصال' : 'لا مشروع مفتوح'} description={bootOffline ? 'يفتح مع الاتصال. الأفكار من ＋.' : 'افتح مشروعاً من الرئيسية.'} />;
   }
   const all = allShots(p);
   const done = all.filter((x) => x.sh.status !== 'planned').length;
@@ -50,7 +50,7 @@ export function MProject() {
     { label: 'عرض المشروع', icon: 'play', run: () => openPresent(0), testid: 'pm-present' },
     { label: p.archived ? 'إلغاء الأرشفة' : 'أرشفة', icon: 'folder', run: () => archiveProject(!p.archived), testid: 'pm-archive' },
     'sep',
-    { label: 'حذف (يبقى في السلة 30 يوماً)', icon: 'trash', danger: true, run: () => deleteProject(p.id, p.name), testid: 'pm-delete' },
+    { label: 'حذف', icon: 'trash', danger: true, run: () => deleteProject(p.id, p.name), testid: 'pm-delete' },
   ];
   const finish = (save: boolean) => {
     const v = ref.current?.value.trim() ?? '';
@@ -284,7 +284,7 @@ function ShotList({ p }: { p: PProject }) {
             })}
           </div>
         ))}
-        {!groups.length && <EmptyState icon="search" title={all.length ? 'لا لقطات بهذه الحالة' : 'لا لقطات بعد'} description={all.length ? 'غيّر الفلتر لعرض لقطات أخرى.' : 'أضف لقطة من تبويب «المشاهد» أو زر ＋.'} />}
+        {!groups.length && <EmptyState icon="search" title={all.length ? 'لا لقطات بهذه الحالة' : 'لا لقطات بعد'} description={all.length ? 'غيّر الفلتر لعرض لقطات أخرى.' : 'أضف لقطة من ＋.'} />}
       </div>
     </div>
   );

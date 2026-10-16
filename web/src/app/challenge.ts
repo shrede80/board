@@ -255,8 +255,8 @@ async function action(path: string, json: unknown = {}): Promise<ServerState | n
     const code = e instanceof ApiError ? (e.body.error as string) : '';
     const msg: Record<string, string> = {
       locked: 'البطاقة مقفلة حتى منتصف الليل',
-      journal: 'جاوب على 3 أسئلة على الأقل',
-      alone: 'ما فيه بطاقة ثانية في هذه المرحلة',
+      journal: 'جاوب 3 أسئلة على الأقل',
+      alone: 'ما فيه بطاقة ثانية',
       used: 'استخدمت الحرق من قبل',
     };
     toast(msg[code] ?? (e instanceof ApiError && e.status === 0 ? 'لا يوجد اتصال' : 'تعذّر الحفظ، حاول مرة ثانية'), { tone: 'danger' });

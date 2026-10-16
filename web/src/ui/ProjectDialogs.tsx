@@ -96,7 +96,7 @@ export function ProjectSettingsDialog() {
         <StagePicker value={p.stage} onChange={(v) => updateProject({ stage: v })} />
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <span style={lbl}>نسبة الإطار — الصور تُقص للعرض فقط، الأصلية لا تتغيّر</span>
+        <span style={lbl}>نسبة الإطار</span>
         <AspectPicker value={p.aspect} onChange={(v) => updateProject({ aspect: v })} />
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -126,7 +126,7 @@ export function DuplicateProjectDialog() {
     <div data-component="DuplicateProjectDialog" style={{ ...dialog, width: 460, display: 'flex', flexDirection: 'column', gap: 14 }}>
       <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 26 }}>تكرار المشروع</h2>
       <p style={{ margin: 0, fontSize: 15, lineHeight: 1.7, color: 'var(--color-text-muted)' }}>{`نسخة كاملة باسم «${p.name} (نسخة)»: المشاهد واللقطات والمكتبة واللوحة. الصور نفسها بدون نسخ، والمرحلة «تحضير» بدون يوم تصوير.`}</p>
-      <Checkbox checked={keep} onChange={setKeep} label="إبقاء حالات اللقطات (وإلا ترجع كلها «مخططة»)" />
+      <Checkbox checked={keep} onChange={setKeep} label="إبقاء حالات اللقطات" />
       <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
         <Button variant="primary" disabled={busy} onClick={() => void duplicateProject(p.id, keep)} data-testid="dup-confirm">تكرار</Button>
         <Button variant="ghost" onClick={close}>إلغاء</Button>

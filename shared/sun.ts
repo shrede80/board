@@ -3,7 +3,7 @@
  * solar equations (no API, no library). Accurate to about a minute between ±60° latitude.
  *
  * Golden hour (one definition, used everywhere): the 40 minutes after sunrise and the
- * 40 minutes before sunset. The app shows the evening one («الذهبية» = sunset − 40 min).
+ * 40 minutes before sunset. The app shows both.
  */
 
 export const GOLDEN_MIN = 40;

@@ -526,7 +526,7 @@ function BurnSheet({ dayId }: { dayId: string }) {
   if (!day) return null;
   return (
     <Sheet onClose={popCh} testid="ch-burn-sheet" title="احرق البطاقة">
-      <span style={{ fontSize: 14, color: 'var(--color-text-muted)', marginTop: -6 }}>مرة وحدة في الدورة. السبب ينحفظ في الدفتر.</span>
+      <span style={{ fontSize: 14, color: 'var(--color-text-muted)', marginTop: -6 }}>مرة وحدة في الدورة.</span>
       <Textarea data-testid="ch-burn-reason" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="ليش؟" rows={3} style={{ fontSize: 16 }} />
       <button data-testid="ch-burn-ok" disabled={!reason.trim() || busy} onClick={async () => (setBusy(true), await burnCard(day, reason), setBusy(false))}
         style={{ ...cta, background: 'var(--color-danger)', color: PAPER, boxShadow: 'none', opacity: reason.trim() ? 1 : 0.5 }}>احرق</button>
@@ -998,7 +998,9 @@ function LogScreen() {
 
 const dateLabel = (t: number) => new Date(t).toLocaleDateString('ar-SA-u-nu-latn-ca-gregory', { day: 'numeric', month: 'long', year: 'numeric' });
 
-/** «الشروق · الذهبية · الغروب» for today at the run's place (Riyadh until «استخدم موقعي»). */
+const T: React.CSSProperties = { direction: 'ltr', display: 'inline-block', fontWeight: 700, color: 'var(--color-text)' };
+
+/** Morning: sunrise and its golden hour; evening: sunset and its golden hour — for today at the run's place (Riyadh until «استخدم موقعي»). */
 function SunRow({ day }: { day: Row }) {
   useApp((s) => s.dataVersion);
   const run = engine.store.challengeRuns.get(day.runId as string);
@@ -1007,10 +1009,13 @@ function SunRow({ day }: { day: Row }) {
   return (
     <div data-testid="ch-sun" style={{ display: 'flex', flexDirection: 'column', gap: 8, borderTop: '1px solid var(--color-border-subtle)', paddingTop: 12 }}>
       {t ? (
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 12.5, color: 'var(--color-text-muted)', flexWrap: 'wrap' }}>
-          <span><Icon name="sun" size={13} /> الشروق <b data-testid="ch-sunrise" style={{ direction: 'ltr', display: 'inline-block' }}>{clock(t.sunrise)}</b></span>
-          <span>الذهبية <b data-testid="ch-golden" style={{ direction: 'ltr', display: 'inline-block' }}>{clock(t.golden)}</b></span>
-          <span>الغروب <b data-testid="ch-sunset" style={{ direction: 'ltr', display: 'inline-block' }}>{clock(t.sunset)}</b></span>
+        <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr 1fr', gap: '6px 12px', fontSize: 12.5, color: 'var(--color-text-muted)', alignItems: 'baseline' }}>
+          <Icon name="sun" size={13} />
+          <span>الشروق <b data-testid="ch-sunrise" style={T}>{clock(t.sunrise)}</b></span>
+          <span>الذهبية <b data-testid="ch-golden-am" style={T}>{`${clock(t.sunrise)}–${clock(t.goldenMorningEnd)}`}</b></span>
+          <span />
+          <span>الغروب <b data-testid="ch-sunset" style={T}>{clock(t.sunset)}</b></span>
+          <span>الذهبية <b data-testid="ch-golden" style={T}>{`${clock(t.golden)}–${clock(t.sunset)}`}</b></span>
         </div>
       ) : <span style={{ fontSize: 12.5, color: 'var(--color-text-muted)' }}>لا شروق ولا غروب اليوم هنا</span>}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--color-text-muted)' }}>
@@ -1145,7 +1150,7 @@ function MirrorScreen({ runId }: { runId?: string }) {
           </div>
         )}
         {canRestart && (
-          <button data-testid="ch-new-run" onClick={() => askConfirm({ title: 'دورة جديدة؟', msg: 'هذي الدورة تنحفظ في الأرشيف، والبطاقات تنخلط من جديد.', ok: 'ابدأ', onOk: () => void startNewRun() })}
+          <button data-testid="ch-new-run" onClick={() => askConfirm({ title: 'دورة جديدة؟', msg: 'الحالية تروح للأرشيف، والبطاقات تنخلط.', ok: 'ابدأ', onOk: () => void startNewRun() })}
             style={{ ...cta, marginTop: 6 }}>دورة جديدة</button>
         )}
       </div>

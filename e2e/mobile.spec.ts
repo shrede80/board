@@ -148,11 +148,11 @@ test('phone: an idea with a photo saved offline is sent once when the connection
   await page.getByTestId('m-add-text').fill('فكرة بدون نت');
   await page.getByTestId('m-add-camera').setInputFiles({ name: 'cam.png', mimeType: 'image/png', buffer: await png(page, '#2e3d5c') });
   await page.getByTestId('m-add-save').click();
-  await expect(page.getByTestId('toast').filter({ hasText: 'تُرسل لما يرجع النت' })).toHaveCount(1);
+  await expect(page.getByTestId('toast').filter({ hasText: 'تُرسل مع الاتصال' })).toHaveCount(1);
   await page.getByTestId('m-tab-ideas').click();
   const waiting = page.getByTestId('idea-pending').filter({ hasText: 'فكرة بدون نت' });
   await expect(waiting).toHaveCount(1);
-  await expect(waiting.getByTestId('pending-status')).toContainText('بانتظار الإنترنت');
+  await expect(waiting.getByTestId('pending-status')).toContainText('بانتظار الاتصال');
   await expect(page.getByTestId('m-tab-ideas-count')).toBeVisible();
 
   // still waiting after a reload of the list (kept in IndexedDB)
@@ -284,7 +284,7 @@ test('phone: offline shows the message and disables editing buttons', async ({ p
   await page.getByText('اللقطات', { exact: true }).click();
   await context.setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event('offline')));
-  await expect(page.getByTestId('offline-banner')).toContainText('لا يوجد اتصال، التغييرات لن تُحفظ');
+  await expect(page.getByTestId('offline-banner')).toContainText('لا يوجد اتصال');
   await expect(page.getByTestId('m-status').first()).toBeDisabled();
   await context.setOffline(false);
   await page.evaluate(() => window.dispatchEvent(new Event('online')));

@@ -233,11 +233,11 @@ function DeskGallery({ owner, target, hex, aspect }: { owner: { images: Img[]; c
         })}
         <label style={{ aspectRatio: arCss, border: `1.5px dashed ${over ? 'var(--color-accent)' : 'var(--color-border)'}`, background: over ? 'var(--color-accent-soft)' : 'transparent', borderRadius: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 11, color: 'var(--color-text-muted)', textAlign: 'center', cursor: 'pointer', padding: 6, lineHeight: 1.4 }}>
           <Icon name="upload" size={16} />
-          {over ? 'أفلت الصورة هنا' : 'اسحب صوراً أو الصق بـ Ctrl+V'}
+          {over ? 'أفلت الصورة هنا' : 'اسحب صوراً أو الصقها'}
           <input type="file" accept="image/*" multiple data-testid="gallery-input" style={{ display: 'none' }} onChange={(e) => { if (e.target.files) addFiles(target, e.target.files); e.target.value = ''; }} />
         </label>
       </div>
-      <p style={{ margin: '8px 0 4px', fontSize: 12, color: 'var(--color-text-muted)' }}>★ تحدد صورة الغلاف · اسحب الصور لإعادة ترتيبها</p>
+      <p style={{ margin: '8px 0 4px', fontSize: 12, color: 'var(--color-text-muted)' }}>★ الغلاف · اسحب للترتيب</p>
     </>
   );
 }
@@ -463,14 +463,14 @@ function ShotEditor({ p, sh, sc }: { p: PProject; sh: PShot; sc: PScene }) {
           <Picker k="lens" title="العدسة المدمجة" display={(sh.lens as string) ?? ''} groups={[{ label: `عدسات ${cam.short}`, options: (cam.builtinLenses as string[]).map((l) => ({ value: l, label: l, active: sh.lens === l })) }]} onSet={(v) => { const m = /\((\d+)mm\)/.exec(v); set({ lens: v, focalMm: m ? Number(m[1]) : sh.focalMm }); }} />
         ) : null}
         {!(cam && cam.fixedLens && !cam.zoomOnly) && (
-          <F title="البعد البؤري" hint={cam?.zoomOnly ? 'زوم مدمج — يكفي البعد البؤري' : cam?.builtinLenses ? 'يُحدَّد من العدسة المختارة' : undefined}>
+          <F title="البعد البؤري" hint={cam?.zoomOnly ? 'زوم مدمج' : cam?.builtinLenses ? 'يُحدَّد من العدسة المختارة' : undefined}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 120 }}><Input type="number" value={(sh.focalMm as number) ?? ''} onChange={(e) => set({ focalMm: Number(e.target.value) || null }, 'focal')} /></div>
               <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18 }}>mm</span>
             </div>
           </F>
         )}
-        {!!cam?.fixedLens && !cam.zoomOnly && <F title="العدسة" hint="الدرون بعدسة ثابتة — لا حاجة لحقل عدسة"><Input value="عدسة ثابتة 24mm" readOnly /></F>}
+        {!!cam?.fixedLens && !cam.zoomOnly && <F title="العدسة" hint="عدسة ثابتة"><Input value="عدسة ثابتة 24mm" readOnly /></F>}
         <Picker k="filter" title="الفلتر" display={sh.filter ? eqName(eq, sh.filter as string) : ''} groups={eqOpts('filter', sh.filter)} onSet={(v) => set({ filter: v })} />
       </Section>
 
@@ -587,7 +587,7 @@ function SceneEditor({ p, sc, si }: { p: PProject; sc: PScene; si: number }) {
             <button title="فك الربط" onClick={a.remove} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'flex' }}><Icon name="x" size={13} /></button>
           </div>
         ))}
-        {!attached.length && <span style={{ fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>في الستوري بورد، اسحب ملاحظة أو لوحة مزاج فوق صف المشهد لربطها.</span>}
+        {!attached.length && <span style={{ fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>تُربط بسحبها إلى صف المشهد.</span>}
       </div>
       <div style={{ borderTop: '1px solid var(--color-border-subtle)', paddingTop: 14, display: 'flex' }}>
         <Button variant="ghost" size="sm" icon="trash" onClick={() => deleteScene(sc.id)}>حذف المشهد</Button>

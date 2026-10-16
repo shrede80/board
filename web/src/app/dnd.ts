@@ -75,7 +75,7 @@ export function dropOnSbEmpty(e: React.DragEvent) {
     else if (d.type === 'heading' || d.type === 'frame' || d.type === 'image') toast('هذا القالب للوحة الأفكار فقط');
     else createFromTemplate(d.type, { where: 'library' });
   }
-  if (d.kind === 'lib') toast('العنصر موجود في المكتبة — أفلته فوق صف مشهد لربطه');
+  if (d.kind === 'lib') toast('موجود، أفلته على مشهد');
 }
 
 export function dropOnRow(e: React.DragEvent, sceneId: string, d0?: Drag | null) {

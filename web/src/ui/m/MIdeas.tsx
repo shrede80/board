@@ -34,14 +34,14 @@ export function MIdeas() {
       {shown.map((i) => <IdeaCard key={i.id} idea={i} mobile />)}
       {!shown.length && !pend.length && (
         <span style={{ padding: '24px 4px', fontSize: 14, lineHeight: 1.8, color: 'var(--color-text-muted)', textAlign: 'center' }}>
-          {f === 'pending' ? 'لا شيء بانتظار الإرسال — كل أفكارك وصلت.' : bootOffline ? 'الأفكار المحفوظة على الخادم تظهر لما يرجع الاتصال.' : 'لا أفكار هنا بعد. اضغط ＋ واكتب أي فكرة تخطر لك.'}
+          {f === 'pending' ? 'كل أفكارك وصلت.' : bootOffline ? 'تظهر مع الاتصال.' : 'لا أفكار بعد. اضغط ＋.'}
         </span>
       )}
     </div>
   );
 }
 
-/** An idea still on this phone: «بانتظار الإنترنت — تُرسل تلقائياً», or failed with retry / delete. */
+/** An idea still on this phone: «بانتظار الاتصال», or failed with retry / delete. */
 function PendingCard({ x }: { x: PendingIdea }) {
   return (
     <div data-testid="idea-pending" data-idea-id={x.id} style={{ border: '1px dashed var(--color-border)', borderRadius: 8, padding: 12, display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--color-surface)' }}>
@@ -51,11 +51,11 @@ function PendingCard({ x }: { x: PendingIdea }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: 'var(--color-danger)' }}>{`لم تُرسل: ${x.failed}`}</span>
           <button data-testid="pending-retry" onClick={() => void retryPending(x.id)} style={{ height: 40, padding: '0 14px', borderRadius: 8, border: 'none', background: 'var(--color-accent)', color: '#141210', fontWeight: 700 }}>إعادة المحاولة</button>
-          <button data-testid="pending-delete" onClick={() => askConfirm({ title: 'حذف الفكرة؟', msg: 'هذه الفكرة لم تصل للخادم، وحذفها نهائي.', ok: 'حذف', danger: true, onOk: () => void deletePending(x.id) })} style={{ height: 40, padding: '0 14px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-danger)', fontWeight: 700 }}>حذف</button>
+          <button data-testid="pending-delete" onClick={() => askConfirm({ title: 'حذف الفكرة؟', msg: 'ما وصلت بعد، وحذفها نهائي.', ok: 'حذف', danger: true, onOk: () => void deletePending(x.id) })} style={{ height: 40, padding: '0 14px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-danger)', fontWeight: 700 }}>حذف</button>
         </div>
       ) : (
         <span data-testid="pending-status" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--color-text-muted)' }}>
-          <Icon name="clock" size={14} />{`بانتظار الإنترنت — تُرسل تلقائياً · ${ideaTime(x.createdAt)}`}
+          <Icon name="clock" size={14} />{`بانتظار الاتصال · ${ideaTime(x.createdAt)}`}
         </span>
       )}
     </div>

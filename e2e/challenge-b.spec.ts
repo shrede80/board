@@ -49,7 +49,12 @@ test('sun times on a time-bound card, «استخدم موقعي», and «فكر�
   await page.getByTestId('ch-home-btn').click();
   await expect(page.getByTestId('ch-sun')).toBeVisible();
   await expect(page.getByTestId('ch-place')).toHaveText('الرياض');
-  for (const id of ['ch-sunrise', 'ch-golden', 'ch-sunset']) await expect(page.getByTestId(id)).toHaveText(/^\d{1,2}:\d{2}[صم]$/);
+  for (const id of ['ch-sunrise', 'ch-sunset']) await expect(page.getByTestId(id)).toHaveText(/^\d{1,2}:\d{2}[صم]$/);
+  // golden hours: from sunrise to 40 min after, and from 40 min before sunset to sunset
+  await expect(page.getByTestId('ch-golden-am')).toHaveText(/^\d{1,2}:\d{2}ص–\d{1,2}:\d{2}ص$/);
+  await expect(page.getByTestId('ch-golden')).toHaveText(/^\d{1,2}:\d{2}م–\d{1,2}:\d{2}م$/);
+  expect((await page.getByTestId('ch-golden-am').textContent())!.startsWith((await page.getByTestId('ch-sunrise').textContent())!)).toBe(true);
+  expect((await page.getByTestId('ch-golden').textContent())!.endsWith((await page.getByTestId('ch-sunset').textContent())!)).toBe(true);
   const riyadhSunset = await page.getByTestId('ch-sunset').textContent();
   await page.getByTestId('ch-use-location').click();
   await expect(page.getByTestId('ch-place')).toHaveText('موقعي');

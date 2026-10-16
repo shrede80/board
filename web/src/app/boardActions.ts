@@ -132,7 +132,7 @@ export function copySelection(cut = false) {
 export function paste(at?: { x: number; y: number }) {
   const p = project();
   if (!p || !clip) return;
-  if (clip.projectId !== p.id) return toast('النسخ بين المشاريع غير متاح حالياً');
+  if (clip.projectId !== p.id) return toast('النسخ بين المشاريع غير متاح');
   let dx: number, dy: number;
   if (at) {
     const pos = clip.snaps.map((s) => (s.kind === 'scene' ? { x: s.scene.boardX as number, y: s.scene.boardY as number } : { x: s.card.x as number, y: s.card.y as number }));
@@ -197,7 +197,7 @@ export function deleteLib(type: LibType, id: string) {
   const label = { character: 'شخصية', location: 'موقع', moodboard: 'لوحة مزاج' }[type];
   askConfirm({
     title: `حذف ${LIB_WORD[type]}؟`,
-    msg: n ? `«${name}» مرتبطة بـ ${n} ${n === 1 ? 'مشهد' : 'مشاهد'} — ستختفي منها، وتقدر تستعيدها من السلة.` : `ستذهب «${name}» إلى السلة، وتقدر تستعيدها منها.`,
+    msg: n ? `«${name}» مرتبطة بـ ${n} ${n === 1 ? 'مشهد' : 'مشاهد'}، وتبقى في السلة.` : `«${name}» تبقى في السلة 30 يوماً.`,
     ok: 'حذف',
     danger: true,
     onOk: () => {
@@ -214,7 +214,7 @@ export function removeFromBoard(cardIds: string[]) {
   const ops: Op[] = cardIds.map((id) => ({ op: 'delete', entity: 'boardCards', id }));
   if (!ops.length || !commit(ops, { history: 'إزالة من اللوحة' })) return;
   setState({ selection: [] });
-  toast('أُزيلت من اللوحة — باقية في المكتبة', { undo: true });
+  toast('أُزيلت من اللوحة فقط', { undo: true });
 }
 
 // ---------- layers, lock, colour ----------
@@ -328,7 +328,7 @@ export function addCard(kind: 'heading' | 'frame', pos = centerWorldRef()) {
 /** Uploads photos and puts each one on the board as an image card, side by side. */
 export async function addImageCards(files: FileList | File[], pos = centerWorldRef()) {
   const p = project();
-  if (!p || getState().offline) return toast('لا يوجد اتصال، التغييرات لن تُحفظ', { tone: 'danger' });
+  if (!p || getState().offline) return toast('لا يوجد اتصال، لم يُحفظ', { tone: 'danger' });
   const list = [...files].filter((f) => /^image\//.test(f.type));
   if (!list.length) return;
   if (list.some((f) => f.size > MAX_UPLOAD_BYTES)) toast('صورة أكبر من 15MB تُرِكت', { tone: 'danger' });
@@ -348,7 +348,7 @@ export async function addImageCards(files: FileList | File[], pos = centerWorldR
     }
     if (commit(ops, { history: 'إضافة صورة' })) setState({ selection: made });
   } catch {
-    toast('فشل رفع صورة — أعد المحاولة', { tone: 'danger' });
+    toast('فشل رفع الصورة', { tone: 'danger' });
   }
 }
 
@@ -534,7 +534,7 @@ export function shotMenu(shotId: string): MenuEntry[] {
     { label: 'تكرار', icon: 'repeat', run: () => duplicateShot(shotId) },
     { label: 'نقل إلى مشهد…', icon: 'arrow-up-right', testid: 'm-move-to', children: p.scenes.map((sc, i) => ({
       label: `${pad2(i + 1)} · ${sc.name}`, disabled: sc.id === f.sc.id, testid: `m-move-${i + 1}`,
-      run: () => (moveShot(shotId, sc.id, null), toast(`نُقلت اللقطة إلى المشهد ${pad2(i + 1)}`, { undo: true })),
+      run: () => (moveShot(shotId, sc.id, null), toast(`نُقلت للمشهد ${pad2(i + 1)}`, { undo: true })),
     })) },
     'sep',
     { label: 'حذف اللقطة', icon: 'trash', danger: true, run: () => deleteShot(shotId), testid: 'm-delete' },

@@ -78,8 +78,8 @@ export function StoryboardView() {
           style={{ height: 28, display: 'flex', alignItems: 'center' }}>
           <div style={{ height: endOver ? 6 : 0, width: '100%', background: 'var(--color-accent)', borderRadius: 3, opacity: endOver ? 1 : 0 }} />
         </div>
-        {!p.scenes.length && <EmptyState icon="film" title="لا مشاهد بعد" description="اسحب قالب «مشهد» من الشريط وأفلته هنا." />}
-        {filter && fCount === 0 && !isBoard && <EmptyState icon="search" title="لا توجد مشاهد مطابقة" description="هذا العنصر غير مرتبط بأي مشهد بعد. اسحبه من المكتبة إلى صف مشهد لربطه." />}
+        {!p.scenes.length && <EmptyState icon="film" title="لا مشاهد بعد" description="اسحب قالب «مشهد» إلى هنا." />}
+        {filter && fCount === 0 && !isBoard && <EmptyState icon="search" title="لا توجد مشاهد مطابقة" description="غير مرتبط بمشهد بعد." />}
       </div>
     </div>
   );
@@ -153,7 +153,7 @@ const SceneRow = memo(function SceneRow({ p, sc, si, match }: { p: PProject; sc:
           {!sc.shots.length && (
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 4, height: addH, padding: '0 12px', color: 'var(--color-text-muted)' }}>
               <span style={{ fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 16, color: 'var(--color-text)' }}>مشهد بلا لقطات</span>
-              <span style={{ fontSize: 13 }}>أضف أول لقطة، أو اسحب لقطة من مشهد آخر.</span>
+              <span style={{ fontSize: 13 }}>أضف لقطة أو اسحبها هنا.</span>
             </div>
           )}
           {/* «+ لقطة» stays fully visible at the row's end even when the shots scroll (SPEC §7.3). */}

@@ -84,7 +84,7 @@ export function BoardCanvas() {
       </div>
       {isBoard && !p.scenes.length && !p.cards.length && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, pointerEvents: 'none' }}>
-          <EmptyState icon="film" title="مشروع فارغ" description="اسحب قالب مشهد من الشريط لتبدأ." />
+          <EmptyState icon="film" title="مشروع فارغ" description="اسحب قالب مشهد لتبدأ." />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, marginTop: 40, color: 'var(--color-accent)' }}>
             <span style={{ width: 2, height: 120, background: 'linear-gradient(var(--color-accent),var(--color-accent)) center/2px 100% no-repeat', opacity: 0.8 }} />
             <span style={{ width: 12, height: 12, borderInlineEnd: '2px solid var(--color-accent)', borderBottom: '2px solid var(--color-accent)', transform: 'rotate(45deg)', marginTop: -10 }} />

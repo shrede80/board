@@ -66,7 +66,7 @@ export function MobileApp() {
     <div data-component="MobileApp" dir="rtl" style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', color: 'var(--color-text)', paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
       {offline && (
         <div data-component="OfflineBanner" data-testid="offline-banner" style={{ margin: '8px 12px 0', padding: '10px 14px', borderRadius: 8, background: 'var(--color-danger)', color: '#fdfcfa', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <Icon name="x-circle" size={16} />لا يوجد اتصال، التغييرات لن تُحفظ — الأفكار تنحفظ على الجوال
+          <Icon name="x-circle" size={16} />لا يوجد اتصال · الأفكار تنحفظ على الجوال
         </div>
       )}
       <main style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>

@@ -40,7 +40,7 @@ export function LoginScreen() {
       await afterLogin();
     } catch (x) {
       const st = x instanceof ApiError ? x.status : 0;
-      setErr(st === 429 ? lockMsg(Number((x as ApiError).body.lockedMs) || 0) : st === 0 ? 'لا يوجد اتصال بالإنترنت.' : 'كلمة السر غير صحيحة. حاول مرة أخرى.');
+      setErr(st === 429 ? lockMsg(Number((x as ApiError).body.lockedMs) || 0) : st === 0 ? 'لا يوجد اتصال' : 'كلمة السر غير صحيحة');
     } finally {
       setBusy(false);
     }
@@ -56,7 +56,7 @@ export function LoginScreen() {
         <Button variant="primary" onClick={() => void submit()} loading={busy} style={{ width: '100%' }} type="submit">
           دخول
         </Button>
-        <span style={{ fontSize: 12, color: '#b9b9c2', textAlign: 'center' }}>هذا الجهاز سيتذكّر دخولك بعد أول مرة</span>
+        <span style={{ fontSize: 12, color: '#b9b9c2', textAlign: 'center' }}>الجهاز يتذكّرك بعدها</span>
       </form>
     </div>
   );
@@ -80,7 +80,7 @@ export function SetupScreen() {
       await afterLogin();
     } catch (x) {
       const st = x instanceof ApiError ? x.status : 0;
-      setErr(st === 401 ? 'رمز الإعداد غير صحيح' : st === 409 ? 'كلمة السر محددة مسبقاً — سجّل الدخول' : st === 429 ? lockMsg(Number((x as ApiError).body.lockedMs) || 0) : 'تعذّر الحفظ، حاول مرة أخرى');
+      setErr(st === 401 ? 'رمز الإعداد غير صحيح' : st === 409 ? 'كلمة السر موجودة، سجّل الدخول' : st === 429 ? lockMsg(Number((x as ApiError).body.lockedMs) || 0) : 'تعذّر الحفظ، حاول مرة أخرى');
     } finally {
       setBusy(false);
     }
@@ -89,7 +89,7 @@ export function SetupScreen() {
     <div data-component="SetupScreen" data-sb-theme="dark" style={wrap}>
       <form onSubmit={submit} style={form}>
         <Header />
-        <span style={{ fontSize: 14, color: '#e3d5b8', lineHeight: 1.7, textAlign: 'center' }}>أول مرة: اختر كلمة سر البرنامج. تُحفظ مشفّرة، ولا يراها أحد.</span>
+        <span style={{ fontSize: 14, color: '#e3d5b8', lineHeight: 1.7, textAlign: 'center' }}>اختر كلمة سر البرنامج.</span>
         <Field label="رمز الإعداد">
           <Input value={token} onChange={(e) => (setToken(e.target.value), setErr(''))} autoComplete="off" data-testid="setup-token" />
         </Field>

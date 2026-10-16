@@ -81,7 +81,7 @@ function IdeaForm({ close }: { close: () => void }) {
     if (!id) return;
     files.forEach((x) => URL.revokeObjectURL(x.url));
     close();
-    toast(navigator.onLine ? 'انحفظت الفكرة' : 'انحفظت الفكرة على الجوال — تُرسل لما يرجع النت');
+    toast(navigator.onLine ? 'انحفظت الفكرة' : 'انحفظت، تُرسل مع الاتصال');
   };
   return (
     <div data-testid="add-idea" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -103,7 +103,7 @@ function IdeaForm({ close }: { close: () => void }) {
         <Field label="المشهد"><Select options={pid && pid === p?.id ? sceneOptions('بدون مشهد') : [{ value: '', label: '—' }]} value={sid} disabled={!pid || pid !== p?.id} onChange={(e) => setSid(e.target.value)} /></Field>
       </div>
       <Button variant="primary" size="lg" icon="check" loading={busy} disabled={!text.trim() && !files.length} onClick={() => void save()} data-testid="m-add-save" style={{ width: '100%' }}>احفظ الفكرة</Button>
-      <span style={{ fontSize: 13, color: 'var(--color-text-muted)', textAlign: 'center' }}>تنحفظ على جوالك حتى لو النت ضعيف، وتُرسل أول ما يرجع.</span>
+      <span style={{ fontSize: 13, color: 'var(--color-text-muted)', textAlign: 'center' }}>تنحفظ على الجوال أولاً.</span>
     </div>
   );
 }
@@ -150,8 +150,8 @@ function ShotForm({ close }: { close: () => void }) {
         </label>
       </div>
       <Button variant="primary" size="lg" icon="plus" disabled={offline || !sc} onClick={save} data-testid="m-add-save" style={{ width: '100%' }}>أضف اللقطة</Button>
-      {!sc && <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>لا مشاهد في هذا المشروع بعد — أضف مشهداً أولاً.</span>}
-      {offline && <span style={{ fontSize: 13, color: 'var(--color-danger)' }}>تحتاج اتصال — الأفكار فقط تنحفظ بدون إنترنت.</span>}
+      {!sc && <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>أضف مشهداً أولاً.</span>}
+      {offline && <span style={{ fontSize: 13, color: 'var(--color-danger)' }}>تحتاج اتصال.</span>}
     </div>
   );
 }
@@ -176,7 +176,7 @@ function SceneForm({ close }: { close: () => void }) {
       <Field label="اسم المشهد"><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="مثلاً: الوصول" data-testid="m-add-scene-name" /></Field>
       <Field label="ملخص (اختياري)"><Textarea rows={3} value={summary} onChange={(e) => setSummary(e.target.value)} data-testid="m-add-scene-summary" /></Field>
       <Button variant="primary" size="lg" icon="plus" disabled={offline} onClick={save} data-testid="m-add-save" style={{ width: '100%' }}>أضف المشهد</Button>
-      {offline && <span style={{ fontSize: 13, color: 'var(--color-danger)' }}>تحتاج اتصال — الأفكار فقط تنحفظ بدون إنترنت.</span>}
+      {offline && <span style={{ fontSize: 13, color: 'var(--color-danger)' }}>تحتاج اتصال.</span>}
     </div>
   );
 }

@@ -219,7 +219,7 @@ export function IdeaEditDialog() {
       const ids = await Promise.all(list.filter((f) => /^image\//.test(f.type)).slice(0, room).map((f) => uploadFile(f)));
       setImages((cur) => [...cur, ...ids]);
     } catch {
-      toast('فشل رفع صورة — أعد المحاولة', { tone: 'danger' });
+      toast('فشل رفع الصورة', { tone: 'danger' });
     }
     setBusy(false);
   };
@@ -269,7 +269,7 @@ export function LibraryIdeas({ projectId }: { projectId: string }) {
   return (
     <>
       <IdeaQuickAdd projectId={projectId} />
-      <p style={{ margin: '4px 4px 0', fontSize: 12, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>اسحب فكرة إلى لقطة لتصبح صوراً مرجعية، أو إلى صف مشهد لتصبح لقطة، أو إلى اللوحة لتصبح ملاحظة.</p>
+      <p style={{ margin: '4px 4px 0', fontSize: 12, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>اسحبها إلى لقطة أو مشهد أو اللوحة.</p>
       <span style={h}>لهذا المشروع</span>
       {mine.map((i) => <IdeaCard key={i.id} idea={i} draggable />)}
       {!mine.length && <span style={{ fontSize: 13, color: 'var(--color-text-muted)', padding: '4px 4px 8px' }}>لا أفكار لهذا المشروع بعد.</span>}

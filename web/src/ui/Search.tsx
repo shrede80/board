@@ -79,7 +79,7 @@ export function SearchDialog() {
             );
           })}
           {q.trim() && !busy && !hits.length && <div style={{ padding: 18, fontSize: 14, color: 'var(--color-text-muted)', textAlign: 'center' }}>لا نتائج</div>}
-          {!q.trim() && <div style={{ padding: 18, fontSize: 13, color: 'var(--color-text-muted)', textAlign: 'center' }}>أسماء المشاريع والعملاء، أسماء المشاهد، أوصاف اللقطات، ونص الأفكار.</div>}
+          {!q.trim() && <div style={{ padding: 18, fontSize: 13, color: 'var(--color-text-muted)', textAlign: 'center' }}>المشاريع والمشاهد واللقطات والأفكار.</div>}
         </div>
       </div>
     </Overlay>
