@@ -62,6 +62,7 @@ npm run seed                # (dev server running) loads the 4 prototype demo pr
 npm run deploy              # build + scripts/deploy.mjs (web files embedded in the Worker; stops at 2.5 MB compressed)
 npm run size                # same bundle + size check, no deploy
 node scripts/backup-prod.mjs <label>   # production backup to R2 (same format as the nightly one) — before every prod migration
+node scripts/check-offline.mjs          # offline start + idea queue against `vite build && vite preview --port 5300` (the SW only runs in builds)
 ```
 - Playwright is pinned to 1.56.1 to match the preinstalled Chromium in /opt/pw-browsers. Do not run `playwright install`.
 - To re-shoot the prototype: unpack is not needed; open `prototype/laptop.html#screen=…&theme=…` (states listed in HANDOFF.md / prototype index).
