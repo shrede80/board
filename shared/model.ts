@@ -10,7 +10,7 @@ export function emptyStore(): Store {
   return {
     projects: new Map(), scenes: new Map(), shots: new Map(), characters: new Map(), locations: new Map(), moodboards: new Map(),
     notes: new Map(), boardCards: new Map(), inboxItems: new Map(), sceneCharacters: new Map(), sceneLinks: new Map(),
-    itemImages: new Map(), ideas: new Map(), equipment: new Map(),
+    itemImages: new Map(), ideas: new Map(), equipment: new Map(), challengeRuns: new Map(), challengeDays: new Map(),
   };
 }
 

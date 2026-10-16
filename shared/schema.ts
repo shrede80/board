@@ -17,6 +17,8 @@ export interface FieldDef {
   createOnly?: boolean;
   /** Default used on create when omitted. */
   def?: unknown;
+  /** Written only by the server's own actions (e.g. the challenge draw); clients can't set it. */
+  server?: boolean;
 }
 
 export interface EntityDef {
@@ -24,6 +26,8 @@ export interface EntityDef {
   scope: 'project' | 'owner';
   /** Deleting puts the row into the 30-day trash (restorable). Others are tombstoned only. */
   trashable: boolean;
+  /** 'update': clients may only update the non-server fields (rows are created by server actions). */
+  clientOps?: 'update';
   fields: Record<string, FieldDef>;
 }
 
@@ -222,6 +226,54 @@ export const ENTITIES = {
       createdAt: { col: 'created_at', type: 'int', createOnly: true },
     },
   },
+  /**
+   * «تحدي العشرين إطاراً» (UPDATE-2 §2). Rows are created and moved forward only by the
+   * server's challenge actions (/api/challenge/*): the draw is random and secret. Clients edit
+   * the journal side (BTS, journal, links, images, voice) through ordinary ops.
+   */
+  challengeRuns: {
+    table: 'challenge_runs', scope: 'owner', trashable: false, clientOps: 'update',
+    fields: {
+      status: { ...e('status', ['active', 'done', 'archived'], 'active'), server: true },
+      deckVersion: { col: 'deck_version', type: 'int', def: 1, server: true },
+      startedAt: { col: 'started_at', type: 'int', server: true },
+      finishedAt: { col: 'finished_at', type: 'int', def: null, server: true },
+      burnUsed: { ...b('burn_used'), server: true },
+      /** {lat, lng, label} | null (= Riyadh) */
+      location: j('location', null),
+      createdAt: { col: 'created_at', type: 'int', createOnly: true, server: true },
+    },
+  },
+  challengeDays: {
+    table: 'challenge_days', scope: 'owner', trashable: false, clientOps: 'update',
+    fields: {
+      runId: { col: 'run_id', type: 'text', server: true },
+      /** card number in the deck file (0–20) */
+      cardId: { col: 'card_id', type: 'int', server: true },
+      /** day shown (0 = prep, then 1…20 in draw order); null while postponed */
+      seq: { col: 'seq', type: 'int', def: null, server: true },
+      state: { ...e('state', ['drawn', 'done', 'burned', 'postponed'], 'drawn'), server: true },
+      drawnAt: { col: 'drawn_at', type: 'int', server: true },
+      completedAt: { col: 'completed_at', type: 'int', def: null, server: true },
+      overrode: { ...b('overrode'), server: true },
+      postponeCount: { col: 'postpone_count', type: 'int', def: 0, server: true },
+      burnReason: { ...t('burn_reason'), server: true },
+      /** 5 booleans (btsChecklist) */
+      bts: j('bts', [false, false, false, false, false]),
+      /** {worked, failed, regret, tomorrow, folder, sendRegret?, setup?: boolean[]} */
+      journal: j('journal', {}),
+      filmUrl: t('film_url'),
+      publishUrl: t('publish_url'),
+      stillImageIds: j('still_image_ids'),
+      btsImageIds: j('bts_image_ids'),
+      voiceId: tn('voice_id'),
+      projectId: tn('project_id'),
+      /** {shot, total} | null */
+      commitment: j('commitment', null),
+      regretIdeaId: tn('regret_idea_id'),
+      createdAt: { col: 'created_at', type: 'int', createOnly: true, server: true },
+    },
+  },
   equipment: {
     table: 'equipment', scope: 'owner', trashable: false,
     fields: {
@@ -251,8 +303,10 @@ export type EntityName = keyof typeof ENTITIES;
 export const ENTITY_NAMES = Object.keys(ENTITIES) as EntityName[];
 export const PROJECT_ENTITIES = ENTITY_NAMES.filter((n) => ENTITIES[n].scope === 'project');
 /** Owner-wide rows every device keeps in sync, with or without an open project. */
-export const OWNER_SYNC: EntityName[] = ['equipment', 'ideas'];
+export const OWNER_SYNC: EntityName[] = ['equipment', 'ideas', 'challengeRuns', 'challengeDays'];
 export const MAX_IDEA_IMAGES = 10;
+export const MAX_STILLS = 3;
+export const MAX_BTS_IMAGES = 6;
 
 export function isEntityName(s: string): s is EntityName {
   return Object.prototype.hasOwnProperty.call(ENTITIES, s);

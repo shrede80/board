@@ -1,4 +1,4 @@
-import { ENTITIES, isEntityName, type EntityName, type FieldDef, type Op, type OpsResult } from '../../shared/schema';
+import { ENTITIES, isEntityName, type EntityDef, type EntityName, type FieldDef, type Op, type OpsResult } from '../../shared/schema';
 import { BadRequest, encodeField, isId, OWNER_ID } from './rows';
 
 /**
@@ -106,8 +106,9 @@ function prepare(ops: Op[], now: number): { p: Prepared; trashIds: (string | nul
       p.restores.push(op.trashId);
       continue;
     }
-    const def = ENTITIES[op.entity];
+    const def = ENTITIES[op.entity] as EntityDef;
     const fields = def.fields as Record<string, FieldDef>;
+    if (def.clientOps === 'update' && op.op !== 'update') throw new BadRequest(`${op.entity}: ${op.op} not allowed`);
     if (op.op === 'create') {
       const row: Record<string, Bound> = { id: op.id };
       for (const [name, f] of Object.entries(fields)) {
@@ -131,7 +132,7 @@ function prepare(ops: Op[], now: number): { p: Prepared; trashIds: (string | nul
       for (const name of names) {
         const f = Object.hasOwn(fields, name) ? fields[name] : undefined;
         if (!f) throw new BadRequest(`${op.entity}.${name}: unknown field`);
-        if (f.createOnly) throw new BadRequest(`${op.entity}.${name}: cannot be changed`);
+        if (f.createOnly || f.server) throw new BadRequest(`${op.entity}.${name}: cannot be changed`);
         row[f.col] = encodeField(op.entity, name, f, op.fields[name]);
         cols.push(f.col);
       }

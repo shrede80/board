@@ -95,6 +95,9 @@ export async function sweepImages(db: D1Database, bucket: R2Bucket, now = Date.n
          AND NOT EXISTS (SELECT 1 FROM inbox_items x WHERE x.image_id = i.id)
          AND NOT EXISTS (SELECT 1 FROM board_cards x WHERE x.kind = 'image' AND x.ref_id = i.id)
          AND NOT EXISTS (SELECT 1 FROM ideas x, json_each(x.image_ids) j WHERE j.value = i.id)
+         AND NOT EXISTS (SELECT 1 FROM challenge_days x WHERE x.voice_id = i.id)
+         AND NOT EXISTS (SELECT 1 FROM challenge_days x, json_each(x.still_image_ids) j WHERE j.value = i.id)
+         AND NOT EXISTS (SELECT 1 FROM challenge_days x, json_each(x.bts_image_ids) j WHERE j.value = i.id)
          ${['projects', 'scenes', 'shots', 'characters', 'locations', 'moodboards']
            .map((t) => `AND NOT EXISTS (SELECT 1 FROM ${t} x WHERE x.cover_image_id = i.id)`)
            .join('\n         ')}

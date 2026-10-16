@@ -8,6 +8,7 @@ import { ensureBootstrap } from './bootstrap';
 import type { Env } from './env';
 import { serveImage, uploadImage } from './images';
 import { daily, purge } from './maintenance';
+import { burn, challengeState, complete, draw, listRuns, META, newRun, postpone, Refused, start, uploadVoice } from './challenge';
 import { duplicateProject } from './duplicate';
 import { APP_VERSION, VERSION_HEADER } from '../../shared/version';
 import { applyOps, parseOps } from './ops';
@@ -30,6 +31,7 @@ app.use('*', async (c, next) => {
 });
 
 app.onError((err, c) => {
+  if (err instanceof Refused) return c.json({ error: err.code, ...err.extra }, 409);
   if (err instanceof BadRequest) return c.json({ error: 'bad_request', message: err.message }, 400);
   console.error(err);
   return c.json({ error: 'server_error' }, 500);
@@ -247,6 +249,44 @@ app.post('/api/images', async (c) => {
 });
 app.get('/api/images/:id', (c) => (isId(c.req.param('id')) ? serveImage(c.env.BUCKET, c.req.param('id'), false) : c.notFound()));
 app.get('/api/images/:id/thumb', (c) => (isId(c.req.param('id')) ? serveImage(c.env.BUCKET, c.req.param('id'), true) : c.notFound()));
+
+// ---------- «تحدي العشرين إطاراً» (UPDATE-2) ----------
+const cardNo = (v: unknown) => {
+  if (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > 99) throw new BadRequest('cardId');
+  return v;
+};
+app.get('/api/challenge/meta', (c) => c.json(META));
+app.get('/api/challenge', async (c) => {
+  const run = c.req.query('run');
+  if (run !== undefined && !isId(run)) throw new BadRequest('run');
+  return c.json(await challengeState(c.env.DB, run));
+});
+app.get('/api/challenge/runs', async (c) => c.json(await listRuns(c.env.DB)));
+app.post('/api/challenge/start', async (c) => c.json(await start(c.env.DB)));
+app.post('/api/challenge/draw', async (c) => {
+  const { tz, override } = await body<{ tz?: unknown; override?: unknown }>(c);
+  if (typeof tz !== 'number' || !Number.isFinite(tz) || Math.abs(tz) > 16 * 60) throw new BadRequest('tz');
+  return c.json(await draw(c.env.DB, { tz, override: override === true }));
+});
+app.post('/api/challenge/postpone', async (c) => c.json(await postpone(c.env.DB, cardNo((await body(c)).cardId))));
+app.post('/api/challenge/burn', async (c) => {
+  const b = await body<{ cardId?: unknown; reason?: unknown }>(c);
+  if (typeof b.reason !== 'string') throw new BadRequest('reason');
+  return c.json(await burn(c.env.DB, cardNo(b.cardId), b.reason));
+});
+app.post('/api/challenge/complete', async (c) => c.json(await complete(c.env.DB, cardNo((await body(c)).cardId))));
+app.post('/api/challenge/new-run', async (c) => c.json(await newRun(c.env.DB)));
+app.post('/api/challenge/voice', async (c) => {
+  const len = Number(c.req.header('Content-Length') || 0);
+  if (len > 6 * 1024 * 1024) throw new BadRequest('audio too large');
+  let form: FormData;
+  try {
+    form = await c.req.formData();
+  } catch {
+    throw new BadRequest('multipart form expected');
+  }
+  return c.json(await uploadVoice(c.env.DB, c.env.BUCKET, form));
+});
 
 // ---------- single-item REST sugar over /api/ops ----------
 app.post('/api/:entity', async (c) => {

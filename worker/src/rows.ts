@@ -1,4 +1,4 @@
-import { ENTITIES, MAX_IDEA_IMAGES, type EntityName, type FieldDef, type Row } from '../../shared/schema';
+import { ENTITIES, MAX_BTS_IMAGES, MAX_IDEA_IMAGES, MAX_STILLS, type EntityName, type FieldDef, type Row } from '../../shared/schema';
 
 /** Fixed owner while the app is single-user (SPEC §1.1). */
 export const OWNER_ID = 'owner';
@@ -63,9 +63,54 @@ export function encodeField(entity: EntityName, name: string, f: FieldDef, v: un
     case 'json': {
       if (typeof v !== 'object') throw bad('expected array/object');
       if (entity === 'ideas' && name === 'imageIds' && (!Array.isArray(v) || v.length > MAX_IDEA_IMAGES || !v.every(isId))) throw bad('up to 10 image ids');
+      if (entity === 'challengeDays' || entity === 'challengeRuns') checkChallengeJson(name, v, bad);
       const s = JSON.stringify(v);
       if (s.length > MAX_TEXT) throw bad('too long');
       return s;
+    }
+  }
+}
+
+const JOURNAL_TEXT = ['worked', 'failed', 'regret', 'tomorrow', 'folder'];
+
+/** Shape checks for the challenge's JSON fields (UPDATE-2 §2.1). */
+function checkChallengeJson(name: string, v: object, bad: (why: string) => Error) {
+  const ids = (max: number) => {
+    if (!Array.isArray(v) || v.length > max || !v.every(isId)) throw bad(`up to ${max} image ids`);
+  };
+  const num = (x: unknown) => typeof x === 'number' && Number.isFinite(x);
+  switch (name) {
+    case 'stillImageIds':
+      return ids(MAX_STILLS);
+    case 'btsImageIds':
+      return ids(MAX_BTS_IMAGES);
+    case 'bts':
+      if (!Array.isArray(v) || v.length !== 5 || !v.every((x) => typeof x === 'boolean')) throw bad('5 booleans');
+      return;
+    case 'journal': {
+      if (Array.isArray(v)) throw bad('object expected');
+      for (const [k, x] of Object.entries(v)) {
+        if (JOURNAL_TEXT.includes(k)) {
+          if (typeof x !== 'string') throw bad(`${k}: text expected`);
+        } else if (k === 'sendRegret') {
+          if (typeof x !== 'boolean') throw bad('sendRegret: boolean expected');
+        } else if (k === 'setup') {
+          if (!Array.isArray(x) || x.length > 20 || !x.every((y) => typeof y === 'boolean')) throw bad('setup: booleans expected');
+        } else throw bad(`unknown key ${k}`);
+      }
+      return;
+    }
+    case 'commitment': {
+      const c = v as Record<string, unknown>;
+      if (Array.isArray(v) || !num(c.shot) || !num(c.total) || Object.keys(c).length !== 2) throw bad('{shot, total} expected');
+      return;
+    }
+    case 'location': {
+      const l = v as Record<string, unknown>;
+      if (Array.isArray(v) || !num(l.lat) || !num(l.lng) || Math.abs(l.lat as number) > 90 || Math.abs(l.lng as number) > 180) throw bad('{lat, lng} expected');
+      if (l.label !== undefined && (typeof l.label !== 'string' || l.label.length > 200)) throw bad('bad label');
+      if (Object.keys(l).some((k) => !['lat', 'lng', 'label'].includes(k))) throw bad('unknown key');
+      return;
     }
   }
 }
