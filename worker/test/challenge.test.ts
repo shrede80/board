@@ -106,7 +106,7 @@ describe('challenge: the rules on the server', () => {
     await ops(cookie, [{ op: 'update', entity: 'challengeDays', id: d.id, fields: { journal: { worked: 'أ', regret: 'ب' } } }]);
     const r = await post(cookie, 'complete', { cardId: d.cardId });
     expect(r.status).toBe(409);
-    expect((await r.json()).error).toBe('journal');
+    expect(((await r.json()) as { error: string }).error).toBe('journal');
     await ops(cookie, [{ op: 'update', entity: 'challengeDays', id: d.id, fields: { filmUrl: 'https://vimeo.com/1' } }]);
     s = await act(cookie, 'complete', { cardId: d.cardId });
     expect(s.days.find((x) => x.id === d.id)!.state).toBe('done');
@@ -183,7 +183,7 @@ describe('challenge: the rules on the server', () => {
     expect(s.open!.postpone).toBe('alone');
     const r = await post(cookie, 'postpone', { cardId: openDay(s).cardId });
     expect(r.status).toBe(409);
-    expect((await r.json()).error).toBe('alone');
+    expect(((await r.json()) as { error: string }).error).toBe('alone');
   });
 
   it('burn: once per run, with a reason; finished but not counted done; refused on fixed cards', async () => {

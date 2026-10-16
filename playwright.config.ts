@@ -12,7 +12,12 @@ export default defineConfig({
     baseURL: `http://localhost:${PORT}`,
     locale: 'ar',
     // headless Chromium needs a UTF-8 locale to keep Arabic download file names
-    launchOptions: { env: { ...process.env, LANG: 'C.UTF-8', LC_ALL: 'C.UTF-8' } },
+    launchOptions: {
+      env: { ...process.env, LANG: 'C.UTF-8', LC_ALL: 'C.UTF-8' },
+      // the challenge's voice memo is recorded from a fake microphone playing a test tone
+      args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', '--use-file-for-fake-audio-capture=e2e/fixtures/tone.wav'],
+    },
+    permissions: ['microphone'],
   },
   projects: [
     { name: 'laptop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },

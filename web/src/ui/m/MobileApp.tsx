@@ -8,6 +8,7 @@ import { Modals } from '../Modals';
 import { PresentationMode } from '../Present';
 import { ChoiceDialog } from '../Search';
 import { AddSheet } from './AddSheet';
+import { ChallengeLayer } from '../Challenge';
 
 import { MHome } from './MHome';
 import { IdeaSheet, MIdeas } from './MIdeas';
@@ -86,6 +87,7 @@ export function MobileApp() {
         {navBtn('ideas', 'sparkles', 'الأفكار', 'm-tab-ideas', badge)}
         {navBtn('more', 'more', 'المزيد', 'm-tab-more')}
       </nav>
+      <ChallengeLayer />
       {editor && <EditorPanel mobile />}
       {addSheet && <AddSheet />}
       {ideaSheet && <IdeaSheet />}

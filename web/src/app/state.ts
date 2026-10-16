@@ -3,6 +3,7 @@ import type { Settings } from '../../../shared/schema';
 import { Engine, type SaveState } from '../data/engine';
 import { deriveProject, type PProject, type Uploads } from '../data/project';
 import type { TplType } from '../lib/constants';
+import type { ChRoute } from './challenge';
 
 export type Mode = 'board' | 'storyboard';
 export type Screen = 'home' | 'ideas' | 'app' | 'equipment' | 'trash' | 'settings' | 'more';
@@ -157,6 +158,10 @@ export interface UIState {
   uploads: Uploads;
   canUndo: boolean;
   canRedo: boolean;
+  /** «تحدي العشرين إطاراً» focus screens, innermost last (UPDATE-2 §4) */
+  ch: ChRoute[];
+  /** bumps when challenge card text / meta arrive */
+  chVersion: number;
 }
 
 const initialTheme = (() => {
@@ -174,7 +179,7 @@ let state: UIState = {
   selection: [], view: { x: 0, y: 0, z: 0.8 }, filter: null, toasts: [], save: 'saved', offline: typeof navigator !== 'undefined' ? !navigator.onLine : false,
   modal: null, dupTarget: null, choice: null, ideaEdit: null, bootOffline: false, pending: [], addSheet: null, ideaSheet: null, mTab: 'scenes', projMenu: false, popMenu: null, dragSize: null, renaming: null, newVersion: false, pickTarget: null, hoverItem: null, exportTab: 'pdf', exportScope: 'all', exportSel: [], confirm: null, dragOver: null,
   present: { open: false, i: 0, playing: false, tech: false, fill: 0 }, hoverShot: null, marquee: null, space: false, menu: false,
-  pick: null, custom: null, customVal: '', flipping: false, guides: [], dragPos: null, uploads: {}, canUndo: false, canRedo: false,
+  pick: null, custom: null, customVal: '', flipping: false, guides: [], dragPos: null, uploads: {}, canUndo: false, canRedo: false, ch: [], chVersion: 0,
 };
 
 const listeners = new Set<() => void>();

@@ -7,6 +7,7 @@ import { Icon } from '../../ds/ds';
 import { STAGE_LABEL, STAGE_ORDER } from '../../lib/constants';
 import { cover, Progress, projectMenu, upcoming, useSummaries, type Summary } from '../Home';
 import { Chips, iconBtn } from './kit';
+import { ChallengeHomeCard } from '../Challenge';
 
 /** Phone Home (UPDATE-1 ج2, mobile.html screen 1). */
 export function MHome() {
@@ -44,6 +45,7 @@ export function MHome() {
         </div>
       )}
 
+      {!bootOffline && <ChallengeHomeCard />}
       {next && <UpcomingMini s={next} now={now} />}
       {last && (
         <button data-testid="continue-card" onClick={() => void openProject(last.id)} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 14, border: '1px solid var(--color-border-subtle)', borderRadius: 14, background: 'var(--color-bg)', boxShadow: 'var(--shadow-card)', textAlign: 'right', color: 'var(--color-text)' }}>

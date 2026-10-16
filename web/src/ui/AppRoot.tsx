@@ -16,6 +16,7 @@ import { Workspace } from './Workspace';
 import { HomeScreen } from './Home';
 import { IdeaEditDialog, IdeasPage } from './Ideas';
 import { ChoiceDialog, SearchDialog } from './Search';
+import { ChallengeLayer } from './Challenge';
 
 function Loading({ mobile }: { mobile: boolean }) {
   if (mobile) {
@@ -91,6 +92,7 @@ export function AppRoot() {
           <ChoiceDialog />
           <IdeaEditDialog />
           <PresentationMode />
+          <ChallengeLayer />
         </>
       )}
       <ConfirmDialog />

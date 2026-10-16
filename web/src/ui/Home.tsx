@@ -1,3 +1,4 @@
+import { ChallengeHomeCard } from './Challenge';
 import { useEffect, useRef, useState } from 'react';
 import { countdown, greeting, isoDay, lastEdit, longDate, shootAt } from '../../../shared/time';
 import { openProject, setMode } from '../app/actions';
@@ -105,6 +106,8 @@ export function HomeScreen() {
             <Button variant="primary" icon="plus" onClick={() => setState({ modal: 'newProject' })} data-testid="new-project">مشروع جديد</Button>
           </div>
         </section>
+
+        <ChallengeHomeCard laptop />
 
         {first && (
           <section data-testid="home-welcome" style={{ border: '1px solid var(--color-border-subtle)', borderRadius: 14, background: 'var(--color-surface)', padding: '48px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, textAlign: 'center' }}>

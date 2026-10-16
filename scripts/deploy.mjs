@@ -32,6 +32,25 @@ function walk(dir) {
   });
 }
 
+// 0. Secrecy (UPDATE-2 rule one): the browser files must never carry challenge card text.
+//    (A title that is also a public word — a stage name or a screen named in the brief — is skipped.)
+{
+  const deck = JSON.parse(readFileSync('updates/update-2/data/challenge-deck.json', 'utf8'));
+  const brief = readFileSync('updates/update-2/UPDATE-2.md', 'utf8');
+  const stageNames = Object.values(deck.stages).map((s) => s.label);
+  const secrets = deck.days.flatMap((d) => [d.hook, d.idea, d.constraint, d.successMark, ...(stageNames.includes(d.title) || brief.includes(d.title) ? [] : [d.title])].filter(Boolean));
+  const leaks = walk(CLIENT).filter((f) => {
+    const text = readFileSync(f, 'latin1');
+    const utf = Buffer.from(text, 'latin1').toString('utf8');
+    return secrets.some((t) => utf.includes(t));
+  });
+  if (leaks.length) {
+    console.error(`STOP: challenge card text found in the web files (${leaks.length} file(s)). Not deploying.`);
+    process.exit(1);
+  }
+  console.log('Secrecy check: no card text in the web files ✓');
+}
+
 rmSync(OUT, { recursive: true, force: true });
 mkdirSync(join(OUT, 'files'), { recursive: true });
 

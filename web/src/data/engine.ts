@@ -329,6 +329,15 @@ export class Engine {
     return true;
   }
 
+  /** Rows the server returned from one of its own actions (e.g. the challenge draw). */
+  ingest(rows: Partial<Record<EntityName, Row[]>>) {
+    const { store, changed } = mergeChanges(this.store, { rows }, this.pending, this.versions);
+    if (changed) {
+      this.store = store;
+      this.ev.change();
+    }
+  }
+
   addImages(list: ImageMeta[]) {
     for (const i of list) this.images.set(i.id, i);
   }
