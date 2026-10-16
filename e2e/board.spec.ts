@@ -10,8 +10,26 @@ async function box(l: Locator) {
   return b;
 }
 
+/**
+ * Waits until the card stops moving on screen. Opening a project re-fits the board view a
+ * moment after the cards appear; measuring before that jump made the first drag miss.
+ */
+async function settled(page: Page, l: Locator) {
+  let last = '';
+  for (let i = 0; i < 40; i++) {
+    const b = await box(l);
+    const now = `${b.x.toFixed(1)},${b.y.toFixed(1)},${b.width.toFixed(1)}`;
+    if (now === last) return;
+    last = now;
+    await page.waitForTimeout(100);
+  }
+  throw new Error('card never settled');
+}
+
 /** Drags card `c` so its top lands `off` px below the top of card `a` (screen px). */
 async function dragNearTop(page: Page, c: Locator, a: Locator, off: number, opts: { alt?: boolean; release?: boolean } = {}) {
+  await settled(page, c);
+  await settled(page, a);
   const bc = await box(c), ba = await box(a);
   await page.mouse.move(bc.x + 40, bc.y + 40);
   await page.mouse.down();
@@ -91,7 +109,7 @@ test('alignment: guides + snap, magnet off, Alt pauses, auto-arrange then undo',
   // auto-arrange: 01 top-right, then leftwards (RTL), one undo step restores
   const positionsBefore = await Promise.all([0, 1, 2, 3, 4].map(async (i) => box(cards.nth(i))));
   await page.getByTestId('auto-arrange').click();
-  await expect(page.getByTestId('toast').filter({ hasText: 'رُتّبت 5 مشاهد' })).toBeVisible();
+  await expect(page.getByTestId('toast').filter({ hasText: 'ترتّبت 5 مشاهد' })).toBeVisible();
   await saved(page);
   await page.waitForTimeout(700); // FLIP animation
   const after = await Promise.all([0, 1, 2, 3, 4].map(async (i) => box(cards.nth(i))));

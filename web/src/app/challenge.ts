@@ -250,7 +250,7 @@ export const closeCh = () => setState({ ch: [] });
 
 async function action(path: string, json: unknown = {}): Promise<ServerState | null> {
   if (getState().offline) {
-    toast('لا يوجد اتصال', { tone: 'danger' });
+    toast('ما فيه اتصال', { tone: 'danger' });
     return null;
   }
   try {
@@ -266,7 +266,7 @@ async function action(path: string, json: unknown = {}): Promise<ServerState | n
       alone: 'ما فيه بطاقة ثانية',
       used: 'استخدمت الحرق من قبل',
     };
-    toast(msg[code] ?? (e instanceof ApiError && e.status === 0 ? 'لا يوجد اتصال' : 'تعذّر الحفظ، حاول مرة ثانية'), { tone: 'danger' });
+    toast(msg[code] ?? (e instanceof ApiError && e.status === 0 ? 'ما فيه اتصال' : 'ما انحفظ، جرّب مرة ثانية'), { tone: 'danger' });
     if (e instanceof ApiError && e.status === 409) void refresh().catch(() => {});
     return null;
   }
@@ -288,7 +288,7 @@ export async function postponeCard(day: Row) {
   const s = await action('postpone', { cardId: day.cardId });
   const d = s?.days.find((x) => x.state === 'drawn');
   if (!d) return;
-  toast('أُجّلت · هذي بطاقتك الجديدة');
+  toast('تأجّلت · هذي بطاقتك الجديدة');
   setState((st) => ({ ch: [...st.ch.filter((r) => r.v !== 'menu' && !('dayId' in r && r.dayId === day.id)), { v: 'card', dayId: d.id }] }));
 }
 
@@ -296,7 +296,7 @@ export async function burnCard(day: Row, reason: string) {
   const s = await action('burn', { cardId: day.cardId, reason });
   if (!s) return;
   closeCh();
-  toast('حُرقت البطاقة');
+  toast('انحرقت البطاقة');
 }
 
 /** Saves the journal edits, sends the regret to the ideas box, then finishes the day. */
@@ -306,7 +306,7 @@ export async function completeDay(day: Row): Promise<boolean> {
   const s = await action('complete', { cardId: day.cardId });
   if (!s) return false;
   closeCh();
-  toast(day.cardId === 0 ? 'التجهيز تمّ' : `سُجّل اليوم ${day.seq}`);
+  toast(day.cardId === 0 ? 'التجهيز تمّ' : `انسجّل اليوم ${day.seq}`);
   return true;
 }
 
@@ -319,7 +319,7 @@ export async function startNewRun() {
 
 /** «استخدم موقعي»: asks once, saved on the run (the sun times use it). */
 export function setMyLocation(run: Row) {
-  if (!('geolocation' in navigator)) return toast('الموقع غير متاح', { tone: 'danger' });
+  if (!('geolocation' in navigator)) return toast('الموقع مو متاح', { tone: 'danger' });
   navigator.geolocation.getCurrentPosition(
     (p) => {
       const location = { lat: Math.round(p.coords.latitude * 1e4) / 1e4, lng: Math.round(p.coords.longitude * 1e4) / 1e4, label: 'موقعي' };

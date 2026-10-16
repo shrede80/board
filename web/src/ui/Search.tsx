@@ -78,7 +78,7 @@ export function SearchDialog() {
               </div>
             );
           })}
-          {q.trim() && !busy && !hits.length && <div style={{ padding: 18, fontSize: 14, color: 'var(--color-text-muted)', textAlign: 'center' }}>لا نتائج</div>}
+          {q.trim() && !busy && !hits.length && <div style={{ padding: 18, fontSize: 14, color: 'var(--color-text-muted)', textAlign: 'center' }}>ما فيه نتائج</div>}
           {!q.trim() && <div style={{ padding: 18, fontSize: 13, color: 'var(--color-text-muted)', textAlign: 'center' }}>المشاريع والمشاهد واللقطات والأفكار.</div>}
         </div>
       </div>

@@ -698,7 +698,7 @@ function FilmStep({ day, title, card }: { day: Row; title: string; card: ChCard 
     }
     setFolder(suggested);
     setJournal(live, { folder: suggested });
-    toast('نُسخ اسم المجلد');
+    toast('انتسخ اسم المجلد');
   };
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -746,7 +746,7 @@ function Pics({ day, field, max, testid }: { day: Row; field: 'stillImageIds' | 
         const cur = ((dayRow(day.id) ?? day)[field] as string[]) ?? [];
         if (cur.length < max) setDayField(day, { [field]: [...cur, id] });
       } catch {
-        toast('فشل رفع الصورة', { tone: 'danger' });
+        toast('الصورة ما انرفعت', { tone: 'danger' });
       }
       setUploading((n) => n - 1);
     }
@@ -799,7 +799,7 @@ export function Voice({ day, item }: { day: Row; item: number }) {
     audio.current?.pause();
   }, []);
   const start = async () => {
-    if (offline) return toast('لا يوجد اتصال', { tone: 'danger' });
+    if (offline) return toast('ما فيه اتصال', { tone: 'danger' });
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -836,7 +836,7 @@ export function Voice({ day, item }: { day: Row; item: number }) {
         setDayField(live, { voiceId: res.id, bts });
         toast('انحفظت المذكرة');
       } catch {
-        toast('تعذّر حفظ المذكرة', { tone: 'danger' });
+        toast('المذكرة ما انحفظت', { tone: 'danger' });
       }
       setStateV('idle');
     };
@@ -871,7 +871,7 @@ export function Voice({ day, item }: { day: Row; item: number }) {
       await a.play();
       setPlaying(true);
     } catch {
-      toast('تعذّر التشغيل', { tone: 'danger' });
+      toast('ما اشتغل', { tone: 'danger' });
     }
   };
   const small: React.CSSProperties = { height: 40, padding: '0 14px', borderRadius: 999, border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-text)', fontSize: 13.5, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' };
@@ -1223,7 +1223,7 @@ function VoicePlay({ id, label: text, testid }: { id: string | null; label: stri
       await audio.current.play();
       setPlaying(true);
     } catch {
-      toast('تعذّر التشغيل', { tone: 'danger' });
+      toast('ما اشتغل', { tone: 'danger' });
     }
   };
   return (

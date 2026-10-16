@@ -508,12 +508,12 @@ export function autoArrange() {
     ops.push(posOp(id, pos));
     inverse.push(posOp(id, { x: b.x, y: b.y }));
   }
-  if (!ops.length) return toast('اللوحة مرتّبة مسبقاً');
+  if (!ops.length) return toast('اللوحة مرتّبة من قبل');
   const rects = capture('board');
   const n = p.scenes.length;
   if (!commit(ops, { history: 'ترتيب تلقائي', inverse })) return;
   requestAnimationFrame(() => playFlip('board', rects, getState().view.z));
-  toast(`رُتّبت ${n} ${n === 1 ? 'مشهد' : n === 2 ? 'مشهدان' : n <= 10 ? 'مشاهد' : 'مشهداً'}`, { undo: true });
+  toast(`ترتّبت ${n} ${n === 1 ? 'مشهد' : n === 2 ? 'مشهدان' : n <= 10 ? 'مشاهد' : 'مشهداً'}`, { undo: true });
 }
 
 export const GRID_PX = GRID;

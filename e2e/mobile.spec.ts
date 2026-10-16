@@ -130,7 +130,7 @@ test('phone: create a scene and a shot, edit its fields, delete it, then undo', 
   await page.getByTestId('m-delete').click();
   await expect(page.getByTestId('editor')).toHaveCount(0);
   await expect(strip).toHaveCount(0);
-  await page.getByTestId('toast').filter({ hasText: 'حُذفت اللقطة' }).getByTestId('toast-undo').click();
+  await page.getByTestId('toast').filter({ hasText: 'انحذفت اللقطة' }).getByTestId('toast-undo').click();
   await expect(strip).toHaveCount(1);
   await strip.first().click();
   await expect(page.getByTestId('shot-desc')).toHaveValue('لقطة عامة من فوق');
@@ -148,7 +148,7 @@ test('phone: an idea with a photo saved offline is sent once when the connection
   await page.getByTestId('m-add-text').fill('فكرة بدون نت');
   await page.getByTestId('m-add-camera').setInputFiles({ name: 'cam.png', mimeType: 'image/png', buffer: await png(page, '#2e3d5c') });
   await page.getByTestId('m-add-save').click();
-  await expect(page.getByTestId('toast').filter({ hasText: 'تُرسل مع الاتصال' })).toHaveCount(1);
+  await expect(page.getByTestId('toast').filter({ hasText: 'تنرسل مع الاتصال' })).toHaveCount(1);
   await page.getByTestId('m-tab-ideas').click();
   const waiting = page.getByTestId('idea-pending').filter({ hasText: 'فكرة بدون نت' });
   await expect(waiting).toHaveCount(1);
@@ -210,7 +210,7 @@ test('phone: hold a shot and slide it to a new place in its strip; hold without 
   await page.mouse.move(b.x + b.width / 2 - 10, b.y + b.height / 2, { steps: 6 });
   await page.mouse.up();
   await expect.poll(() => strip.evaluateAll((els) => els.map((e) => e.getAttribute('data-shot-id')))).toEqual([ids[1], ids[0], ...ids.slice(2)]);
-  const moved = page.getByTestId('toast').filter({ hasText: 'نُقلت اللقطة' });
+  const moved = page.getByTestId('toast').filter({ hasText: 'انتقلت اللقطة' });
   await expect(moved).toHaveCount(1);
   await moved.getByTestId('toast-undo').click();
   await expect.poll(() => strip.evaluateAll((els) => els.map((e) => e.getAttribute('data-shot-id')))).toEqual(ids);
@@ -284,7 +284,7 @@ test('phone: offline shows the message and disables editing buttons', async ({ p
   await page.getByText('اللقطات', { exact: true }).click();
   await context.setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event('offline')));
-  await expect(page.getByTestId('offline-banner')).toContainText('لا يوجد اتصال');
+  await expect(page.getByTestId('offline-banner')).toContainText('ما فيه اتصال');
   await expect(page.getByTestId('m-status').first()).toBeDisabled();
   await context.setOffline(false);
   await page.evaluate(() => window.dispatchEvent(new Event('online')));

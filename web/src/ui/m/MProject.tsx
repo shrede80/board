@@ -105,8 +105,8 @@ function sceneMenu(p: PProject, sc: PScene, si: number): MenuEntry[] {
     { label: 'تعديل المشهد', icon: 'edit', run: () => openEditor('scene', sc.id), testid: 'm-open' },
     { label: 'لقطة جديدة', icon: 'plus', run: () => addShot(sc.id), testid: 'm-add-shot' },
     { label: 'تكرار المشهد', icon: 'repeat', run: () => duplicateSelection([sc.id]), testid: 'm-duplicate' },
-    { label: 'نقل لأعلى', icon: 'chevron-up', disabled: si === 0, run: move(si - 1, `نُقل المشهد إلى ${pad2(si)}`), testid: 'm-up' },
-    { label: 'نقل لأسفل', icon: 'chevron-down', disabled: si === n - 1, run: move(si + 2, `نُقل المشهد إلى ${pad2(si + 2)}`), testid: 'm-down' },
+    { label: 'نقل لأعلى', icon: 'chevron-up', disabled: si === 0, run: move(si - 1, `انتقل المشهد إلى ${pad2(si)}`), testid: 'm-up' },
+    { label: 'نقل لأسفل', icon: 'chevron-down', disabled: si === n - 1, run: move(si + 2, `انتقل المشهد إلى ${pad2(si + 2)}`), testid: 'm-down' },
     'sep',
     { label: 'حذف المشهد', icon: 'trash', danger: true, run: () => deleteScene(sc.id), testid: 'm-delete' },
   ];
@@ -163,7 +163,7 @@ function ShotStrip({ p, sc, si }: { p: PProject; sc: PScene; si: number }) {
     setDrag(null);
     if (s.moved && s.over !== s.from) {
       moveShot(s.id, sc.id, s.over > s.from ? s.over + 1 : s.over);
-      toast(`نُقلت اللقطة إلى ${si + 1}.${s.over + 1}`, { undo: true });
+      toast(`انتقلت اللقطة إلى ${si + 1}.${s.over + 1}`, { undo: true });
     } else if (!s.moved) openMenu(e.clientX, e.clientY, shotMenu(s.id), 'shot-menu');
   };
   return (
@@ -284,7 +284,7 @@ function ShotList({ p }: { p: PProject }) {
             })}
           </div>
         ))}
-        {!groups.length && <EmptyState icon="search" title={all.length ? 'لا لقطات بهذه الحالة' : 'لا لقطات بعد'} description={all.length ? 'غيّر الفلتر لعرض لقطات أخرى.' : 'أضف لقطة من ＋.'} />}
+        {!groups.length && <EmptyState icon="search" title={all.length ? 'ما فيه لقطات بهالحالة' : 'ما فيه لقطات بعد'} description={all.length ? 'غيّر الفلتر لعرض لقطات أخرى.' : 'أضف لقطة من ＋.'} />}
       </div>
     </div>
   );
@@ -294,9 +294,9 @@ function ShotList({ p }: { p: PProject }) {
 
 type LibTab = 'character' | 'location' | 'moodboard';
 const LIB: Record<LibTab, { list: (p: PProject) => PLib[]; add: string; empty: string }> = {
-  character: { list: (p) => p.library.characters, add: 'شخصية', empty: 'لا شخصيات بعد' },
-  location: { list: (p) => p.library.locations, add: 'موقع', empty: 'لا مواقع بعد' },
-  moodboard: { list: (p) => p.library.moodboards, add: 'لوحة مزاج', empty: 'لا لوحات مزاج بعد' },
+  character: { list: (p) => p.library.characters, add: 'شخصية', empty: 'ما فيه شخصيات بعد' },
+  location: { list: (p) => p.library.locations, add: 'موقع', empty: 'ما فيه مواقع بعد' },
+  moodboard: { list: (p) => p.library.moodboards, add: 'لوحة مزاج', empty: 'ما فيه لوحات مزاج بعد' },
 };
 
 function LibraryTab({ p }: { p: PProject }) {

@@ -43,7 +43,7 @@ function FilterBanner() {
       </div>
       {count === 0 && isBoard && (
         <div style={{ position: 'absolute', top: 70, left: '50%', transform: 'translateX(-50%)', zIndex: 12, background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 14, boxShadow: 'var(--shadow-card)' }}>
-          <EmptyState icon="search" title="لا توجد مشاهد مطابقة" description="غير مرتبط بمشهد بعد." style={{ padding: '24px 32px' }} />
+          <EmptyState icon="search" title="ما فيه مشاهد مطابقة" description="غير مرتبط بمشهد بعد." style={{ padding: '24px 32px' }} />
         </div>
       )}
     </>

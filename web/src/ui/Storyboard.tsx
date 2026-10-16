@@ -78,8 +78,8 @@ export function StoryboardView() {
           style={{ height: 28, display: 'flex', alignItems: 'center' }}>
           <div style={{ height: endOver ? 6 : 0, width: '100%', background: 'var(--color-accent)', borderRadius: 3, opacity: endOver ? 1 : 0 }} />
         </div>
-        {!p.scenes.length && <EmptyState icon="film" title="لا مشاهد بعد" description="اسحب قالب «مشهد» إلى هنا." />}
-        {filter && fCount === 0 && !isBoard && <EmptyState icon="search" title="لا توجد مشاهد مطابقة" description="غير مرتبط بمشهد بعد." />}
+        {!p.scenes.length && <EmptyState icon="film" title="ما فيه مشاهد بعد" description="اسحب قالب «مشهد» إلى هنا." />}
+        {filter && fCount === 0 && !isBoard && <EmptyState icon="search" title="ما فيه مشاهد مطابقة" description="غير مرتبط بمشهد بعد." />}
       </div>
     </div>
   );

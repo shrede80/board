@@ -91,7 +91,7 @@ export function PickTargetDialog() {
         {t.kind === 'shot' && p.scenes.map((sc, si) => (
           <div key={sc.id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-muted)' }}>{`${pad2(si + 1)} · ${sc.name}`}</span>
-            {!sc.shots.length && <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>لا لقطات</span>}
+            {!sc.shots.length && <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>ما فيه لقطات</span>}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
               {sc.shots.map((sh, hi) => (
                 <button key={sh.id} data-testid="pick-shot" onClick={pick(() => imageToShot(t.cardId, sh.id))} title={sh.description || 'بدون وصف'}

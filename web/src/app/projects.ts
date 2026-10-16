@@ -33,7 +33,7 @@ export function renameProject(name: string, id = openId()) {
 export function archiveProject(on: boolean, id = openId()) {
   if (!id) return;
   updateProject({ archived: on }, on ? 'أرشفة' : 'إلغاء الأرشفة', undefined, id);
-  toast(on ? 'أُرشف المشروع' : 'أُلغيت الأرشفة', { undo: true });
+  toast(on ? 'انتقل للأرشيف' : 'رجع من الأرشيف', { undo: true });
 }
 
 /** «تكرار المشروع…» for any project. */
@@ -50,7 +50,7 @@ export async function duplicateProject(id: string, keepStatus: boolean) {
     if (!openId()) void pollNow(); // Home: the copy shows up in «مشاريعي»
     toast('تكرّر المشروع', { actions: [{ label: 'فتح', run: () => void openProject(res.projectId), testid: 'toast-open' }], ms: 8000 });
   } catch {
-    toast('تعذّر تكرار المشروع', { tone: 'danger' });
+    toast('ما قدرنا نكرّر المشروع', { tone: 'danger' });
   }
 }
 
@@ -67,7 +67,7 @@ export async function openWith(id: string, modal: 'projectSettings' | 'export') 
 export function deleteProject(id: string, name: string) {
   askConfirm({
     title: 'حذف المشروع؟',
-    msg: `«${name}» يبقى في السلة 30 يوماً.`,
+    msg: `«${name}» يبقى في السلة 30 يوم.`,
     ok: 'حذف',
     danger: true,
     onOk: () => void doDelete(id, name),
@@ -81,7 +81,7 @@ async function doDelete(id: string, name: string) {
   try {
     await api('/api/ops', { method: 'POST', json: { ops } });
   } catch {
-    toast('تعذّر حذف المشروع', { tone: 'danger' });
+    toast('ما قدرنا نحذف المشروع', { tone: 'danger' });
     return;
   }
   const s = getState().settings;
@@ -92,13 +92,13 @@ async function doDelete(id: string, name: string) {
   }
   const wasOpen = openId() === id;
   await showHome();
-  toast(`حُذف المشروع «${name}»`, {
+  toast(`انحذف المشروع «${name}»`, {
     ms: 8000,
     actions: [{
       label: 'تراجع', testid: 'toast-undo-project',
       run: () => void api(`/api/trash/${encodeURIComponent(trashId)}/restore`, { method: 'POST' })
         .then(() => (wasOpen ? openProject(id) : pollNow()))
-        .catch(() => toast('تعذّرت الاستعادة، جرّب السلة', { tone: 'danger' })),
+        .catch(() => toast('ما رجع، جرّبه من السلة', { tone: 'danger' })),
     }],
   });
 }

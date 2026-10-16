@@ -104,14 +104,14 @@ export async function queueIdea(o: { text: string; files: File[]; projectId: str
   try {
     for (const f of files) images.push(await compress(f));
   } catch {
-    toast('تعذّرت قراءة الصورة', { tone: 'danger' });
+    toast('ما قدرنا نقرأ الصورة', { tone: 'danger' });
     return null;
   }
   const item: Stored = { id: uid('idea'), text: o.text.trim(), projectId: o.projectId, sceneId: o.sceneId, createdAt: Date.now(), images };
   try {
     await put(item);
   } catch {
-    toast('تعذّر حفظ الفكرة على الجهاز', { tone: 'danger' });
+    toast('ما انحفظت على الجهاز', { tone: 'danger' });
     return null;
   }
   requestPersist();
@@ -161,7 +161,7 @@ export async function flushQueue() {
     running = false;
     await refreshPending();
     if (sent) {
-      if (waited) toast(waited === 1 ? 'أُرسلت الفكرة المنتظرة' : `أُرسلت ${waited} أفكار منتظرة`);
+      if (waited) toast(waited === 1 ? 'وصلت الفكرة المنتظرة' : `وصلت ${waited} أفكار منتظرة`);
       const { pollNow } = await import('./actions');
       void pollNow();
     }

@@ -252,7 +252,7 @@ export class Engine {
           // An undo/redo was refused: the screen may now differ from the server, so re-read it.
           void this.poll().catch(() => {});
         }
-        this.ev.rejected('لم يُحفظ، رجع كما كان');
+        this.ev.rejected('ما انحفظ، رجع مثل ما كان');
         this.ev.change();
       } else {
         this.current = null;

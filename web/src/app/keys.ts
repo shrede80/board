@@ -133,7 +133,7 @@ export function onPaste(e: ClipboardEvent) {
   }
   e.preventDefault();
   addFiles(target, files);
-  toast('أُلصقت الصورة');
+  toast('انلصقت الصورة');
 }
 
 export function onWinDown(e: PointerEvent) {

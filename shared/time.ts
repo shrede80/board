@@ -33,7 +33,7 @@ const count = (n: number, one: string, two: string, few: string, many: string) =
 /** «آخر تعديل …»: الآن · قبل 5 دقائق · قبل ساعتين · أمس · 9 أكتوبر */
 export function lastEdit(ms: number, now = new Date()): string {
   const s = Math.max(0, now.getTime() - ms) / 1000;
-  if (s < 60) return 'الآن';
+  if (s < 60) return 'الحين';
   if (s < 3600) return `قبل ${count(Math.floor(s / 60), 'دقيقة', 'دقيقتين', 'دقائق', 'دقيقة')}`;
   const d = new Date(ms);
   const diff = dayDiff(now, d);
@@ -64,7 +64,7 @@ export interface Countdown {
   past: boolean;
 }
 
-const daysWord = (n: number) => (n === 1 ? 'يوم' : n === 2 ? 'يومان' : n <= 10 ? 'أيام' : 'يوماً');
+const daysWord = (n: number) => (n === 1 ? 'يوم' : n === 2 ? 'يومان' : n <= 10 ? 'أيام' : 'يوم');
 const hoursWord = (n: number) => (n === 1 ? 'ساعة' : n === 2 ? 'ساعتان' : n <= 10 ? 'ساعات' : 'ساعة');
 const minsWord = (n: number) => (n === 1 ? 'دقيقة' : n === 2 ? 'دقيقتان' : n <= 10 ? 'دقائق' : 'دقيقة');
 

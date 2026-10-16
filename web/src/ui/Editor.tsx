@@ -23,7 +23,7 @@ const chip = (on: boolean) => (on ? 'var(--color-inverse-bg)' : 'transparent');
 const chipFg = (on: boolean) => (on ? 'var(--color-inverse-text)' : 'var(--color-text)');
 const hdrBtn: React.CSSProperties = { width: 32, height: 32, border: 'none', background: 'transparent', borderRadius: 8, cursor: 'pointer', color: 'var(--color-text)', display: 'flex', alignItems: 'center', justifyContent: 'center' };
 
-// «استُخدمت سابقاً»: values typed by hand before (SPEC §3.2)
+// «استخدمتها قبل»: values typed by hand before (SPEC §3.2)
 let customCache: Record<string, string[]> = {};
 function useCustomValues() {
   const [cv, setCv] = useState(customCache);
@@ -115,7 +115,7 @@ function MobileEditor({ comp, head, body }: { comp: string; head: { kicker: stri
   const save = useApp((s) => s.save);
   const offline = useApp((s) => s.offline);
   const menu = editorMenu(ed.type, ed.id);
-  const saveLbl = offline ? 'غير متصل' : save === 'saving' ? 'يحفظ…' : save === 'error' ? 'فشل الحفظ' : 'محفوظ ✓';
+  const saveLbl = offline ? 'غير متصل' : save === 'saving' ? 'يحفظ…' : save === 'error' ? 'ما انحفظ' : 'محفوظ ✓';
   const navBtn: React.CSSProperties = { minWidth: 88, height: 44, border: 'none', background: 'transparent', color: 'var(--color-text)', fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, padding: '0 6px' };
   return (
     <MobileCtx.Provider value={true}>
@@ -176,7 +176,7 @@ function MobileGallery({ owner, target, hex, aspect }: { owner: { images: Img[];
               onClick={(e) => { if (im.error) return retryUpload(target, im.imageId); const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); openMenu(r.right, r.bottom + 4, items, 'gallery-menu'); }}
               style={{ position: 'relative', width: 88, height: 60, flexShrink: 0, borderRadius: 6, border: 'none', padding: 0, background: frameBg(im, hex), boxShadow: isCover ? '0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-accent)' : undefined, opacity: im.uploading ? 0.6 : 1 }}>
               {im.uploading && <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fdfcfa', textShadow: '0 1px 4px rgba(0,0,0,.6)' }}>يرفع…</span>}
-              {im.error && <span style={{ position: 'absolute', inset: 0, borderRadius: 6, background: 'rgba(20,18,16,.82)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#e8a294', textAlign: 'center' }}>فشل — اضغط للإعادة</span>}
+              {im.error && <span style={{ position: 'absolute', inset: 0, borderRadius: 6, background: 'rgba(20,18,16,.82)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#e8a294', textAlign: 'center' }}>ما انحفظ — اضغط وجرّب</span>}
             </button>
           );
         })}
@@ -224,7 +224,7 @@ function DeskGallery({ owner, target, hex, aspect }: { owner: { images: Img[]; c
               {im.uploading && <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fdfcfa', textShadow: '0 1px 4px rgba(0,0,0,.6)' }}>يرفع…</span>}
               {im.error && (
                 <div style={{ position: 'absolute', inset: 0, background: 'rgba(20,18,16,.82)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, padding: 6, textAlign: 'center' }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: '#e8a294' }}>فشل رفع الصورة</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#e8a294' }}>الصورة ما انرفعت</span>
                   <button onClick={() => retryUpload(target, im.imageId)} style={{ fontSize: 11, fontWeight: 700, border: 'none', borderRadius: 4, background: '#d2a06a', color: '#141210', padding: '4px 10px', cursor: 'pointer' }}>إعادة المحاولة</button>
                 </div>
               )}
@@ -306,7 +306,7 @@ function Picker({ k, title, display, groups, onSet, multi, chips, hint }: { k: s
           ))}
           <div style={{ borderTop: '1px solid var(--color-border-subtle)', marginTop: 6, paddingTop: 6 }}>
             {customOpen ? (
-              <input autoFocus value={customVal} placeholder="اكتب ثم Enter" onChange={(e) => setState({ customVal: e.target.value })}
+              <input autoFocus value={customVal} placeholder="اكتب واضغط Enter" onChange={(e) => setState({ customVal: e.target.value })}
                 onKeyDown={(e) => { const v = (e.target as HTMLInputElement).value.trim(); if (e.key === 'Enter' && v) { onSet(v); setState({ pick: null, custom: null, customVal: '' }); } }}
                 style={{ width: '100%', height: 38, border: '1px solid var(--color-focus-ring)', borderRadius: 4, padding: '0 10px', fontSize: 14, background: 'var(--field-bg)', color: 'var(--color-text)', outline: 'none' }} />
             ) : (
@@ -364,7 +364,7 @@ function ShotEditor({ p, sh, sc }: { p: PProject; sh: PShot; sc: PScene }) {
   const cam = eq.get(sh.cameraId as string);
   const items = [...eq.values()].filter((i) => !i.deletedAt);
   const used = (key: string, current: unknown, multi?: boolean): Group => ({
-    label: 'استُخدمت سابقاً',
+    label: 'استخدمتها قبل',
     options: (cv[key] ?? []).filter((v) => !(GENERAL[key] ?? []).includes(v)).map((v) => ({ value: v, label: v, active: multi ? ((current as string[]) ?? []).includes(v) : current === v })),
   });
   const eqOpts = (role: string, current: unknown, multi?: boolean): Group[] => {
@@ -463,7 +463,7 @@ function ShotEditor({ p, sh, sc }: { p: PProject; sh: PShot; sc: PScene }) {
           <Picker k="lens" title="العدسة المدمجة" display={(sh.lens as string) ?? ''} groups={[{ label: `عدسات ${cam.short}`, options: (cam.builtinLenses as string[]).map((l) => ({ value: l, label: l, active: sh.lens === l })) }]} onSet={(v) => { const m = /\((\d+)mm\)/.exec(v); set({ lens: v, focalMm: m ? Number(m[1]) : sh.focalMm }); }} />
         ) : null}
         {!(cam && cam.fixedLens && !cam.zoomOnly) && (
-          <F title="البعد البؤري" hint={cam?.zoomOnly ? 'زوم مدمج' : cam?.builtinLenses ? 'يُحدَّد من العدسة المختارة' : undefined}>
+          <F title="البعد البؤري" hint={cam?.zoomOnly ? 'زوم مدمج' : cam?.builtinLenses ? 'من العدسة المختارة' : undefined}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 120 }}><Input type="number" value={(sh.focalMm as number) ?? ''} onChange={(e) => set({ focalMm: Number(e.target.value) || null }, 'focal')} /></div>
               <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18 }}>mm</span>
@@ -587,7 +587,7 @@ function SceneEditor({ p, sc, si }: { p: PProject; sc: PScene; si: number }) {
             <button title="فك الربط" onClick={a.remove} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'flex' }}><Icon name="x" size={13} /></button>
           </div>
         ))}
-        {!attached.length && <span style={{ fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>تُربط بسحبها إلى صف المشهد.</span>}
+        {!attached.length && <span style={{ fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>تنربط لما تسحبها لصف المشهد.</span>}
       </div>
       <div style={{ borderTop: '1px solid var(--color-border-subtle)', paddingTop: 14, display: 'flex' }}>
         <Button variant="ghost" size="sm" icon="trash" onClick={() => deleteScene(sc.id)}>حذف المشهد</Button>

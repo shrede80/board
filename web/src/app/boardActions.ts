@@ -125,14 +125,14 @@ export function copySelection(cut = false) {
   if (!p || !sel.length) return;
   clip = { projectId: p.id, snaps: snapshot(sel), pastes: 0 };
   if (cut) deleteSelection();
-  else toast(sel.length === 1 ? 'نُسخ العنصر' : `نُسخت ${sel.length} عناصر`, { ms: 2000 });
+  else toast(sel.length === 1 ? 'انتسخ العنصر' : `انتسخت ${sel.length} عناصر`, { ms: 2000 });
 }
 
 /** at: world position (from the menu, at the pointer); without it: 24px further each time. */
 export function paste(at?: { x: number; y: number }) {
   const p = project();
   if (!p || !clip) return;
-  if (clip.projectId !== p.id) return toast('النسخ بين المشاريع غير متاح');
+  if (clip.projectId !== p.id) return toast('النسخ بين المشاريع ما يصير');
   let dx: number, dy: number;
   if (at) {
     const pos = clip.snaps.map((s) => (s.kind === 'scene' ? { x: s.scene.boardX as number, y: s.scene.boardY as number } : { x: s.card.x as number, y: s.card.y as number }));
@@ -197,14 +197,14 @@ export function deleteLib(type: LibType, id: string) {
   const label = { character: 'شخصية', location: 'موقع', moodboard: 'لوحة مزاج' }[type];
   askConfirm({
     title: `حذف ${LIB_WORD[type]}؟`,
-    msg: n ? `«${name}» تختفي من ${n} ${n === 1 ? 'مشهد' : 'مشاهد'}، وتبقى في السلة.` : `«${name}» تبقى في السلة 30 يوماً.`,
+    msg: n ? `«${name}» تختفي من ${n} ${n === 1 ? 'مشهد' : 'مشاهد'}، وتبقى في السلة.` : `«${name}» تبقى في السلة 30 يوم.`,
     ok: 'حذف',
     danger: true,
     onOk: () => {
       if (!commit([{ op: 'delete', entity: LIB_ENTITY[type], id, label: `${label}: ${name}` }], { history: 'حذف' })) return;
       if (getState().editor?.id === id) setState({ editor: null });
       setState({ selection: getState().selection.filter((s) => engine.store.boardCards.get(s)?.refId !== id) });
-      toast(`حُذفت ${LIB_WORD[type]}`, { undo: true });
+      toast(`انحذفت ${LIB_WORD[type]}`, { undo: true });
     },
   });
 }
@@ -214,7 +214,7 @@ export function removeFromBoard(cardIds: string[]) {
   const ops: Op[] = cardIds.map((id) => ({ op: 'delete', entity: 'boardCards', id }));
   if (!ops.length || !commit(ops, { history: 'إزالة من اللوحة' })) return;
   setState({ selection: [] });
-  toast('أُزيلت من اللوحة فقط', { undo: true });
+  toast('انشالت من اللوحة فقط', { undo: true });
 }
 
 // ---------- layers, lock, colour ----------
@@ -328,10 +328,10 @@ export function addCard(kind: 'heading' | 'frame', pos = centerWorldRef()) {
 /** Uploads photos and puts each one on the board as an image card, side by side. */
 export async function addImageCards(files: FileList | File[], pos = centerWorldRef()) {
   const p = project();
-  if (!p || getState().offline) return toast('لا يوجد اتصال، لم يُحفظ', { tone: 'danger' });
+  if (!p || getState().offline) return toast('ما فيه اتصال، ما انحفظ', { tone: 'danger' });
   const list = [...files].filter((f) => /^image\//.test(f.type));
   if (!list.length) return;
-  if (list.some((f) => f.size > MAX_UPLOAD_BYTES)) toast('صورة أكبر من 15MB تُرِكت', { tone: 'danger' });
+  if (list.some((f) => f.size > MAX_UPLOAD_BYTES)) toast('صورة فوق 15MB ما انضافت', { tone: 'danger' });
   const ok = list.filter((f) => f.size <= MAX_UPLOAD_BYTES);
   toast(ok.length === 1 ? 'يرفع الصورة…' : `يرفع ${ok.length} صور…`, { ms: 2500 });
   try {
@@ -348,7 +348,7 @@ export async function addImageCards(files: FileList | File[], pos = centerWorldR
     }
     if (commit(ops, { history: 'إضافة صورة' })) setState({ selection: made });
   } catch {
-    toast('فشل رفع الصورة', { tone: 'danger' });
+    toast('الصورة ما انرفعت', { tone: 'danger' });
   }
 }
 
@@ -393,7 +393,7 @@ export function imageToMoodboard(cardId: string, mbId: string | null) {
   }
   const linked = live(engine.store.itemImages, (r) => r.ownerId === id);
   ops.push({ op: 'create', entity: 'itemImages', id: uid('ii'), fields: { projectId: p.id, ownerKind: 'moodboard', ownerId: id, imageId: c.refId, position: linked.length + 1 } });
-  if (commit(ops, { history: 'لوحة مزاج' })) toast('أُضيفت الصورة إلى لوحة المزاج', { undo: true, actions: [{ label: 'فتح', run: () => openEditor('moodboard', id!) }] });
+  if (commit(ops, { history: 'لوحة مزاج' })) toast('انضافت الصورة إلى لوحة المزاج', { undo: true, actions: [{ label: 'فتح', run: () => openEditor('moodboard', id!) }] });
 }
 
 // ---------- menus (UPDATE-1 أ3) ----------
@@ -534,7 +534,7 @@ export function shotMenu(shotId: string): MenuEntry[] {
     { label: 'تكرار', icon: 'repeat', run: () => duplicateShot(shotId) },
     { label: 'نقل إلى مشهد…', icon: 'arrow-up-right', testid: 'm-move-to', children: p.scenes.map((sc, i) => ({
       label: `${pad2(i + 1)} · ${sc.name}`, disabled: sc.id === f.sc.id, testid: `m-move-${i + 1}`,
-      run: () => (moveShot(shotId, sc.id, null), toast(`نُقلت للمشهد ${pad2(i + 1)}`, { undo: true })),
+      run: () => (moveShot(shotId, sc.id, null), toast(`انتقلت للمشهد ${pad2(i + 1)}`, { undo: true })),
     })) },
     'sep',
     { label: 'حذف اللقطة', icon: 'trash', danger: true, run: () => deleteShot(shotId), testid: 'm-delete' },

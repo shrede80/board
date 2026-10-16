@@ -30,7 +30,7 @@ export async function exportXlsx(p: PProject) {
   const rows = shotRows(p, engine.store.equipment);
   const blob = await buildXlsx('قائمة اللقطات', shotCols, rows.map((r) => shotCols.map((c) => r[c.key as keyof typeof r])));
   download(`${p.name} — قائمة اللقطات.xlsx`, blob);
-  toast('صُدّرت قائمة اللقطات');
+  toast('قائمة اللقطات جاهزة');
 }
 
 /** PDF = the browser's print dialog with the @media print rules in dark.css (A4 landscape). */
@@ -64,7 +64,7 @@ export async function exportProjectZip(p: PProject, onProgress?: (done: number, 
   zip.file('project.json', JSON.stringify(data, null, 2));
   const out = await zip.generateAsync({ type: 'blob', mimeType: 'application/zip' });
   download(`${p.name}.zip`, out, 'application/zip');
-  toast('حُفظت نسخة المشروع على جهازك');
+  toast('انحفظت نسخة المشروع على جهازك');
 }
 
 export interface ImportPreview {
@@ -80,21 +80,21 @@ export async function readProjectZip(file: File): Promise<ImportPreview> {
   try {
     zip = await JSZip.loadAsync(file);
   } catch {
-    throw new Error('الملف ليس نسخة مشروع صالحة (ملف zip تالف أو من نوع آخر).');
+    throw new Error('الملف مو نسخة مشروع صالحة (zip تالف أو نوع ثاني).');
   }
   const pj = zip.file('project.json');
-  if (!pj) throw new Error('الملف لا يحتوي على project.json — هل هو نسخة من «لوحة المشاهد»؟');
+  if (!pj) throw new Error('الملف ما فيه project.json — هو نسخة من «لوحة المشاهد»؟');
   let data: Portable;
   try {
     data = JSON.parse(await pj.async('string'));
   } catch {
-    throw new Error('ملف project.json تالف ولا يمكن قراءته.');
+    throw new Error('ملف project.json تالف وما ينقرأ.');
   }
   if (!data || data.format !== 'lawhat-almashahed/1' || !data.project || typeof data.rows !== 'object' || !Array.isArray(data.images)) {
-    throw new Error('هذا الملف ليس بصيغة نسخة مشروع من «لوحة المشاهد».');
+    throw new Error('هذا الملف مو نسخة مشروع من «لوحة المشاهد».');
   }
   const missing = data.images.filter((i) => i.file && !zip.file(i.file));
-  if (missing.length) throw new Error(`الملف ناقص: ${missing.length} صورة غير موجودة داخله.`);
+  if (missing.length) throw new Error(`الملف ناقص: ${missing.length} صورة مو موجودة فيه.`);
   const n = (k: string) => (Array.isArray(data.rows[k]) ? data.rows[k].length : 0);
   return {
     zip, data, name: String(data.project.name ?? 'مشروع'),
@@ -116,5 +116,5 @@ export async function importProjectZip(pre: ImportPreview, onProgress?: (done: n
   }
   const res = await api<{ projectId: string }>('/api/import', { method: 'POST', json: { project: pre.data, imageMap } });
   await openProject(res.projectId);
-  toast('استُورد المشروع');
+  toast('انستورد المشروع');
 }

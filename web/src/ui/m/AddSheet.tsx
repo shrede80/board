@@ -81,7 +81,7 @@ function IdeaForm({ close }: { close: () => void }) {
     if (!id) return;
     files.forEach((x) => URL.revokeObjectURL(x.url));
     close();
-    toast(navigator.onLine ? 'انحفظت الفكرة' : 'انحفظت، تُرسل مع الاتصال');
+    toast(navigator.onLine ? 'انحفظت الفكرة' : 'انحفظت، تنرسل مع الاتصال');
   };
   return (
     <div data-testid="add-idea" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

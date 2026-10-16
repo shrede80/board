@@ -34,7 +34,7 @@ export function MIdeas() {
       {shown.map((i) => <IdeaCard key={i.id} idea={i} mobile />)}
       {!shown.length && !pend.length && (
         <span style={{ padding: '24px 4px', fontSize: 14, lineHeight: 1.8, color: 'var(--color-text-muted)', textAlign: 'center' }}>
-          {f === 'pending' ? 'كل أفكارك وصلت.' : bootOffline ? 'تظهر مع الاتصال.' : 'لا أفكار بعد. اضغط ＋.'}
+          {f === 'pending' ? 'كل أفكارك وصلت.' : bootOffline ? 'تظهر مع الاتصال.' : 'ما فيه أفكار بعد. اضغط ＋.'}
         </span>
       )}
     </div>
@@ -49,7 +49,7 @@ function PendingCard({ x }: { x: PendingIdea }) {
       {x.text && <IdeaText text={x.text} />}
       {x.failed ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: 'var(--color-danger)' }}>{`لم تُرسل: ${x.failed}`}</span>
+          <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: 'var(--color-danger)' }}>{`ما انرسلت: ${x.failed}`}</span>
           <button data-testid="pending-retry" onClick={() => void retryPending(x.id)} style={{ height: 40, padding: '0 14px', borderRadius: 8, border: 'none', background: 'var(--color-accent)', color: '#141210', fontWeight: 700 }}>إعادة المحاولة</button>
           <button data-testid="pending-delete" onClick={() => askConfirm({ title: 'حذف الفكرة؟', msg: 'ما وصلت بعد، وحذفها نهائي.', ok: 'حذف', danger: true, onOk: () => void deletePending(x.id) })} style={{ height: 40, padding: '0 14px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-danger)', fontWeight: 700 }}>حذف</button>
         </div>

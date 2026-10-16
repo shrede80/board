@@ -58,7 +58,7 @@ test('exports: storyboard PDF (print), shot list Excel, full project zip → imp
 
   // a broken file gives a clear message and creates nothing
   await page.getByTestId('import-input').setInputFiles({ name: 'bad.zip', mimeType: 'application/zip', buffer: Buffer.from('not a zip') });
-  await expect(page.getByTestId('import-error')).toContainText('ليس نسخة مشروع صالحة');
+  await expect(page.getByTestId('import-error')).toContainText('مو نسخة مشروع صالحة');
 
   // import → preview → confirm → a NEW project opens with the same content
   await page.getByTestId('import-input').setInputFiles(zpath);

@@ -90,7 +90,7 @@ function ExportDialog() {
     try {
       await f();
     } catch (e) {
-      setErr(e instanceof Error && /[؀-ۿ]/.test(e.message) ? e.message : 'تعذّرت العملية، حاول مرة أخرى.');
+      setErr(e instanceof Error && /[؀-ۿ]/.test(e.message) ? e.message : 'ما تمّت، جرّب مرة ثانية.');
     } finally {
       setBusy('');
     }
@@ -261,7 +261,7 @@ function ImportPanel() {
     try {
       await importProjectZip(pre);
     } catch (e) {
-      setImpErr(e instanceof Error && /[؀-ۿ]/.test(e.message) ? e.message : 'تعذّرت العملية، حاول مرة أخرى.');
+      setImpErr(e instanceof Error && /[؀-ۿ]/.test(e.message) ? e.message : 'ما تمّت، جرّب مرة ثانية.');
     } finally {
       setBusy(false);
     }

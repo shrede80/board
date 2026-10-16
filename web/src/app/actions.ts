@@ -46,7 +46,7 @@ function forgetSessionIfOnline() {
   if (navigator.onLine) forgetSession();
 }
 
-/** Tries again to reach the server (offline start → «حاول الآن»). */
+/** Tries again to reach the server (offline start → «جرّب الحين»). */
 export async function start() {
   try {
     const st = await api<AuthStatus>('/api/auth/status');
@@ -129,7 +129,7 @@ export async function openProject(id: string) {
     await engine.load(id);
   } catch (e) {
     // deleted elsewhere, or no connection: back to Home instead of an endless loading screen
-    toast(e instanceof ApiError && e.status === 404 ? 'المشروع غير موجود' : 'تعذّر فتح المشروع', { tone: 'danger' });
+    toast(e instanceof ApiError && e.status === 404 ? 'المشروع مو موجود' : 'ما قدرنا نفتح المشروع', { tone: 'danger' });
     await showHome().catch(() => setState({ loaded: true, projectId: null, screen: 'home' }));
     return;
   }
@@ -186,7 +186,7 @@ function fitAllSoon() {
 /** Refuses writes while offline (SPEC §1.4), like the prototype. */
 export function commit(ops: Op[], opts: { history?: string | false; key?: string; inverse?: Op[]; flip?: boolean } = {}): boolean {
   if (getState().offline) {
-    toast('لا يوجد اتصال، لم يُحفظ', { tone: 'danger' });
+    toast('ما فيه اتصال، ما انحفظ', { tone: 'danger' });
     return false;
   }
   if (opts.flip && getState().mode === 'storyboard') {
@@ -297,7 +297,7 @@ export function deleteShot(id: string) {
   if (!ok) return;
   if (getState().editor?.id === id) closeEditor();
   setState({ hoverShot: null });
-  toast(`حُذفت اللقطة ${f.num}`, { undo: true });
+  toast(`انحذفت اللقطة ${f.num}`, { undo: true });
 }
 
 export function addScene(o: { index?: number; pos?: { x: number; y: number }; name?: string; open?: boolean } = {}): string | null {
@@ -334,7 +334,7 @@ export function deleteScene(id: string) {
   const ok = commit([{ op: 'delete', entity: 'scenes', id, label: `مشهد ${num}: ${p.scenes[i].name}` }], { history: 'حذف مشهد', flip: true });
   if (!ok) return;
   if (getState().editor?.id === id) closeEditor();
-  toast(`حُذف المشهد ${num}`, { undo: true });
+  toast(`انحذف المشهد ${num}`, { undo: true });
 }
 
 /** Layer for a new board item: above everything (frames excluded — they always stay underneath). */
@@ -374,7 +374,7 @@ export function deleteSelection() {
   }
   if (!commit(ops, { history: 'حذف' })) return;
   setState({ selection: [], editor: null });
-  toast(nums.length === 1 && sel.length === 1 ? `حُذف المشهد ${nums[0]}` : sel.length === 1 ? 'حُذف العنصر' : `حُذف ${sel.length} عناصر`, { undo: true });
+  toast(nums.length === 1 && sel.length === 1 ? `انحذف المشهد ${nums[0]}` : sel.length === 1 ? 'انحذف العنصر' : `انحذف ${sel.length} عناصر`, { undo: true });
 }
 
 export function moveShot(shotId: string, toSceneId: string, toIndex: number | null) {
@@ -441,7 +441,7 @@ export function createFromTemplate(type: 'scene' | LibType, ctx: { where: 'board
   if (ctx.where === 'row' && type === 'location' && !ctx.force) {
     const sc = p.scenes.find((s) => s.id === ctx.sceneId);
     if (sc?.locationId) {
-      askConfirm({ title: 'استبدال الموقع؟', msg: 'الموقع الحالي يُستبدل بالجديد.', ok: 'استبدال', onOk: () => createFromTemplate(type, { ...ctx, force: true }) });
+      askConfirm({ title: 'استبدال الموقع؟', msg: 'الموقع الحالي يتبدّل بالجديد.', ok: 'استبدال', onOk: () => createFromTemplate(type, { ...ctx, force: true }) });
       return;
     }
   }
@@ -460,8 +460,8 @@ export function createFromTemplate(type: 'scene' | LibType, ctx: { where: 'board
     else ops.push({ op: 'create', entity: 'sceneLinks', id: `${sc.id}:${type}:${id}`, fields: { projectId: p.id, sceneId: sc.id, kind: type, refId: id } });
   }
   if (!commit(ops, { history: 'إضافة' })) return;
-  if (ctx.where === 'row' && ctx.sceneId) toast(`رُبطت بالمشهد ${pad2(p.scenes.findIndex((s) => s.id === ctx.sceneId) + 1)}`);
-  if (ctx.where === 'library') toast(type === 'note' ? 'أُضيفت الملاحظة إلى لوحة الأفكار' : `أُضيفت ${LABEL[type]} إلى المكتبة فقط`);
+  if (ctx.where === 'row' && ctx.sceneId) toast(`انربطت بالمشهد ${pad2(p.scenes.findIndex((s) => s.id === ctx.sceneId) + 1)}`);
+  if (ctx.where === 'library') toast(type === 'note' ? 'انضافت الملاحظة إلى لوحة الأفكار' : `انضافت ${LABEL[type]} إلى المكتبة فقط`);
   openEditor(type, id);
 }
 
@@ -472,12 +472,12 @@ export function linkLib(sceneId: string, type: LibType, id: string) {
   const n = pad2(p.scenes.indexOf(sc) + 1);
   const go = () => {
     const ops = linkOps(project()!, sceneId, type, id);
-    if (ops.length && commit(ops, { history: 'ربط' })) toast(`رُبط العنصر بالمشهد ${n}`);
-    else if (!ops.length) toast(`العنصر مرتبط بالمشهد ${n} مسبقاً`);
+    if (ops.length && commit(ops, { history: 'ربط' })) toast(`انربط العنصر بالمشهد ${n}`);
+    else if (!ops.length) toast(`العنصر مرتبط بالمشهد ${n} من قبل`);
   };
   if (type === 'location' && sc.locationId && sc.locationId !== id) {
     const old = p.library.locations.find((l) => l.id === sc.locationId);
-    askConfirm({ title: 'استبدال الموقع؟', msg: `موقع المشهد ${n} حالياً «${old?.name ?? ''}». هل تستبدله؟`, ok: 'استبدال', onOk: go });
+    askConfirm({ title: 'استبدال الموقع؟', msg: `موقع المشهد ${n} الحين «${old?.name ?? ''}». تبي تبدّله؟`, ok: 'استبدال', onOk: go });
   } else go();
 }
 
@@ -538,5 +538,5 @@ export function createProject(np: { name: string; aspect: string; template: stri
   setState({ modal: null });
   void engine.idle().then(() => api('/api/ops', { method: 'POST', json: { ops } }))
     .then(() => openProject(id))
-    .catch(() => toast('تعذّر إنشاء المشروع', { tone: 'danger' }));
+    .catch(() => toast('ما قدرنا ننشئ المشروع', { tone: 'danger' }));
 }

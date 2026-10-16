@@ -19,7 +19,7 @@ export function PresentationMode() {
   if (!list.length) {
     return (
       <div data-component="PresentationMode" data-sb-theme="dark" style={{ position: 'fixed', inset: 0, zIndex: 80, background: '#0e0d0b', color: '#fdfcfa', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
-        <span style={{ fontFamily: 'var(--font-serif-text)', fontSize: 22 }}>لا توجد لقطات للعرض بعد</span>
+        <span style={{ fontFamily: 'var(--font-serif-text)', fontSize: 22 }}>ما فيه لقطات للعرض بعد</span>
         <button onClick={closePresent} style={{ border: '1px solid #3a342c', background: 'transparent', color: '#fdfcfa', borderRadius: 999, padding: '8px 14px', cursor: 'pointer' }}>Esc</button>
       </div>
     );
@@ -122,7 +122,7 @@ function PhonePresent() {
       onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) setInfo((v) => !v); }}
       style={{ position: 'fixed', inset: 0, zIndex: 80, background: '#0e0d0b', color: '#fdfcfa', display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'pan-y', userSelect: 'none' }}>
       {!x ? (
-        <span style={{ fontFamily: 'var(--font-serif-text)', fontSize: 20 }}>لا توجد لقطات للعرض بعد</span>
+        <span style={{ fontFamily: 'var(--font-serif-text)', fontSize: 20 }}>ما فيه لقطات للعرض بعد</span>
       ) : (
         <div data-testid="present-frame" style={{ width: `min(100vw, calc(100vh * ${ar}))`, aspectRatio: arCss, background: frameBg(coverOf(x.sh), moodHex(x.sc.mood), true), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {!coverOf(x.sh) && <span style={{ color: '#6b6255', fontSize: 14 }}>بدون صورة مرجعية</span>}

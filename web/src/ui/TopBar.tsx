@@ -104,7 +104,7 @@ function ProjectTopBar() {
   const isDark = theme === 'dark';
   const total = p ? p.scenes.reduce((a, s) => a + sceneDur(s), 0) : 0;
   const nShots = p ? p.scenes.reduce((a, s) => a + s.shots.length, 0) : 0;
-  const saveMap = { saved: ['محفوظ', 'var(--color-text-muted)'], saving: ['يحفظ…', 'var(--color-text-muted)'], error: ['فشل الحفظ — إعادة المحاولة', 'var(--color-danger)'] }[save];
+  const saveMap = { saved: ['محفوظ', 'var(--color-text-muted)'], saving: ['يحفظ…', 'var(--color-text-muted)'], error: ['ما انحفظ — جرّب مرة ثانية', 'var(--color-danger)'] }[save];
   const saveLabel = offline ? 'غير متصل' : saveMap[0];
   const saveColor = offline ? 'var(--color-danger)' : saveMap[1];
   return (
@@ -133,10 +133,10 @@ function ProjectTopBar() {
         <span>{`${p?.scenes.length ?? 0} مشاهد · ${nShots} لقطة`}</span>
       </div>
       <div style={{ display: 'flex', gap: 2 }}>
-        <button title={canUndo ? 'تراجع (Ctrl+Z)' : 'لا يوجد ما يُتراجع عنه'} aria-label="تراجع" data-testid="undo" className="h-strong" disabled={!canUndo || offline} onClick={() => void undo()} style={{ ...iconBtn, opacity: canUndo ? 1 : 0.35 }}>
+        <button title={canUndo ? 'تراجع (Ctrl+Z)' : 'ما فيه تراجع'} aria-label="تراجع" data-testid="undo" className="h-strong" disabled={!canUndo || offline} onClick={() => void undo()} style={{ ...iconBtn, opacity: canUndo ? 1 : 0.35 }}>
           <UndoIcon />
         </button>
-        <button title={canRedo ? 'إعادة (Ctrl+Shift+Z)' : 'لا يوجد ما يُعاد'} aria-label="إعادة" data-testid="redo" className="h-strong" disabled={!canRedo || offline} onClick={() => void redo()} style={{ ...iconBtn, opacity: canRedo ? 1 : 0.35 }}>
+        <button title={canRedo ? 'إعادة (Ctrl+Shift+Z)' : 'ما فيه إعادة'} aria-label="إعادة" data-testid="redo" className="h-strong" disabled={!canRedo || offline} onClick={() => void redo()} style={{ ...iconBtn, opacity: canRedo ? 1 : 0.35 }}>
           <UndoIcon flip />
         </button>
       </div>
@@ -193,7 +193,7 @@ function Breadcrumb() {
               ))}
               <div style={{ height: 1, background: 'var(--color-border-subtle)', margin: '5px 4px' }} />
               <button data-testid="pm-delete" className="h-strong" onClick={pick(() => deleteProject(p.id, p.name))} style={{ ...menuItem, color: 'var(--color-danger)' }}>
-                <Icon name="trash" size={16} />حذف (يبقى في السلة 30 يوماً)
+                <Icon name="trash" size={16} />حذف (يبقى في السلة 30 يوم)
               </button>
             </div>
           )}

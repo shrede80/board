@@ -39,8 +39,8 @@ export function MHome() {
 
       {bootOffline && (
         <div data-testid="m-offline-home" style={{ border: '1px solid var(--color-border-subtle)', borderRadius: 14, background: 'var(--color-surface)', padding: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <b style={{ fontSize: 17 }}>لا يوجد اتصال</b>
-          <span style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--color-text-muted)' }}>اكتب فكرة بزر ＋، تُرسل لحالها.</span>
+          <b style={{ fontSize: 17 }}>ما فيه اتصال</b>
+          <span style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--color-text-muted)' }}>اكتب فكرة بزر ＋، تنرسل لحالها.</span>
           <button onClick={() => setState({ addSheet: 'idea' })} style={{ alignSelf: 'flex-start', height: 44, padding: '0 18px', borderRadius: 8, border: 'none', background: 'var(--color-accent)', color: '#141210', fontSize: 15, fontWeight: 700 }}>＋ فكرة</button>
         </div>
       )}
@@ -68,7 +68,7 @@ export function MHome() {
           <Chips testid="pf" value={f} onChange={setF} items={[['all', `الكل ${live.length}`], ...STAGE_ORDER.map((s) => [s, STAGE_LABEL[s]] as [string, string]), ...(nArch ? [['archived', `المؤرشفة ${nArch}`] as [string, string]] : [])]} />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {shown.map((s) => <ProjectRow key={s.id} s={s} now={now} renaming={renaming === s.id} onRename={() => setRenaming(s.id)} onRenamed={() => setRenaming(null)} />)}
-            {!shown.length && <span style={{ padding: '18px 0', fontSize: 14, color: 'var(--color-text-muted)' }}>{live.length ? 'لا مشاريع بهذه المرحلة.' : 'لا مشاريع بعد.'}</span>}
+            {!shown.length && <span style={{ padding: '18px 0', fontSize: 14, color: 'var(--color-text-muted)' }}>{live.length ? 'ما فيه مشاريع بهالمرحلة.' : 'ما فيه مشاريع بعد.'}</span>}
           </div>
         </section>
       )}

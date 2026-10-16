@@ -89,7 +89,7 @@ const files = new Map<string, File>();
 
 /** Adds files as images of a shot / character / location / moodboard. */
 export function addFiles(target: Target, list: FileList | File[]) {
-  if (getState().offline) return toast('لا يوجد اتصال، لم يُحفظ', { tone: 'danger' });
+  if (getState().offline) return toast('ما فيه اتصال، ما انحفظ', { tone: 'danger' });
   const imgs = [...list].filter((f) => /^image\//.test(f.type));
   if (!imgs.length) return;
   for (const f of imgs) {
@@ -120,7 +120,7 @@ async function runUpload(target: Target, tempId: string) {
     files.delete(tempId);
   } catch {
     setUploads(key, (l) => l.map((i) => (i.imageId === tempId ? { ...i, error: true, uploading: false } : i)));
-    toast('فشل رفع الصورة', { tone: 'danger' });
+    toast('الصورة ما انرفعت', { tone: 'danger' });
   }
 }
 
@@ -208,6 +208,6 @@ export async function filesToMoodboard(list: FileList, pos: { x: number; y: numb
     ];
     commit(ops, { history: 'لوحة مزاج' });
   } catch {
-    toast('فشل رفع الصورة', { tone: 'danger' });
+    toast('الصورة ما انرفعت', { tone: 'danger' });
   }
 }

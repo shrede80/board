@@ -24,7 +24,7 @@ function Header() {
   );
 }
 
-const lockMsg = (ms: number) => `محاولات كثيرة. حاول بعد ${Math.max(1, Math.ceil(ms / 60000))} دقيقة.`;
+const lockMsg = (ms: number) => `محاولات كثيرة، جرّب بعد ${Math.max(1, Math.ceil(ms / 60000))} دقيقة.`;
 
 export function LoginScreen() {
   const [pw, setPw] = useState('');
@@ -40,7 +40,7 @@ export function LoginScreen() {
       await afterLogin();
     } catch (x) {
       const st = x instanceof ApiError ? x.status : 0;
-      setErr(st === 429 ? lockMsg(Number((x as ApiError).body.lockedMs) || 0) : st === 0 ? 'لا يوجد اتصال' : 'كلمة السر غير صحيحة');
+      setErr(st === 429 ? lockMsg(Number((x as ApiError).body.lockedMs) || 0) : st === 0 ? 'ما فيه اتصال' : 'كلمة السر غلط');
     } finally {
       setBusy(false);
     }
@@ -80,7 +80,7 @@ export function SetupScreen() {
       await afterLogin();
     } catch (x) {
       const st = x instanceof ApiError ? x.status : 0;
-      setErr(st === 401 ? 'رمز الإعداد غير صحيح' : st === 409 ? 'كلمة السر موجودة، سجّل الدخول' : st === 429 ? lockMsg(Number((x as ApiError).body.lockedMs) || 0) : 'تعذّر الحفظ، حاول مرة أخرى');
+      setErr(st === 401 ? 'رمز الإعداد غلط' : st === 409 ? 'كلمة السر موجودة، سجّل الدخول' : st === 429 ? lockMsg(Number((x as ApiError).body.lockedMs) || 0) : 'ما انحفظ، جرّب مرة ثانية');
     } finally {
       setBusy(false);
     }

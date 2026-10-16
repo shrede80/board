@@ -32,7 +32,7 @@ export async function addIdea(o: { text: string; files?: File[]; imageIds?: stri
   const files = (o.files ?? []).slice(0, MAX_IDEA_IMAGES);
   if (!text && !files.length && !o.imageIds?.length) return null;
   if (getState().offline) {
-    toast('لا يوجد اتصال، لم تُحفظ', { tone: 'danger' });
+    toast('ما فيه اتصال، ما انحفظت', { tone: 'danger' });
     return null;
   }
   let imageIds = o.imageIds ?? [];
@@ -40,7 +40,7 @@ export async function addIdea(o: { text: string; files?: File[]; imageIds?: stri
     try {
       imageIds = [...imageIds, ...(await Promise.all(files.map((f) => uploadFile(f))))].slice(0, MAX_IDEA_IMAGES);
     } catch {
-      toast('فشل رفع الصورة', { tone: 'danger' });
+      toast('الصورة ما انرفعت', { tone: 'danger' });
       return null;
     }
   }
@@ -56,12 +56,12 @@ export function updateIdea(id: string, fields: Record<string, unknown>, key?: st
 export function deleteIdea(id: string) {
   const r = engine.store.ideas.get(id);
   if (!r) return;
-  if (commit([{ op: 'delete', entity: 'ideas', id, label: `فكرة: ${((r.text as string) || 'صور').slice(0, 60)}` }], { history: 'حذف فكرة' })) toast('حُذفت الفكرة', { undo: true });
+  if (commit([{ op: 'delete', entity: 'ideas', id, label: `فكرة: ${((r.text as string) || 'صور').slice(0, 60)}` }], { history: 'حذف فكرة' })) toast('انحذفت الفكرة', { undo: true });
 }
 
 export function moveIdea(id: string, projectId: string | null) {
   updateIdea(id, { projectId, sceneId: null });
-  toast(projectId ? 'نُقلت الفكرة للمشروع' : 'صارت الفكرة بدون مشروع', { undo: true });
+  toast(projectId ? 'انتقلت الفكرة للمشروع' : 'صارت الفكرة بدون مشروع', { undo: true });
 }
 
 /** «جديدة» goes away once the idea has been seen on the laptop. */
@@ -119,7 +119,7 @@ function chooseShot(p: PProject, title: string): Promise<string | null> {
   return new Promise((resolve) => {
     setState({
       choice: {
-        title, empty: 'لا لقطات في المشروع بعد.',
+        title, empty: 'ما فيه لقطات في المشروع بعد.',
         groups: p.scenes.filter((sc) => sc.shots.length).map((sc) => ({
           label: `${pad2(p.scenes.indexOf(sc) + 1)} · ${sc.name}`,
           options: sc.shots.map((sh, hi) => ({ label: `${p.scenes.indexOf(sc) + 1}.${hi + 1}`, sub: sh.description || 'بدون وصف', bg: frameBg(sh.images[0] ?? null, moodHex(sc.mood)), run: () => resolve(sh.id), testid: 'choose-shot' })),
@@ -143,7 +143,7 @@ export const CONVERT_LABEL: Record<ConvertKind, string> = {
 export async function convertIdea(id: string, kind: ConvertKind, target: { sceneId?: string; shotId?: string; pos?: { x: number; y: number } } = {}): Promise<boolean> {
   const idea0 = engine.store.ideas.get(id);
   if (!idea0 || idea0.deletedAt) return false;
-  if (getState().offline) return (toast('لا يوجد اتصال، لم يُحفظ', { tone: 'danger' }), false);
+  if (getState().offline) return (toast('ما فيه اتصال، ما انحفظ', { tone: 'danger' }), false);
   // a drop onto this project's board/storyboard converts here; otherwise the idea's own project
   const dropped = !!(target.sceneId || target.shotId || target.pos);
   let pid = dropped ? getState().projectId : ideaProject(idea0);
@@ -183,7 +183,7 @@ export async function convertIdea(id: string, kind: ConvertKind, target: { scene
   const q = project()!;
   if (kind === 'shot' || kind === 'refs') {
     const f = findShot(q, made.id);
-    toast(kind === 'shot' ? `صارت اللقطة ${f?.num ?? ''}` : `أُضيفت الصور للّقطة ${f?.num ?? ''}`, { undo: true, ms: 8000, actions: [{ label: 'فتح', testid: 'toast-open', run: () => openEditor('shot', made.id) }] });
+    toast(kind === 'shot' ? `صارت اللقطة ${f?.num ?? ''}` : `انضافت الصور للّقطة ${f?.num ?? ''}`, { undo: true, ms: 8000, actions: [{ label: 'فتح', testid: 'toast-open', run: () => openEditor('shot', made.id) }] });
   } else if (kind === 'scene') {
     const i = q.scenes.findIndex((s) => s.id === made.id);
     toast(`صار المشهد ${pad2(i + 1)}`, { undo: true, ms: 8000, actions: [{ label: 'فتح', testid: 'toast-open', run: () => openEditor('scene', made.id) }] });

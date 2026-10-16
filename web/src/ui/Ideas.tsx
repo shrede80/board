@@ -137,7 +137,7 @@ export function IdeaQuickAdd({ projectId = null, autoFocus, inputRef }: { projec
       setText('');
       files.forEach((x) => URL.revokeObjectURL(x.url));
       setFiles([]);
-      toast('حُفظت الفكرة', { ms: 2000 });
+      toast('انحفظت الفكرة', { ms: 2000 });
     }
   };
   const ib: React.CSSProperties = { width: 30, height: 30, border: 'none', borderRadius: 6, background: 'transparent', color: 'var(--color-text)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 };
@@ -219,7 +219,7 @@ export function IdeaEditDialog() {
       const ids = await Promise.all(list.filter((f) => /^image\//.test(f.type)).slice(0, room).map((f) => uploadFile(f)));
       setImages((cur) => [...cur, ...ids]);
     } catch {
-      toast('فشل رفع الصورة', { tone: 'danger' });
+      toast('الصورة ما انرفعت', { tone: 'danger' });
     }
     setBusy(false);
   };
@@ -272,7 +272,7 @@ export function LibraryIdeas({ projectId }: { projectId: string }) {
       <p style={{ margin: '4px 4px 0', fontSize: 12, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>اسحبها إلى لقطة أو مشهد أو اللوحة.</p>
       <span style={h}>لهذا المشروع</span>
       {mine.map((i) => <IdeaCard key={i.id} idea={i} draggable />)}
-      {!mine.length && <span style={{ fontSize: 13, color: 'var(--color-text-muted)', padding: '4px 4px 8px' }}>لا أفكار لهذا المشروع بعد.</span>}
+      {!mine.length && <span style={{ fontSize: 13, color: 'var(--color-text-muted)', padding: '4px 4px 8px' }}>ما فيه أفكار لهالمشروع بعد.</span>}
       {loose.length > 0 && <span style={h}>غير مصنّفة (من كل المشاريع)</span>}
       {loose.map((i) => <IdeaCard key={i.id} idea={i} draggable moveHere={projectId} />)}
     </>
@@ -305,7 +305,7 @@ export function IdeasPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))', gap: 12, alignItems: 'start' }}>
           {shown.map((i) => <IdeaCard key={i.id} idea={i} />)}
         </div>
-        {!shown.length && <span style={{ color: 'var(--color-text-muted)', fontSize: 14 }}>لا أفكار هنا.</span>}
+        {!shown.length && <span style={{ color: 'var(--color-text-muted)', fontSize: 14 }}>ما فيه أفكار هنا.</span>}
       </div>
     </div>
   );

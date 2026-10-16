@@ -78,7 +78,7 @@ test('ideas: quick add with a link, convert to a shot then undo, delete with und
   // delete → «تراجع»
   await idea.getByTestId('idea-delete').click();
   await expect(idea).toHaveCount(0);
-  await page.getByTestId('toast').filter({ hasText: 'حُذفت الفكرة' }).getByTestId('toast-undo').click();
+  await page.getByTestId('toast').filter({ hasText: 'انحذفت الفكرة' }).getByTestId('toast-undo').click();
   await expect(idea).toHaveCount(1);
 
   // logout from the main menu

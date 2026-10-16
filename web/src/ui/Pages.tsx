@@ -59,7 +59,7 @@ export function EquipmentPage() {
     const fields = { name: edit.name.trim(), brand: edit.brand, model: edit.model, use: edit.use, qty: Math.max(1, edit.qty || 1), role: edit.role, category: edit.category, icon: edit.icon };
     if (edit.id) commit([{ op: 'update', entity: 'equipment', id: edit.id, fields }], { history: 'تعديل قطعة' });
     else commit([{ op: 'create', entity: 'equipment', id: uid('eq'), fields: { ...fields, position: items.length + 1 } }], { history: 'قطعة جديدة' });
-    toast(edit.id ? 'حُفظت التعديلات' : 'أُضيفت القطعة');
+    toast(edit.id ? 'انحفظت التعديلات' : 'انضافت القطعة');
     setEdit(null);
   };
   const onImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,7 +73,7 @@ export function EquipmentPage() {
       const key = (i: Row) => `${i.name}|${i.model || ''}`;
       const have = new Set(items.map(key));
       setImp(list.map((i) => ({ ...i, isNew: !have.has(key(i)) })));
-    }).catch(() => toast('تعذّرت قراءة الملف', { tone: 'danger' }));
+    }).catch(() => toast('ما قدرنا نقرأ الملف', { tone: 'danger' }));
   };
   const confirmImport = () => {
     const add = (imp ?? []).filter((i) => i.isNew);
@@ -87,7 +87,7 @@ export function EquipmentPage() {
     }));
     if (ops.length) commit(ops, { history: 'استيراد معدات' });
     setImp(null);
-    toast(`استُوردت ${add.length} قطعة`);
+    toast(`انستوردت ${add.length} قطعة`);
   };
   const cell: React.CSSProperties = { width: phone ? 38 : 32, height: phone ? 44 : 32, border: 'none', background: 'transparent', borderRadius: 4, cursor: 'pointer', color: 'var(--color-text)', display: 'flex', alignItems: 'center', justifyContent: 'center' };
   return (
@@ -131,7 +131,7 @@ export function EquipmentPage() {
             ))}
           </section>
         ))}
-        {!groups.length && <EmptyState icon="search" title="لا نتائج" description="جرّب كلمة أخرى." />}
+        {!groups.length && <EmptyState icon="search" title="ما فيه نتائج" description="جرّب كلمة أخرى." />}
       </div>
       {edit && (
         <Overlay z={62}>
@@ -159,7 +159,7 @@ export function EquipmentPage() {
         <Overlay z={62}>
           <div data-component="EquipmentImportPreview" style={{ width: 620, maxWidth: '100%', maxHeight: '100%', background: 'var(--color-bg)', borderRadius: 14, boxShadow: 'var(--shadow-lift)', padding: 26, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 26 }}>معاينة الاستيراد</h2>
-            <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>{`${imp.length} قطعة في الملف — ستُضاف ${imp.filter((i) => i.isNew).length} جديدة، والموجودة تُتجاهل.`}</span>
+            <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>{`${imp.length} قطعة في الملف — تنضاف ${imp.filter((i) => i.isNew).length} جديدة، والموجود يبقى.`}</span>
             <div style={{ flex: 1, minHeight: 0, maxHeight: 380, overflowY: 'auto', border: '1px solid var(--color-border-subtle)', borderRadius: 8 }}>
               {imp.map((r, k) => (
                 <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderBottom: '1px solid var(--color-border-subtle)' }}>
@@ -201,8 +201,8 @@ export function TrashPage() {
   const restore = (t: TrashItem) => {
     const ok = commit([{ op: 'restore', trashId: t.id }], { history: 'استعادة', inverse: [{ op: 'delete', entity: t.kind as Op extends { entity: infer E } ? E : never, id: t.refId, label: t.label }] });
     if (!ok) return;
-    if (t.kind === 'projects') toast('استُعيد المشروع', { actions: [{ label: 'فتح', testid: 'toast-open', run: () => void engine.idle().then(() => openProject(t.refId)) }] });
-    else toast('استُعيد العنصر');
+    if (t.kind === 'projects') toast('رجع المشروع', { actions: [{ label: 'فتح', testid: 'toast-open', run: () => void engine.idle().then(() => openProject(t.refId)) }] });
+    else toast('رجع العنصر');
     void engine.idle().then(load);
   };
   const purge = (t: TrashItem) =>
@@ -211,9 +211,9 @@ export function TrashPage() {
       onOk: async () => {
         try {
           await api(`/api/trash/${encodeURIComponent(t.id)}`, { method: 'DELETE' });
-          toast('حُذف نهائياً');
+          toast('انحذف نهائياً');
         } catch {
-          toast('تعذّر الحذف', { tone: 'danger' });
+          toast('ما انحذف', { tone: 'danger' });
         }
         void load();
       },
@@ -223,7 +223,7 @@ export function TrashPage() {
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '12px clamp(16px, 4vw, 32px) 80px', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <h1 style={h1}>سلة المحذوفات</h1>
-          <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>تبقى 30 يوماً ثم تُحذف.</span>
+          <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>تبقى 30 يوم وبعدين تنحذف.</span>
         </div>
         {(items ?? []).map((t) => {
           const left = daysLeft(t.deletedAt);
@@ -232,16 +232,16 @@ export function TrashPage() {
               <Badge tone="outline">{KIND[t.kind] ?? t.kind}</Badge>
               <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <span style={{ fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 16 }}>{t.label}</span>
-                <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{`${t.projectName} · حُذف ${fmtDate(t.deletedAt)}`}</span>
-                {t.extra > 0 && <span style={{ fontSize: 12, color: 'var(--tan-600)' }}>{`يُستعاد مع ${t.extra} ${t.extra === 1 ? 'لقطة' : 'لقطات'}`}</span>}
+                <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{`${t.projectName} · انحذف ${fmtDate(t.deletedAt)}`}</span>
+                {t.extra > 0 && <span style={{ fontSize: 12, color: 'var(--tan-600)' }}>{`يرجع مع ${t.extra} ${t.extra === 1 ? 'لقطة' : 'لقطات'}`}</span>}
               </div>
-              <span style={{ fontSize: 13, fontWeight: 600, color: left <= 5 ? 'var(--color-danger)' : 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>{`باقي ${left} يوماً`}</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: left <= 5 ? 'var(--color-danger)' : 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>{`باقي ${left} يوم`}</span>
               <Button variant="outline" size="sm" icon="repeat" onClick={() => restore(t)} data-testid="trash-restore">استعادة</Button>
               <Button variant="ghost" size="sm" icon="trash" onClick={() => purge(t)}>حذف نهائي</Button>
             </div>
           );
         })}
-        {items && !items.length && <EmptyState icon="trash" title="السلة فارغة" description="المحذوف يظهر هنا 30 يوماً." />}
+        {items && !items.length && <EmptyState icon="trash" title="السلة فارغة" description="المحذوف يظهر هنا 30 يوم." />}
       </div>
     </div>
   );
@@ -264,13 +264,13 @@ export function SettingsPage() {
       setPw({ cur: '', next: '', conf: '', err: '' });
       toast('تغيّرت كلمة السر، الأجهزة الأخرى خرجت');
     } catch (e) {
-      setPw({ ...pw, err: e instanceof ApiError && e.status === 401 ? 'كلمة السر الحالية غير صحيحة' : 'تعذّر الحفظ، حاول مرة أخرى' });
+      setPw({ ...pw, err: e instanceof ApiError && e.status === 401 ? 'كلمة السر الحالية غلط' : 'ما انحفظ، جرّب مرة ثانية' });
     } finally {
       setBusy(false);
     }
   };
   const bk = settings?.lastBackupAt ? new Date(settings.lastBackupAt) : null;
-  let backup = 'لم تُؤخذ نسخة احتياطية بعد';
+  let backup = 'ما فيه نسخة احتياطية بعد';
   if (bk) {
     const today = new Date().toDateString() === bk.toDateString();
     const h = bk.getHours(), hh = h % 12 || 12;
