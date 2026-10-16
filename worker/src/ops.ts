@@ -15,6 +15,8 @@ const TRASH_TABLES = Object.values(ENTITIES).map((e) => e.table);
 type Bound = string | number | null;
 interface Prepared {
   creates: Map<EntityName, Record<string, Bound>[]>;
+  /** creates sent with once: true (kept apart: ON CONFLICT DO NOTHING) */
+  createsOnce: Map<EntityName, Record<string, Bound>[]>;
   updates: Map<string, { entity: EntityName; cols: string[]; rows: Record<string, Bound>[] }>;
   deletes: Map<EntityName, { id: string; tid: string | null; label: string }[]>;
   /** soft deletes without trash: non-trashable deletes and discards */
@@ -50,8 +52,10 @@ function legacyInbox(op: Op): Op {
   };
   switch (op.op) {
     case 'create':
+      // an old phone re-sending after a lost reply must not bring back an idea since converted or deleted
+      return { op: 'create', entity: 'ideas', id: op.id, fields: map(op.fields, true), once: true };
     case 'update':
-      return { op: op.op, entity: 'ideas', id: op.id, fields: map(op.fields, op.op === 'create') };
+      return { op: 'update', entity: 'ideas', id: op.id, fields: map(op.fields, false) };
     case 'delete':
     case 'discard':
       // the old inbox was emptied without the trash
@@ -76,6 +80,7 @@ function parseRaw(input: unknown[]): Op[] {
       case 'create':
       case 'update':
         if (!o.fields || typeof o.fields !== 'object' || Array.isArray(o.fields)) throw new BadRequest(`op ${i}: fields required`);
+        if (o.op === 'create' && o.once === true) return { op: 'create', ...base, fields: o.fields as Record<string, unknown>, once: true };
         return { op: o.op, ...base, fields: o.fields as Record<string, unknown> };
       case 'delete':
         if (o.trashId !== undefined && !(isId(o.trashId) && String(o.trashId).startsWith('tr-'))) throw new BadRequest(`op ${i}: bad trashId`);
@@ -90,7 +95,7 @@ function parseRaw(input: unknown[]): Op[] {
 }
 
 function prepare(ops: Op[], now: number): { p: Prepared; trashIds: (string | null)[]; projectRefs: Set<string> } {
-  const p: Prepared = { creates: new Map(), updates: new Map(), deletes: new Map(), discards: new Map(), undeletes: new Map(), restores: [] };
+  const p: Prepared = { creates: new Map(), createsOnce: new Map(), updates: new Map(), deletes: new Map(), discards: new Map(), undeletes: new Map(), restores: [] };
   const trashIds: (string | null)[] = [];
   const projectRefs = new Set<string>();
   let seq = 0;
@@ -117,7 +122,7 @@ function prepare(ops: Op[], now: number): { p: Prepared; trashIds: (string | nul
         if (!isId(row.project_id)) throw new BadRequest(`${op.entity}: bad projectId`);
         projectRefs.add(row.project_id as string);
       }
-      push(p.creates, op.entity, row);
+      push(op.once ? p.createsOnce : p.creates, op.entity, row);
     } else if (op.op === 'update') {
       const names = Object.keys(op.fields).sort();
       if (!names.length) continue;
@@ -170,7 +175,7 @@ export async function applyOps(db: D1Database, ops: Op[]): Promise<OpsResult> {
       .bind(OWNER_ID, JSON.stringify(ids))
       .all<{ id: string }>();
     // A project created in this same batch counts as existing.
-    const creating = new Set((p.creates.get('projects') ?? []).map((r) => r.id as string));
+    const creating = new Set([...(p.creates.get('projects') ?? []), ...(p.createsOnce.get('projects') ?? [])].map((r) => r.id as string));
     const ok = new Set(found.results.map((r) => r.id));
     for (const id of ids) if (!ok.has(id) && !creating.has(id)) throw new BadRequest(`unknown project ${id}`);
   }
@@ -197,7 +202,7 @@ export async function applyOps(db: D1Database, ops: Op[]): Promise<OpsResult> {
     if (ENTITIES[entity].scope === 'project') touched.set(entity, [...(touched.get(entity) ?? []), ...ids]);
   };
 
-  for (const [entity, rows] of p.creates) {
+  for (const [entity, rows, once] of [...[...p.creates].map(([e, r]) => [e, r, false] as const), ...[...p.createsOnce].map(([e, r]) => [e, r, true] as const)]) {
     const def = ENTITIES[entity];
     const cols = Object.values(def.fields as Record<string, FieldDef>).map((f) => f.col);
     const owner = def.scope === 'owner';
@@ -211,8 +216,10 @@ export async function applyOps(db: D1Database, ops: Op[]): Promise<OpsResult> {
     const updatable = cols.filter((c) => c !== 'created_at');
     const sql =
       `INSERT INTO ${def.table} (${insertCols.join(',')}) SELECT ${select.join(',')} FROM json_each(?1) j WHERE true ` +
-      `ON CONFLICT(id) DO UPDATE SET ${updatable.map((c) => `${c}=excluded.${c}`).join(',')}, updated_at=MAX(${def.table}.updated_at + 1, excluded.updated_at), deleted_at=NULL, trash_id=NULL` +
-      (owner ? ' WHERE owner_id = excluded.owner_id' : '');
+      (once
+        ? 'ON CONFLICT(id) DO NOTHING'
+        : `ON CONFLICT(id) DO UPDATE SET ${updatable.map((c) => `${c}=excluded.${c}`).join(',')}, updated_at=MAX(${def.table}.updated_at + 1, excluded.updated_at), deleted_at=NULL, trash_id=NULL` +
+          (owner ? ' WHERE owner_id = excluded.owner_id' : ''));
     stmts.push(db.prepare(sql).bind(JSON.stringify(rows), OWNER_ID, now));
     touch(entity, rows.map((r) => r.id as string));
   }

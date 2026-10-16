@@ -125,7 +125,14 @@ export async function setBoardSnap(on: boolean) {
 export async function openProject(id: string) {
   await engine.idle();
   setState({ loaded: false, projectId: id, screen: 'app', editor: null, filter: null, selection: [], modal: null, dragPos: null, guides: [], popMenu: null, menu: false });
-  await engine.load(id);
+  try {
+    await engine.load(id);
+  } catch (e) {
+    // deleted elsewhere, or no connection: back to Home instead of an endless loading screen
+    toast(e instanceof ApiError && e.status === 404 ? 'المشروع غير موجود — ربما حُذف' : 'تعذّر فتح المشروع، تأكد من الاتصال', { tone: 'danger' });
+    await showHome().catch(() => setState({ loaded: true, projectId: null, screen: 'home' }));
+    return;
+  }
   setState({ loaded: true });
   api('/api/settings', { method: 'PATCH', json: { lastProjectId: id } }).catch(() => {});
   setTimeout(() => fitAllSoon(), 30);

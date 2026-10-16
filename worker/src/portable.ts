@@ -83,7 +83,6 @@ export async function exportProject(db: D1Database, projectId: string): Promise<
     .prepare(
       `SELECT * FROM images WHERE owner_id = ?2 AND id IN (
          SELECT image_id FROM item_images WHERE project_id = ?1 AND deleted_at IS NULL
-         UNION SELECT image_id FROM inbox_items WHERE project_id = ?1 AND deleted_at IS NULL AND image_id IS NOT NULL
          UNION SELECT ref_id FROM board_cards WHERE project_id = ?1 AND deleted_at IS NULL AND kind = 'image'
          UNION SELECT j.value FROM ideas d, json_each(d.image_ids) j WHERE d.project_id = ?1 AND d.owner_id = ?2 AND d.deleted_at IS NULL)`,
     )
@@ -102,6 +101,8 @@ export async function exportProject(db: D1Database, projectId: string): Promise<
     return rest as Row;
   };
   for (const e of PROJECT_ENTITIES) rows[e] = rows[e]!.map(clean);
+  // the inbox is retired (UPDATE-1 ق3): its items live on as ideas, which travel below
+  delete rows.inboxItems;
   const imageIds = new Set(images.map((i) => i.id));
   rows.ideas = ideas.results.map((r) => clean(toApi('ideas', r))).map((r) => ({ ...r, imageIds: ((r.imageIds as string[]) ?? []).filter((x) => imageIds.has(x)) }));
   return { format: PORTABLE_FORMAT, exportedAt: new Date().toISOString(), project: clean(toApi('projects', proj)), rows, images };
@@ -186,6 +187,7 @@ export async function importProject(db: D1Database, input: unknown, imageMap: Re
   ops.push({ op: 'create', entity: 'projects', id: projectId, fields: projFields });
   const counts: Record<string, number> = {};
   for (const e of PROJECT_ENTITIES) {
+    if (e === 'inboxItems') continue; // never written again (UPDATE-1 ق3); see the ideas below
     counts[e] = rows[e]!.length;
     for (const r of rows[e]!) ops.push({ op: 'create', entity: e, id: ids.get(r.id)!, fields: { ...fieldsOf(e, r), projectId } });
   }
@@ -201,8 +203,17 @@ export async function importProject(db: D1Database, input: unknown, imageMap: Re
         fields: { projectId, sceneId, text: typeof r.text === 'string' ? r.text : '', imageIds, source: r.source === 'phone' ? 'phone' : 'laptop', isNew: false },
       });
     }
-    counts.ideas = ops.filter((o) => o.op === 'create' && o.entity === 'ideas').length;
+  } else {
+    // a file from before Update 1: its inbox items become ideas of the new project
+    for (const r of rows.inboxItems!.slice(0, 2000)) {
+      const imageId = typeof r.imageId === 'string' ? img.get(r.imageId) : undefined;
+      ops.push({
+        op: 'create', entity: 'ideas', id: newId(r.id),
+        fields: { projectId, sceneId: typeof r.sceneId === 'string' ? ids.get(r.sceneId) ?? null : null, text: typeof r.text === 'string' ? r.text : '', imageIds: imageId ? [imageId] : [], source: 'phone', isNew: false },
+      });
+    }
   }
+  counts.ideas = ops.filter((o) => o.op === 'create' && o.entity === 'ideas').length;
 
   if (placeholderRows.length) {
     await db

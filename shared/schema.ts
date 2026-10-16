@@ -263,7 +263,8 @@ export type Row = { id: string; updatedAt: number; deletedAt: number | null } & 
 
 /** One write in a batch. `fields` holds only changed fields for updates. */
 export type Op =
-  | { op: 'create'; entity: EntityName; id: string; fields: Record<string, unknown> }
+  /** once: insert only if the id is new — a re-sent create (offline queue) never overwrites or revives a row */
+  | { op: 'create'; entity: EntityName; id: string; fields: Record<string, unknown>; once?: boolean }
   | { op: 'update'; entity: EntityName; id: string; fields: Record<string, unknown> }
   /** trashId: chosen by the client so a retried request is idempotent */
   | { op: 'delete'; entity: EntityName; id: string; label?: string; trashId?: string }

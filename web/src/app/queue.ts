@@ -7,15 +7,22 @@ import { getState, setState, toast, type PendingIdea } from './state';
 /**
  * Ideas typed on the phone wait here until they reach the server (UPDATE-1 ج8).
  * IndexedDB keeps the text and the photos already compressed in the browser. Items are sent in
- * order; the idea id is made on the phone, so sending the same item twice still makes one idea
- * (the server ignores a second create). Uploaded photo ids are remembered per item, so a retry
+ * order; the idea id is made on the phone and sent with once: true, so sending the same item twice
+ * still makes one idea, and a re-send never brings back an idea converted or deleted meanwhile. Uploaded photo ids are remembered per item, so a retry
  * does not upload them again. Connection problems, 5xx and an ended session leave the item
  * waiting; any other refusal marks it failed with «إعادة المحاولة» and «حذف».
  */
 
 interface StoredImage extends Compressed {
   uploadedId?: string;
+  uploadedAt?: number;
 }
+
+/**
+ * The server sweeps photos nothing points at once they are a day old (maintenance.ts). A photo
+ * uploaded long before its idea finally goes out is uploaded again from the copy on the phone.
+ */
+const UPLOAD_FRESH_MS = 12 * 3600 * 1000;
 interface Stored {
   id: string;
   text: string;
@@ -130,13 +137,14 @@ export async function flushQueue() {
       if (getState().auth !== 'app' || getState().bootOffline) break;
       try {
         for (const im of it.images) {
-          if (im.uploadedId) continue;
+          if (im.uploadedId && Date.now() - (im.uploadedAt ?? 0) < UPLOAD_FRESH_MS) continue;
           im.uploadedId = await uploadCompressed(im);
+          im.uploadedAt = Date.now();
           await put(it);
         }
         await api('/api/ops', {
           method: 'POST',
-          json: { ops: [{ op: 'create', entity: 'ideas', id: it.id, fields: {
+          json: { ops: [{ op: 'create', entity: 'ideas', id: it.id, once: true, fields: {
             projectId: it.projectId, sceneId: it.sceneId, text: it.text, imageIds: it.images.map((im) => im.uploadedId), source: 'phone', isNew: true, createdAt: it.createdAt,
           } }] },
         });

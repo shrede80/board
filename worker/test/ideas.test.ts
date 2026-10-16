@@ -75,6 +75,54 @@ describe('ideas over the API', () => {
     expect((await getJson('/api/home', cookie)).rows.ideas).toHaveLength(1);
   });
 
+  it('a re-sent queued idea (once) never brings back one converted or deleted meanwhile, nor overwrites edits', async () => {
+    const cookie = await setupAndLogin();
+    const op = { op: 'create', entity: 'ideas', id: 'idea-q2', once: true, fields: { text: 'من الجوال', imageIds: [], source: 'phone', isNew: true } };
+    await ops(cookie, [op]);
+    // the laptop edits it, then converts it (discard) — the phone never got the first reply
+    await ops(cookie, [{ op: 'update', entity: 'ideas', id: 'idea-q2', fields: { text: 'عُدّلت على اللابتوب' } }]);
+    await ops(cookie, [{ op: 'discard', entity: 'ideas', id: 'idea-q2' }]);
+    await ops(cookie, [op]);
+    const row = await env.DB.prepare('SELECT text, deleted_at FROM ideas WHERE id = ?').bind('idea-q2').first<{ text: string; deleted_at: number | null }>();
+    expect(row!.deleted_at).toBeTruthy();
+    expect(row!.text).toBe('عُدّلت على اللابتوب');
+    // same for the trash: the trashed idea stays in the trash
+    const op3 = { ...op, id: 'idea-q3' };
+    await ops(cookie, [op3]);
+    await ops(cookie, [{ op: 'delete', entity: 'ideas', id: 'idea-q3', label: 'فكرة' }]);
+    await ops(cookie, [op3]);
+    expect((await env.DB.prepare('SELECT deleted_at, trash_id FROM ideas WHERE id = ?').bind('idea-q3').first<{ deleted_at: number | null; trash_id: string | null }>())!.trash_id).toBeTruthy();
+    // an old phone re-sending an inbox create is treated the same way
+    await ops(cookie, [{ op: 'create', entity: 'projects', id: 'pr-o', fields: { name: 'p' } }]);
+    const old = { op: 'create', entity: 'inboxItems', id: 'in-q4', fields: { projectId: 'pr-o', kind: 'note', text: 'قديم', isNew: true } };
+    await ops(cookie, [old]);
+    await ops(cookie, [{ op: 'discard', entity: 'ideas', id: 'in-q4' }]);
+    await ops(cookie, [old]);
+    expect((await env.DB.prepare('SELECT deleted_at FROM ideas WHERE id = ?').bind('in-q4').first<{ deleted_at: number | null }>())!.deleted_at).toBeTruthy();
+  });
+
+  it('a project file from before Update 1 brings its inbox items as ideas; new files carry no inbox', async () => {
+    const cookie = await setupAndLogin();
+    await ops(cookie, [
+      { op: 'create', entity: 'projects', id: 'pr-1', fields: { name: 'p' } },
+      { op: 'create', entity: 'scenes', id: 'sc-1', fields: { projectId: 'pr-1' } },
+    ]);
+    await inbox([{ id: 'in-x', project: 'pr-1', text: 'في الوارد', scene: 'sc-1', created: 1000 }]);
+    await runMigration();
+    const exp = await getJson('/api/projects/pr-1/export', cookie);
+    expect(exp.rows.inboxItems).toBeUndefined();
+    expect(exp.rows.ideas).toHaveLength(1);
+    // the old format: inbox rows, no ideas
+    const oldFile = { ...exp, rows: { ...exp.rows, ideas: undefined, inboxItems: [{ id: 'in-x', kind: 'note', text: 'في الوارد', sceneId: exp.rows.scenes[0].id, imageId: null, isNew: true }] } };
+    const before = await count('SELECT COUNT(*) AS n FROM inbox_items');
+    const res = await call('/api/import', { method: 'POST', cookie, json: { project: oldFile, imageMap: {} } });
+    const { projectId } = (await res.json()) as { projectId: string };
+    expect(await count('SELECT COUNT(*) AS n FROM inbox_items')).toBe(before); // never written again
+    const sc = (await getJson(`/api/projects/${projectId}`, cookie)).rows.scenes[0];
+    const copy = (await getJson('/api/home', cookie)).rows.ideas.find((r: { projectId: string }) => r.projectId === projectId);
+    expect(copy).toMatchObject({ text: 'في الوارد', sceneId: sc.id, source: 'phone' });
+  });
+
   it('validates images, goes to the trash and comes back', async () => {
     const cookie = await setupAndLogin();
     const bad = await call('/api/ops', { method: 'POST', cookie, json: { ops: [{ op: 'create', entity: 'ideas', id: 'idea-x', fields: { imageIds: Array.from({ length: 11 }, (_, i) => `img-${i}`) } }] } });

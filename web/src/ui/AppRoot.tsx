@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { boot } from '../app/actions';
+import { boot, start as retryStart } from '../app/actions';
 import { wireKeys } from '../app/keys';
-import { useApp } from '../app/state';
+import { getState, useApp } from '../app/state';
 import { Alert, Skeleton } from '../ds/ds';
 import { LoginScreen, SetupScreen } from './Login';
 import { ConfirmDialog, Modals, Toasts } from './Modals';
@@ -9,9 +9,9 @@ import { EqSprite, EquipmentPage, PageBack, SettingsPage, TrashPage } from './Pa
 import { PresentationMode } from './Present';
 import { TopBar, UpdateBanner } from './TopBar';
 import { MenuLayer, PickTargetDialog } from './Menu';
-import { MobileApp } from './m/MobileApp';
-import { useIsMobile } from '../lib/device';
-import { start as retryStart } from '../app/actions';
+import { goHome as phoneHome, MobileApp } from './m/MobileApp';
+import { installBackButton } from './m/kit';
+import { isPhone, useIsMobile } from '../lib/device';
 import { Workspace } from './Workspace';
 import { HomeScreen } from './Home';
 import { IdeaEditDialog, IdeasPage } from './Ideas';
@@ -54,6 +54,7 @@ export function AppRoot() {
   const mobile = useIsMobile();
   useEffect(() => {
     wireKeys();
+    installBackButton(() => isPhone() && getState().auth === 'app', phoneHome);
     void boot();
   }, []);
   return (

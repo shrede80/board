@@ -22,6 +22,8 @@ export function ideaProject(idea: Row): string | null {
   if (!pid) return null;
   const p = engine.store.projects.get(pid);
   if (p && p.deletedAt) return null;
+  // Home holds every live project: one that is missing there is in the trash
+  if (!p && !getState().projectId) return null;
   return pid;
 }
 

@@ -1,8 +1,9 @@
 -- Update 1 phase B: every inbox item becomes an idea (UPDATE-1 §2.2).
 -- Copy only — inbox_items is kept untouched and is never written again (the server now
 -- stores old clients' inbox writes as ideas, see worker/src/ops.ts).
--- Safe to run again: the idea keeps the inbox item's id, so a second run inserts nothing
--- (INSERT OR IGNORE) and a later run picks up anything added in between.
+-- Safe to run again right after the deploy: the idea keeps the inbox item's id, so a second
+-- run inserts nothing (INSERT OR IGNORE) and only picks up items added in between.
+-- Not later than that: ideas purged 30 days after a conversion or deletion would come back.
 -- updated_at = now so devices that are already polling receive the new rows.
 INSERT OR IGNORE INTO ideas (id, owner_id, project_id, scene_id, text, image_ids, source, is_new, created_at, updated_at, deleted_at, trash_id)
 SELECT

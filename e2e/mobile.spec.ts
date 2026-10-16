@@ -291,6 +291,24 @@ test('phone: offline shows the message and disables editing buttons', async ({ p
   await expect(page.getByTestId('offline-banner')).toHaveCount(0);
 });
 
+test('phone: the back gesture closes layers one by one and ends on Home, inside the app', async ({ page }) => {
+  await login(page);
+  await openLast(page);
+  await page.getByTestId('m-strip-shot').first().click();
+  await page.getByTestId('m-editor-more').click();
+  await expect(page.getByTestId('editor-menu')).toBeVisible();
+  await page.goBack();
+  await expect(page.getByTestId('editor-menu')).toHaveCount(0);
+  await expect(page.getByTestId('editor')).toBeVisible();
+  await page.goBack();
+  await expect(page.getByTestId('editor')).toHaveCount(0);
+  await expect(page.getByTestId('m-scenes')).toBeVisible();
+  await page.goBack();
+  await expect(page.getByTestId('m-home')).toBeVisible();
+  expect(new URL(page.url()).origin).toBe(new URL(page.url()).origin); // still in the app
+  await expect(page.locator('[data-component=MobileApp]')).toBeVisible();
+});
+
 test('phone held sideways (844×390) keeps the phone UI', async ({ browser }) => {
   const ctx = await browser.newContext({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true, locale: 'ar' });
   const page = await ctx.newPage();

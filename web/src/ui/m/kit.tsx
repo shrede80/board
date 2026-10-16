@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
 import { closeEditor } from '../../app/actions';
 import { cancelChoice } from '../../app/ideas';
 import { closePresent } from '../../app/present';
 import { closeMenu, getState, setState, subscribe, type UIState } from '../../app/state';
 import { Icon } from '../../ds/ds';
+import { PHONE_QUERY } from '../../lib/device';
 
 /** Phone building blocks (UPDATE-1 ج1): every target ≥ 44 px, nothing depends on hover. */
 
@@ -74,35 +74,37 @@ function closeTop(goHome: () => void) {
   if (s.screen !== 'home') goHome();
 }
 
-/** Mirrors the open layers into browser history: one entry per layer. */
-export function useBackButton(goHome: () => void) {
-  useEffect(() => {
-    let pushed = 0;
-    let ignore = 0;
-    const sync = () => {
-      const d = layers(getState());
-      if (d > pushed) {
-        while (pushed < d) history.pushState({ layer: ++pushed }, '');
-      } else if (d < pushed) {
-        // closed from the UI: drop the extra history entries without reacting to them
-        const n = pushed - d;
-        pushed = d;
-        ignore++;
-        history.go(-n);
-      }
-    };
-    const onPop = () => {
-      if (ignore) return void ignore--;
-      if (pushed === 0) return;
-      pushed--;
-      closeTop(goHome);
-    };
-    window.addEventListener('popstate', onPop);
-    const off = subscribe(sync);
-    sync();
-    return () => {
-      off();
-      window.removeEventListener('popstate', onPop);
-    };
-  }, [goHome]);
+let installed = false;
+
+/**
+ * Mirrors the open layers into browser history: one entry per layer. Installed once for the
+ * app's lifetime (loading screens and sign-out don't reset it); off the phone UI the layer
+ * count is 0, so leaving the phone UI drops its entries and no back press is ever dead.
+ */
+export function installBackButton(active: () => boolean, goHome: () => void) {
+  if (installed) return;
+  installed = true;
+  let pushed = 0;
+  let ignore = 0;
+  const sync = () => {
+    const d = active() ? layers(getState()) : 0;
+    if (d > pushed) {
+      while (pushed < d) history.pushState({ layer: ++pushed }, '');
+    } else if (d < pushed) {
+      // closed from the UI: drop the extra history entries without reacting to them
+      const n = pushed - d;
+      pushed = d;
+      ignore++;
+      history.go(-n);
+    }
+  };
+  window.addEventListener('popstate', () => {
+    if (ignore) return void ignore--;
+    if (pushed === 0) return;
+    pushed--;
+    closeTop(goHome);
+  });
+  subscribe(sync);
+  matchMedia(PHONE_QUERY).addEventListener('change', sync);
+  sync();
 }

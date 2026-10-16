@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { openProject, showHome } from '../../app/actions';
 import { liveIdeas } from '../../app/ideas';
 import { engine, getState, setState, toast, useApp } from '../../app/state';
@@ -9,7 +8,7 @@ import { Modals } from '../Modals';
 import { PresentationMode } from '../Present';
 import { ChoiceDialog } from '../Search';
 import { AddSheet } from './AddSheet';
-import { useBackButton } from './kit';
+
 import { MHome } from './MHome';
 import { IdeaSheet, MIdeas } from './MIdeas';
 import { MMore } from './MMore';
@@ -50,8 +49,6 @@ export function MobileApp() {
   useApp((s) => s.dataVersion);
   const nNew = liveIdeas().filter((i) => i.isNew).length;
   const nPending = useApp((s) => s.pending.length);
-  const back = useCallback(goHome, []);
-  useBackButton(back);
   const tab: Tab = screen === 'home' ? 'home' : screen === 'app' ? 'project' : screen === 'ideas' ? 'ideas' : 'more';
   const badge = nNew + nPending;
   const navBtn = (t: Tab, icon: string, label: string, testid: string, count = 0) => (
