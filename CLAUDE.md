@@ -5,6 +5,7 @@
 ## ⚠️ Rule one (Update 2): challenge cards are SECRET
 The 20 cards of «تحدي العشرين إطاراً» are hidden from the user on purpose — the daily surprise is the point.
 1. **Never quote or summarise any card content** (titles, ideas, constraints, deliverables, hooks, card backs, gear, requirements of a given card, integration details) in any message to the user, report, plan, `PROGRESS.md`, commit message, PR text or code comment. Refer to a card **only by its number in the file** («البطاقة 7»). Avoid printing card text in tool output too (inspect structure, not text).
+   **Hints count too:** never tie any property to a card number (its stage, requirements such as time/drone, fixed/double/partner, integration, difficulty…) in reports, PROGRESS, commits or code/tests — describe features in general only. Tests derive such facts from the deck file at run time; synthetic decks must not mirror the real one.
 2. An undrawn card reveals nothing in the UI: no title, no requirement icons, no hint — only the stage name and «···».
 3. Card content never reaches the browser before it is drawn: the server sends a card's text only when it is drawn in the current run. The deck lives server-side only (never imported by `web/`). Tested.
 4. The card back (success mark, skill, BTS, publish) shows only after «أنهيت».

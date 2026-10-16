@@ -3,14 +3,14 @@ import {
   burnCheck, journalAnswers, lockedUntil, nextCard, postponeCheck, progressOf, seeded, seqStages, type DayLite, type DeckShape,
 } from './challenge';
 
-/** Same shape as the real deck (numbers and stages only): 0 prep, 1 fixed, 2–7, 8–14, 15–19 (17+18 double), 20 fixed. */
+/** A synthetic deck for the rules (not the real one): prep, a fixed first card, three drawn stages with one double pair, a fixed last card. */
 const SHAPE: DeckShape = {
   cards: [
     { id: 0, stage: 'prep', fixed: true, double: null },
     { id: 1, stage: 'zero', fixed: true, double: null },
     ...[2, 3, 4, 5, 6, 7].map((id) => ({ id, stage: 'stage1', fixed: false, double: null })),
     ...[8, 9, 10, 11, 12, 13, 14].map((id) => ({ id, stage: 'stage2', fixed: false, double: null })),
-    ...[15, 16, 17, 18, 19].map((id) => ({ id, stage: 'stage3', fixed: false, double: id === 17 ? 18 : id === 18 ? 17 : null })),
+    ...[15, 16, 17, 18, 19].map((id) => ({ id, stage: 'stage3', fixed: false, double: id === 15 ? 16 : id === 16 ? 15 : null })),
     { id: 20, stage: 'final', fixed: true, double: null },
   ],
   stagesInOrder: ['stage1', 'stage2', 'stage3'],
@@ -57,8 +57,8 @@ describe('challenge order', () => {
   it('the double pair always comes back to back, smaller first; the partner is never drawn alone', () => {
     for (let seed = 1; seed <= 300; seed++) {
       const order = playRun(seed);
-      const i = order.indexOf(17);
-      expect(order[i + 1]).toBe(18);
+      const i = order.indexOf(15);
+      expect(order[i + 1]).toBe(16);
     }
   });
 
@@ -92,8 +92,8 @@ describe('postpone', () => {
     expect(postponeCheck(SHAPE, days, 4, seeded(1))).toEqual({ ok: false, why: 'alone' });
     expect(postponeCheck(SHAPE, [{ cardId: 0, seq: 0, state: 'drawn', drawnAt: 1, completedAt: null }], 0, seeded(1))).toEqual({ ok: false, why: 'protected' });
     expect(postponeCheck(SHAPE, [...base().slice(0, 1), { cardId: 1, seq: 1, state: 'drawn', drawnAt: 3, completedAt: null }], 1, seeded(1))).toEqual({ ok: false, why: 'protected' });
-    const d17 = [...base(), { cardId: 17, seq: 2, state: 'drawn' as const, drawnAt: 5, completedAt: null }];
-    expect(postponeCheck(SHAPE, d17, 17, seeded(1))).toEqual({ ok: false, why: 'protected' });
+    const dd = [...base(), { cardId: 15, seq: 2, state: 'drawn' as const, drawnAt: 5, completedAt: null }];
+    expect(postponeCheck(SHAPE, dd, 15, seeded(1))).toEqual({ ok: false, why: 'protected' });
   });
 });
 
@@ -110,7 +110,7 @@ describe('burn', () => {
     days.push({ cardId: 6, seq: 3, state: 'drawn', drawnAt: 7, completedAt: null });
     expect(burnCheck(SHAPE, days, 6, false)).toEqual({ ok: false, why: 'used' });
     expect(progressOf(days, SHAPE)).toEqual({ done: 1, burned: 1 });
-    expect(burnCheck(SHAPE, [{ cardId: 17, seq: 2, state: 'drawn', drawnAt: 1, completedAt: null }], 17, false)).toEqual({ ok: false, why: 'protected' });
+    expect(burnCheck(SHAPE, [{ cardId: 16, seq: 2, state: 'drawn', drawnAt: 1, completedAt: null }], 16, false)).toEqual({ ok: false, why: 'protected' });
     expect(burnCheck(SHAPE, [{ cardId: 20, seq: 20, state: 'drawn', drawnAt: 1, completedAt: null }], 20, false)).toEqual({ ok: false, why: 'protected' });
   });
 });

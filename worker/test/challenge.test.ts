@@ -35,7 +35,10 @@ describe('challenge: deck and secrecy', () => {
   it('the deck shape matches UPDATE-2 (21 cards, fixed 0/1/20, one double pair)', () => {
     expect(SHAPE.cards).toHaveLength(21);
     expect(SHAPE.cards.filter((c) => c.fixed).map((c) => c.id)).toEqual([0, 1, 20]);
-    expect(SHAPE.cards.filter((c) => c.double != null).map((c) => [c.id, c.double])).toEqual([[17, 18], [18, 17]]);
+    const pair = SHAPE.cards.filter((c) => c.double != null);
+    expect(pair).toHaveLength(2);
+    expect(pair[0].double).toBe(pair[1].id);
+    expect(pair[1].double).toBe(pair[0].id);
   });
 
   it('the server never sends the text of a card that is not drawn in the run', async () => {
@@ -218,7 +221,8 @@ describe('challenge: the rules on the server', () => {
     expect(order).toHaveLength(21);
     expect(order.slice(0, 2)).toEqual([0, 1]);
     expect(order[20]).toBe(20);
-    expect(order[order.indexOf(17) + 1]).toBe(18);
+    const [lo, hi] = SHAPE.cards.filter((c) => c.double != null).map((c) => c.id).sort((a, b) => a - b);
+    expect(order[order.indexOf(lo) + 1]).toBe(hi);
     const stages = order.map((id) => SHAPE.cards.find((c) => c.id === id)!.stage);
     expect(stages.slice(2, 8).every((x) => x === 'stage1')).toBe(true);
     expect(stages.slice(8, 15).every((x) => x === 'stage2')).toBe(true);
