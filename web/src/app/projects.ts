@@ -1,6 +1,7 @@
+import { activateNewShell } from './sw';
 import type { Op } from '../../../shared/schema';
 import { api } from '../data/api';
-import { commit, openProject, pollNow, showHome } from './actions';
+import { commit, forgetSession, openProject, pollNow, showHome } from './actions';
 import { askConfirm, engine, getState, setState, toast } from './state';
 
 /**
@@ -118,6 +119,7 @@ export function askLogout() {
 export async function logout() {
   await engine.idle().catch(() => {});
   await api('/api/auth/logout', { method: 'POST' }).catch(() => {});
+  forgetSession();
   setState({ auth: 'login', loaded: false, projectId: null, editor: null, modal: null, selection: [], menu: false });
 }
 
@@ -126,5 +128,5 @@ export async function logout() {
 /** Waits for pending saves, then reloads into the new version. */
 export async function reloadForUpdate() {
   await engine.idle();
-  location.reload();
+  await activateNewShell();
 }

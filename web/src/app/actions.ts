@@ -5,48 +5,83 @@ import { allShots, findShot, type PProject, type PScene } from '../data/project'
 import { MOODS, POLL_MS, TEMPLATES } from '../lib/constants';
 import { pad2, uid } from '../lib/util';
 import { capture, playFlipLater } from './flip';
+import { flushQueue, refreshPending } from './queue';
 import { askConfirm, engine, getState, project, setState, toast, type EditorType } from './state';
 
 // ---------- boot / auth ----------
 
+const SESSION_KEY = 'lawhat-signed-in';
+const rememberSession = () => {
+  try {
+    localStorage.setItem(SESSION_KEY, '1');
+  } catch {
+    /* storage blocked */
+  }
+};
+/** Signed out on this device: no more offline start (UPDATE-1 ج8). */
+export function forgetSession() {
+  try {
+    localStorage.removeItem(SESSION_KEY);
+  } catch {
+    /* storage blocked */
+  }
+}
+const hadSession = () => {
+  try {
+    return localStorage.getItem(SESSION_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+
 export async function boot() {
-  setUnauthorizedHandler(() => setState({ auth: 'login', loaded: false }));
+  setUnauthorizedHandler(() => (forgetSessionIfOnline(), setState({ auth: 'login', loaded: false })));
   setNewVersionHandler(() => !getState().newVersion && setState({ newVersion: true }));
   wireWindow();
+  void refreshPending();
+  await start();
+}
+
+function forgetSessionIfOnline() {
+  if (navigator.onLine) forgetSession();
+}
+
+/** Tries again to reach the server (offline start → «حاول الآن»). */
+export async function start() {
   try {
     const st = await api<AuthStatus>('/api/auth/status');
     if (location.pathname === '/setup' && !st.setupDone) return setState({ auth: 'setup' });
-    if (!st.authed) return setState({ auth: st.setupDone ? 'login' : 'setup' });
+    if (!st.authed) {
+      forgetSession();
+      return setState({ auth: st.setupDone ? 'login' : 'setup' });
+    }
     if (location.pathname === '/setup') history.replaceState(null, '', '/');
-    setState({ auth: 'app' });
+    rememberSession();
+    setState({ auth: 'app', bootOffline: false });
     await loadInitial();
-  } catch {
+  } catch (e) {
+    // No connection on a device that signed in before: open anyway, ideas still work (UPDATE-1 ج8).
+    if (e instanceof ApiError && e.status === 0 && hadSession()) {
+      setState({ auth: 'app', loaded: true, bootOffline: true, offline: true, screen: 'home', projectId: null });
+      return;
+    }
     setState({ auth: 'login', offline: !navigator.onLine });
   }
 }
 
 export async function afterLogin() {
   if (location.pathname === '/setup') history.replaceState(null, '', '/');
-  setState({ auth: 'app', loaded: false });
+  rememberSession();
+  setState({ auth: 'app', loaded: false, bootOffline: false });
   await loadInitial();
 }
-
-/** Phones keep the project screen until the phone Home arrives (UPDATE-1 phase C). */
-const isPhone = () => typeof matchMedia !== 'undefined' && matchMedia('(max-width: 760px)').matches;
 
 async function loadInitial() {
   const settings = await api<Settings>('/api/settings');
   applySettings(settings);
-  if (isPhone()) {
-    const projects = await api<{ id: string; archived?: boolean }[]>('/api/projects');
-    let pid = settings.lastProjectId && projects.some((p) => p.id === settings.lastProjectId) ? settings.lastProjectId : (projects.find((p) => !p.archived) ?? projects[0])?.id;
-    if (!pid) {
-      pid = uid('pr');
-      await api('/api/ops', { method: 'POST', json: { ops: [{ op: 'create', entity: 'projects', id: pid, fields: { name: 'مشروع جديد', template: 'blank', aspect: '16:9' } }] } });
-    }
-    await openProject(pid);
-  } else await showHome(); // the app opens on Home (UPDATE-1 ق2)
+  await showHome(); // the app opens on Home, laptop and phone (UPDATE-1 ق2)
   startPolling();
+  void flushQueue();
 }
 
 /** Home: no project open (UPDATE-1 ب1). */
@@ -107,6 +142,7 @@ export async function pollNow() {
   try {
     await engine.poll();
     if (getState().offline) setState({ offline: false });
+    if (getState().pending.some((p) => !p.failed)) void flushQueue();
   } catch (e) {
     if (e instanceof ApiError && e.status === 0) setState({ offline: !navigator.onLine });
   }
@@ -115,8 +151,10 @@ export async function pollNow() {
 function wireWindow() {
   window.addEventListener('online', () => {
     setState({ offline: false });
+    if (getState().bootOffline) return void start();
     engine.retry();
     void pollNow();
+    void flushQueue();
   });
   window.addEventListener('offline', () => setState({ offline: true }));
   document.addEventListener('visibilitychange', () => {

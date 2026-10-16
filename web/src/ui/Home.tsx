@@ -23,7 +23,7 @@ export interface Summary {
 }
 
 /** Project summaries (counts from the server) with the latest local edits of each project row on top. */
-function useSummaries(): Summary[] | null {
+export function useSummaries(): Summary[] | null {
   const dv = useApp((s) => s.dataVersion);
   const [list, setList] = useState<Summary[] | null>(null);
   useEffect(() => {
@@ -41,10 +41,10 @@ function useSummaries(): Summary[] | null {
     .filter((s): s is Summary => !!s);
 }
 
-const cover = (s: Summary) => frameBg(s.coverImageId ? { imageId: s.coverImageId, placeholder: s.coverPlaceholder } : null, moodHex(s.coverMood));
+export const cover = (s: Summary) => frameBg(s.coverImageId ? { imageId: s.coverImageId, placeholder: s.coverPlaceholder } : null, moodHex(s.coverMood));
 
 /** Thin progress bar: approved (accent) then shot (ink). */
-function Progress({ s, h = 6 }: { s: Summary; h?: number }) {
+export function Progress({ s, h = 6 }: { s: Summary; h?: number }) {
   const t = Math.max(1, s.shots);
   return (
     <div style={{ height: h, borderRadius: h / 2, background: 'var(--color-surface-strong)', overflow: 'hidden', display: 'flex' }}>
@@ -55,7 +55,7 @@ function Progress({ s, h = 6 }: { s: Summary; h?: number }) {
 }
 
 const today = () => isoDay(new Date());
-const upcoming = (list: Summary[]) =>
+export const upcoming = (list: Summary[]) =>
   list.filter((s) => !s.archived && s.stage !== 'done' && s.shootDate && s.shootDate >= today())
     .sort((a, b) => shootAt(a.shootDate!, a.shootTime).getTime() - shootAt(b.shootDate!, b.shootTime).getTime())[0] ?? null;
 
@@ -203,7 +203,7 @@ function UpcomingCard({ s, now }: { s: Summary; now: Date }) {
   );
 }
 
-function StageBadge({ stage, glass }: { stage: string; glass?: boolean }) {
+export function StageBadge({ stage, glass }: { stage: string; glass?: boolean }) {
   return (
     <span data-testid="stage-badge" style={{ height: 24, padding: '0 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap', ...(glass ? { background: 'rgba(20,18,16,.62)', color: '#fdfcfa' } : { background: 'var(--color-accent-soft)', color: 'var(--tan-600)' }) }}>{STAGE_LABEL[stage] ?? ''}</span>
   );

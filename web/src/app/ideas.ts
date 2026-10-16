@@ -138,25 +138,25 @@ export const CONVERT_LABEL: Record<ConvertKind, string> = {
  * «حوّلها إلى…». The idea's project (or one chosen now) is opened first; target = a scene for a
  * new shot, a shot for references, a board spot for the note — asked for when not given.
  */
-export async function convertIdea(id: string, kind: ConvertKind, target: { sceneId?: string; shotId?: string; pos?: { x: number; y: number } } = {}) {
+export async function convertIdea(id: string, kind: ConvertKind, target: { sceneId?: string; shotId?: string; pos?: { x: number; y: number } } = {}): Promise<boolean> {
   const idea0 = engine.store.ideas.get(id);
-  if (!idea0 || idea0.deletedAt) return;
-  if (getState().offline) return toast('لا يوجد اتصال، التغييرات لن تُحفظ', { tone: 'danger' });
+  if (!idea0 || idea0.deletedAt) return false;
+  if (getState().offline) return (toast('لا يوجد اتصال، التغييرات لن تُحفظ', { tone: 'danger' }), false);
   // a drop onto this project's board/storyboard converts here; otherwise the idea's own project
   const dropped = !!(target.sceneId || target.shotId || target.pos);
   let pid = dropped ? getState().projectId : ideaProject(idea0);
   if (!pid) pid = await chooseProject('حوّلها في أي مشروع؟');
-  if (!pid) return;
+  if (!pid) return false;
   if (getState().projectId !== pid) await openProject(pid);
   const p = project();
   const idea = engine.store.ideas.get(id);
-  if (!p || !idea || idea.deletedAt) return;
+  if (!p || !idea || idea.deletedAt) return false;
 
   const ctx: ConvertCtx = { projectId: p.id, newId: uid };
   if (kind === 'shot') {
     const sceneId = target.sceneId ?? (idea.sceneId && p.scenes.some((s) => s.id === idea.sceneId) ? (idea.sceneId as string) : await chooseScene(p, 'في أي مشهد؟'));
     const sc = p.scenes.find((s) => s.id === sceneId);
-    if (!sc) return;
+    if (!sc) return false;
     const last = sc.shots[sc.shots.length - 1];
     ctx.shot = { sceneId: sc.id, position: positionAt(sc.shots, sc.shots.length), fields: newShotFields(last as never) };
   } else if (kind === 'scene') {
@@ -166,7 +166,7 @@ export async function convertIdea(id: string, kind: ConvertKind, target: { scene
   } else if (kind === 'refs') {
     const shotId = target.shotId ?? (await chooseShot(p, 'أي لقطة؟'));
     const f = shotId ? findShot(p, shotId) : null;
-    if (!f) return;
+    if (!f) return false;
     const linked = f.sh.images.filter((i) => i.linkId).map((i) => engine.store.itemImages.get(i.linkId!)).filter((r): r is Row => !!r);
     ctx.refs = { shotId: f.sh.id, sceneId: f.sc.id, nextImagePosition: positionAt(linked, linked.length), hasCover: !!f.sh.coverImageId };
   } else if (kind === 'note') {
@@ -176,7 +176,7 @@ export async function convertIdea(id: string, kind: ConvertKind, target: { scene
     ctx.moodboard = { position: positionAt(p.library.moodboards, p.library.moodboards.length) };
   }
   const { ops, made } = convertIdeaOps(idea, kind, ctx);
-  if (!commit(ops, { history: `تحويل الفكرة إلى ${CONVERT_LABEL[kind]}`, flip: kind === 'shot' })) return;
+  if (!commit(ops, { history: `تحويل الفكرة إلى ${CONVERT_LABEL[kind]}`, flip: kind === 'shot' })) return false;
 
   const q = project()!;
   if (kind === 'shot' || kind === 'refs') {
@@ -191,6 +191,7 @@ export async function convertIdea(id: string, kind: ConvertKind, target: { scene
   } else {
     toast('صارت لوحة مزاج', { undo: true, ms: 8000, actions: [{ label: 'فتح', testid: 'toast-open', run: () => openEditor('moodboard', made.id) }] });
   }
+  return true;
 }
 
 /** Dragging an idea from the library (like the inbox before): shot → references, row → new shot, board → note. */

@@ -1,5 +1,7 @@
 import { closePresent, presGo, presToggle, toggleTech } from '../app/present';
+import { useRef, useState } from 'react';
 import { useApp, useEquipment, useProject } from '../app/state';
+import { useIsMobile } from '../lib/device';
 import { allShots, camLine, coverOf, eqName, moodHex, moveLine } from '../data/project';
 import { Icon } from '../ds/ds';
 import { AR } from '../lib/constants';
@@ -9,7 +11,9 @@ export function PresentationMode() {
   const p = useProject();
   const eq = useEquipment();
   const pr = useApp((s) => s.present);
+  const phone = useIsMobile();
   if (!pr.open || !p) return null;
+  if (phone) return <PhonePresent />;
   const list = allShots(p);
   const roundBtn: React.CSSProperties = { position: 'absolute', top: '50%', transform: 'translateY(-50%)', width: 52, height: 52, borderRadius: '50%', border: '1px solid #3a342c', background: 'rgba(20,18,16,.6)', color: '#fdfcfa', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' };
   if (!list.length) {
@@ -82,6 +86,62 @@ export function PresentationMode() {
           <span style={{ fontSize: 13, color: '#b9b9c2' }}>{`المدة الكلية ${mmss(total)}`}</span>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * «عرض المشروع» on the phone (UPDATE-1 ج10): the frame fills the screen (upright or sideways),
+ * swipe to move between shots (right = next, as the shots run right to left), tap to show or
+ * hide the details.
+ */
+function PhonePresent() {
+  const p = useProject()!;
+  const pr = useApp((s) => s.present);
+  const [info, setInfo] = useState(true);
+  const t = useRef<{ x: number; y: number; at: number } | null>(null);
+  const list = allShots(p);
+  const i = Math.min(pr.i, Math.max(0, list.length - 1));
+  const x = list[i];
+  const arCss = p.aspect === '2.39:1' ? '2.39 / 1' : p.aspect.replace(':', ' / ');
+  const ar = AR[p.aspect] || 16 / 9;
+  const chrome: React.CSSProperties = { position: 'absolute', insetInline: 0, padding: '0 16px', transition: 'opacity 160ms', opacity: info ? 1 : 0, pointerEvents: info ? 'auto' : 'none' };
+  return (
+    <div data-component="PresentationMode" data-sb-theme="dark" data-testid="present"
+      onTouchStart={(e) => (t.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, at: Date.now() })}
+      onTouchEnd={(e) => {
+        const s = t.current;
+        t.current = null;
+        if (!s) return;
+        const dx = e.changedTouches[0].clientX - s.x, dy = e.changedTouches[0].clientY - s.y;
+        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+          e.preventDefault();
+          presGo(dx > 0 ? i + 1 : i - 1);
+        }
+      }}
+      onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) setInfo((v) => !v); }}
+      style={{ position: 'fixed', inset: 0, zIndex: 80, background: '#0e0d0b', color: '#fdfcfa', display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'pan-y', userSelect: 'none' }}>
+      {!x ? (
+        <span style={{ fontFamily: 'var(--font-serif-text)', fontSize: 20 }}>لا توجد لقطات للعرض بعد</span>
+      ) : (
+        <div data-testid="present-frame" style={{ width: `min(100vw, calc(100vh * ${ar}))`, aspectRatio: arCss, background: frameBg(coverOf(x.sh), moodHex(x.sc.mood), true), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {!coverOf(x.sh) && <span style={{ color: '#6b6255', fontSize: 14 }}>بدون صورة مرجعية</span>}
+        </div>
+      )}
+      <div data-testid="present-info" aria-hidden={!info} style={{ ...chrome, top: 'calc(10px + env(safe-area-inset-top))', display: 'flex', alignItems: 'center', gap: 10, textShadow: '0 1px 6px rgba(0,0,0,.7)' }}>
+        {x && <span data-testid="present-num" style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 36, lineHeight: 1 }}>{x.num}</span>}
+        {x && <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{`المشهد ${pad2(x.si + 1)} · ${x.sc.name}`}</span>}
+        <button aria-label="إغلاق العرض" data-testid="present-close" onClick={closePresent} style={{ width: 44, height: 44, borderRadius: '50%', border: '1px solid #3a342c', background: 'rgba(20,18,16,.6)', color: '#fdfcfa', display: 'flex', alignItems: 'center', justifyContent: 'center', marginInlineStart: 'auto' }}><Icon name="x" size={20} /></button>
+      </div>
+      {x && (
+        <div style={{ ...chrome, bottom: 'calc(12px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column', gap: 8, textShadow: '0 1px 6px rgba(0,0,0,.7)' }}>
+          <span style={{ fontFamily: 'var(--font-serif-text)', fontSize: 17, lineHeight: 1.5, textAlign: 'center' }}>{x.sh.description || 'بدون وصف'}</span>
+          <div style={{ display: 'flex', gap: 3, height: 4 }}>
+            {list.map((y, j) => <i key={y.sh.id} style={{ flex: 1, borderRadius: 2, background: j <= i ? moodHex(y.sc.mood) : '#3a342c' }} />)}
+          </div>
+          <span style={{ fontSize: 12, color: '#b9b9c2', textAlign: 'center' }}>{`لقطة ${i + 1} من ${list.length} · ${mmss(x.sh.durationS)} · اسحب للتنقّل`}</span>
+        </div>
+      )}
     </div>
   );
 }

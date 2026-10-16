@@ -5,7 +5,7 @@ import { deriveProject, type PProject, type Uploads } from '../data/project';
 import type { TplType } from '../lib/constants';
 
 export type Mode = 'board' | 'storyboard';
-export type Screen = 'home' | 'ideas' | 'app' | 'equipment' | 'trash' | 'settings';
+export type Screen = 'home' | 'ideas' | 'app' | 'equipment' | 'trash' | 'settings' | 'more';
 export type EditorType = 'shot' | 'scene' | 'character' | 'location' | 'moodboard' | 'note';
 export type Drag =
   | { kind: 'tpl'; type: TplType }
@@ -61,6 +61,17 @@ export type Renaming =
   | { kind: 'scene'; id: string; where: 'board' | 'row' }
   | { kind: 'card'; id: string }
   | null;
+export interface PendingIdea {
+  id: string;
+  text: string;
+  projectId: string | null;
+  sceneId: string | null;
+  createdAt: number;
+  /** local previews (object URLs) */
+  thumbs: string[];
+  /** set when the server refused it (not a connection problem) */
+  failed?: string;
+}
 export interface Confirm {
   title: string;
   msg: string;
@@ -104,6 +115,16 @@ export interface UIState {
   choice: Choice | null;
   /** idea being edited (UPDATE-1 ب2) */
   ideaEdit: string | null;
+  /** opened without a connection on a signed-in device: no data loaded yet (UPDATE-1 ج8) */
+  bootOffline: boolean;
+  /** ideas waiting on this device to be sent (UPDATE-1 ج8) */
+  pending: PendingIdea[];
+  /** phone: the ＋ sheet (UPDATE-1 ج5) */
+  addSheet: null | 'idea' | 'shot' | 'scene';
+  /** phone: «حوّل الفكرة إلى» sheet for this idea (UPDATE-1 ج6) */
+  ideaSheet: string | null;
+  /** phone: project tabs (UPDATE-1 ج3) */
+  mTab: 'scenes' | 'shots' | 'library';
   /** «⌂ الرئيسية ‹ project ▾» menu */
   projMenu: boolean;
   popMenu: PopMenu | null;
@@ -151,7 +172,7 @@ let state: UIState = {
   settings: null, libOpen: true, libTab: 'characters', editor: null,
   sections: { refs: true, basics: true, comp: true, cam: true, move: true, light: false, audio: false },
   selection: [], view: { x: 0, y: 0, z: 0.8 }, filter: null, toasts: [], save: 'saved', offline: typeof navigator !== 'undefined' ? !navigator.onLine : false,
-  modal: null, dupTarget: null, choice: null, ideaEdit: null, projMenu: false, popMenu: null, dragSize: null, renaming: null, newVersion: false, pickTarget: null, hoverItem: null, exportTab: 'pdf', exportScope: 'all', exportSel: [], confirm: null, dragOver: null,
+  modal: null, dupTarget: null, choice: null, ideaEdit: null, bootOffline: false, pending: [], addSheet: null, ideaSheet: null, mTab: 'scenes', projMenu: false, popMenu: null, dragSize: null, renaming: null, newVersion: false, pickTarget: null, hoverItem: null, exportTab: 'pdf', exportScope: 'all', exportSel: [], confirm: null, dragOver: null,
   present: { open: false, i: 0, playing: false, tech: false, fill: 0 }, hoverShot: null, marquee: null, space: false, menu: false,
   pick: null, custom: null, customVal: '', flipping: false, guides: [], dragPos: null, uploads: {}, canUndo: false, canRedo: false,
 };
@@ -168,7 +189,7 @@ export function setState(patch: Partial<UIState> | ((s: UIState) => Partial<UISt
   listeners.forEach((l) => l());
 }
 
-function subscribe(l: () => void) {
+export function subscribe(l: () => void) {
   listeners.add(l);
   return () => listeners.delete(l);
 }

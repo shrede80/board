@@ -9,7 +9,9 @@ import { EqSprite, EquipmentPage, PageBack, SettingsPage, TrashPage } from './Pa
 import { PresentationMode } from './Present';
 import { TopBar, UpdateBanner } from './TopBar';
 import { MenuLayer, PickTargetDialog } from './Menu';
-import { MobileApp, useIsMobile } from './Mobile';
+import { MobileApp } from './m/MobileApp';
+import { useIsMobile } from '../lib/device';
+import { start as retryStart } from '../app/actions';
 import { Workspace } from './Workspace';
 import { HomeScreen } from './Home';
 import { IdeaEditDialog, IdeasPage } from './Ideas';
@@ -48,6 +50,7 @@ export function AppRoot() {
   const screen = useApp((s) => s.screen);
   const offline = useApp((s) => s.offline);
   const modal = useApp((s) => s.modal);
+  const bootOffline = useApp((s) => s.bootOffline);
   const mobile = useIsMobile();
   useEffect(() => {
     wireKeys();
@@ -60,7 +63,14 @@ export function AppRoot() {
       {auth === 'setup' && <SetupScreen />}
       {(auth === 'loading' || (auth === 'app' && !loaded)) && <Loading mobile={mobile} />}
       {auth === 'app' && loaded && mobile && <MobileApp />}
-      {auth === 'app' && loaded && !mobile && (
+      {auth === 'app' && loaded && !mobile && bootOffline && (
+        <div data-testid="offline-start" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, textAlign: 'center' }}>
+          <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 34 }}>لا يوجد اتصال بالإنترنت</h1>
+          <p style={{ margin: 0, fontSize: 15, color: 'var(--color-text-muted)', lineHeight: 1.8 }}>البرنامج يحتاج إنترنت على اللابتوب. يفتح لحاله أول ما يرجع الاتصال.</p>
+          <button onClick={() => void retryStart()} style={{ height: 44, padding: '0 20px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-text)', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>حاول الآن</button>
+        </div>
+      )}
+      {auth === 'app' && loaded && !mobile && !bootOffline && (
         <>
           <TopBar />
           {offline && (

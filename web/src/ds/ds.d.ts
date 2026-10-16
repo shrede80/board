@@ -1,5 +1,5 @@
 /* Types for the design-system components extracted from the prototype (ds.jsx). */
-import type { CSSProperties, ReactNode, ChangeEvent, InputHTMLAttributes, TextareaHTMLAttributes } from 'react';
+import type { CSSProperties, ReactNode, ChangeEvent, InputHTMLAttributes, TextareaHTMLAttributes, Ref } from 'react';
 
 type S = { style?: CSSProperties };
 
@@ -33,5 +33,5 @@ export function Radio(p: S & { checked?: boolean; onChange?: (v: boolean) => voi
 export function Search(p: S & { value?: string; onChange?: (e: ChangeEvent<HTMLInputElement>) => void; placeholder?: string }): JSX.Element;
 export function Select(p: S & { options: { value: string; label: string }[]; value?: string; onChange?: (e: ChangeEvent<HTMLSelectElement>) => void; disabled?: boolean; invalid?: boolean }): JSX.Element;
 export function Switch(p: S & { checked?: boolean; onChange?: (v: boolean) => void; label?: ReactNode; disabled?: boolean }): JSX.Element;
-export function Textarea(p: TextareaHTMLAttributes<HTMLTextAreaElement> & { invalid?: boolean }): JSX.Element;
+export function Textarea(p: TextareaHTMLAttributes<HTMLTextAreaElement> & { invalid?: boolean; ref?: Ref<HTMLTextAreaElement> }): JSX.Element;
 export function Tabs<T extends string = string>(p: S & { items: { value: T; label: ReactNode }[]; value?: T | ''; onChange?: (v: T) => void; tone?: 'light' | 'dark' }): JSX.Element;

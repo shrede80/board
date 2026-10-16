@@ -1,3 +1,4 @@
+import { useIsMobile } from '../lib/device';
 import { useEffect, useState } from 'react';
 import type { Op, Row } from '../../../shared/schema';
 import { commit, openProject, setTheme } from '../app/actions';
@@ -38,6 +39,7 @@ const h1: React.CSSProperties = { margin: 0, fontFamily: 'var(--font-display)', 
 type EqDraft = { id: string | null; name: string; brand: string; model: string; use: string; qty: number; role: string; category: string; icon: string };
 
 export function EquipmentPage() {
+  const phone = useIsMobile();
   const eq = useEquipment();
   const settings = useApp((s) => s.settings);
   const [q, setQ] = useState('');
@@ -87,17 +89,17 @@ export function EquipmentPage() {
     setImp(null);
     toast(`استُوردت ${add.length} قطعة`);
   };
-  const cell: React.CSSProperties = { width: 32, height: 32, border: 'none', background: 'transparent', borderRadius: 4, cursor: 'pointer', color: 'var(--color-text)', display: 'flex', alignItems: 'center', justifyContent: 'center' };
+  const cell: React.CSSProperties = { width: phone ? 38 : 32, height: phone ? 44 : 32, border: 'none', background: 'transparent', borderRadius: 4, cursor: 'pointer', color: 'var(--color-text)', display: 'flex', alignItems: 'center', justifyContent: 'center' };
   return (
     <div data-component="EquipmentPage" style={{ flex: 1, overflowY: 'auto' }}>
-      <div style={{ maxWidth: 1144, margin: '0 auto', padding: '12px 32px 80px', display: 'flex', flexDirection: 'column', gap: 22 }}>
+      <div style={{ maxWidth: 1144, margin: '0 auto', padding: '12px clamp(16px, 4vw, 32px) 80px', display: 'flex', flexDirection: 'column', gap: 22 }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <h1 style={h1}>معداتي</h1>
             <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>{`${total} قطعة · مشتركة بين كل المشاريع. الدور يحدد في أي قائمة تظهر القطعة داخل بطاقة اللقطة.`}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 260 }}><Search value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث في المعدات…" /></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', width: phone ? '100%' : undefined }}>
+            <div style={{ width: phone ? '100%' : 260 }}><Search value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث في المعدات…" /></div>
             <label className="h-surface" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 40, padding: '0 16px', border: '1px solid var(--color-border)', borderRadius: 4, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: 'var(--color-text)', whiteSpace: 'nowrap' }}>
               <Icon name="upload" size={16} />استيراد من ملف
               <input type="file" accept=".json,application/json" onChange={onImportFile} style={{ display: 'none' }} />
@@ -112,15 +114,15 @@ export function EquipmentPage() {
               <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>{`${g.items.reduce((a, i) => a + ((i.qty as number) || 1), 0)} قطعة`}</span>
             </div>
             {g.items.map((it) => (
-              <div key={it.id} data-testid="eq-row" className="h-surface" style={{ display: 'grid', gridTemplateColumns: '44px minmax(0,1.4fr) minmax(0,1.2fr) 48px 120px 76px', alignItems: 'center', gap: 16, padding: '10px 8px', borderBottom: '1px solid var(--color-border-subtle)', borderRadius: 4 }}>
+              <div key={it.id} data-testid="eq-row" className="h-surface" style={{ display: 'grid', gridTemplateColumns: phone ? '44px minmax(0,1fr) 40px 76px' : '44px minmax(0,1.4fr) minmax(0,1.2fr) 48px 120px 76px', alignItems: 'center', gap: phone ? 10 : 16, padding: '10px 8px', borderBottom: '1px solid var(--color-border-subtle)', borderRadius: 4 }}>
                 <span style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--color-surface-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-700)' }}><EqIcon name={(it.icon as string) || 'box'} /></span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
                   <span style={{ fontSize: 15, fontWeight: 700 }}>{it.name as string}</span>
                   <span style={{ fontSize: 12, color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{[it.brand, it.model].filter(Boolean).join(' · ') || '—'}</span>
                 </div>
-                <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>{(it.use as string) || ''}</span>
+                {!phone && <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>{(it.use as string) || ''}</span>}
                 <span style={{ fontSize: 14, fontWeight: 700 }}>{`×${(it.qty as number) || 1}`}</span>
-                <span><Badge tone="accent">{roles[it.role as string] ?? (it.role as string)}</Badge></span>
+                {!phone && <span><Badge tone="accent">{roles[it.role as string] ?? (it.role as string)}</Badge></span>}
                 <div style={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                   <button title="تعديل" className="h-strong" style={cell} onClick={() => setEdit({ id: it.id, name: it.name as string, brand: (it.brand as string) || '', model: (it.model as string) || '', use: (it.use as string) || '', qty: (it.qty as number) || 1, role: it.role as string, category: it.category as string, icon: (it.icon as string) || 'box' })}><Icon name="edit" size={15} /></button>
                   <button title="حذف" className="h-strong" style={cell} onClick={() => askConfirm({ title: 'حذف القطعة؟', msg: `ستُحذف «${it.name}» من معداتي ولن تظهر في قوائم اللقطات.`, ok: 'حذف', danger: true, onOk: () => commit([{ op: 'delete', entity: 'equipment', id: it.id }], { history: 'حذف قطعة' }) })}><Icon name="trash" size={15} /></button>
@@ -218,7 +220,7 @@ export function TrashPage() {
     });
   return (
     <div data-component="TrashPage" style={{ flex: 1, overflowY: 'auto' }}>
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '12px 32px 80px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '12px clamp(16px, 4vw, 32px) 80px', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <h1 style={h1}>سلة المحذوفات</h1>
           <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>تبقى العناصر 30 يوماً ثم تُحذف نهائياً. المشهد يُستعاد بلقطاته.</span>
@@ -226,7 +228,7 @@ export function TrashPage() {
         {(items ?? []).map((t) => {
           const left = daysLeft(t.deletedAt);
           return (
-            <div key={t.id} data-testid="trash-item" style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 16px', border: '1px solid var(--color-border-subtle)', borderRadius: 8, background: 'var(--color-bg)' }}>
+            <div key={t.id} data-testid="trash-item" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, padding: '14px 16px', border: '1px solid var(--color-border-subtle)', borderRadius: 8, background: 'var(--color-bg)' }}>
               <Badge tone="outline">{KIND[t.kind] ?? t.kind}</Badge>
               <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <span style={{ fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 16 }}>{t.label}</span>
@@ -277,7 +279,7 @@ export function SettingsPage() {
   const on = (k: 'cur' | 'next' | 'conf') => (e: React.ChangeEvent<HTMLInputElement>) => setPw({ ...pw, [k]: e.target.value, err: '' });
   return (
     <div data-component="SettingsPage" style={{ flex: 1, overflowY: 'auto' }}>
-      <div style={{ maxWidth: 640, margin: '0 auto', padding: '12px 32px 80px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ maxWidth: 640, margin: '0 auto', padding: '12px clamp(16px, 4vw, 32px) 80px', display: 'flex', flexDirection: 'column', gap: 24 }}>
         <h1 style={h1}>الإعدادات</h1>
         <Card>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

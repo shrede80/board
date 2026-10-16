@@ -55,7 +55,13 @@ export async function compress(file: File, keepOriginal = false): Promise<{ full
 export async function uploadFile(file: File, keepOriginal = false): Promise<string> {
   if (!/^image\//.test(file.type)) throw new Error('type');
   if (file.size > MAX_UPLOAD_BYTES) throw new Error('size');
-  const c = await compress(file, keepOriginal);
+  return uploadCompressed(await compress(file, keepOriginal));
+}
+
+export type Compressed = Awaited<ReturnType<typeof compress>>;
+
+/** Uploads an image already compressed in the browser (also used by the offline idea queue). */
+export async function uploadCompressed(c: Compressed): Promise<string> {
   const fd = new FormData();
   const ext = (b: Blob) => (b.type === 'image/webp' ? 'webp' : b.type === 'image/png' ? 'png' : 'jpg');
   fd.set('file', new File([c.full], `image.${ext(c.full)}`, { type: c.full.type }));

@@ -51,7 +51,7 @@ function convertMenu(id: string): MenuEntry[] {
 }
 
 interface Summary { id: string; name: string; archived?: boolean }
-async function moveMenu(id: string, x: number, y: number) {
+export async function moveMenu(id: string, x: number, y: number) {
   const list = await api<Summary[]>('/api/projects').catch(() => [] as Summary[]);
   openMenu(x, y, [
     { label: 'بدون مشروع', icon: 'x', run: () => moveIdea(id, null), testid: 'move-none' },
@@ -66,7 +66,7 @@ const at = (e: React.MouseEvent) => {
 };
 
 /** One idea (UPDATE-1 ب1 column, ب2): photos, text and links, «جديدة», source and time, project badge, actions. */
-export function IdeaCard({ idea, draggable, moveHere, readOnView = true }: { idea: Row; draggable?: boolean; moveHere?: string; readOnView?: boolean }) {
+export function IdeaCard({ idea, draggable, moveHere, readOnView = true, mobile }: { idea: Row; draggable?: boolean; moveHere?: string; readOnView?: boolean; mobile?: boolean }) {
   const offline = useApp((s) => s.offline);
   const badge = useIdeaBadge(idea);
   const ref = useRef<HTMLDivElement>(null);
@@ -92,7 +92,7 @@ export function IdeaCard({ idea, draggable, moveHere, readOnView = true }: { ide
       style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border-subtle)', borderRadius: 8, padding: 12, display: 'flex', flexDirection: 'column', gap: 8, cursor: draggable ? 'grab' : 'default' }}>
       {images.length > 0 && (
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {images.slice(0, 4).map((im) => <i key={im} style={{ display: 'block', width: 64, height: 42, borderRadius: 4, background: frameBg({ imageId: im, placeholder: engine.images.get(im)?.placeholder ?? null }, '#c27a32') }} />)}
+          {images.slice(0, 4).map((im) => <i key={im} style={{ display: 'block', width: mobile ? 96 : 64, height: mobile ? 64 : 42, borderRadius: 4, background: frameBg({ imageId: im, placeholder: engine.images.get(im)?.placeholder ?? null }, '#c27a32') }} />)}
           {images.length > 4 && <span style={{ alignSelf: 'center', fontSize: 12, color: 'var(--color-text-muted)' }}>{`+${images.length - 4}`}</span>}
         </div>
       )}
@@ -103,8 +103,9 @@ export function IdeaCard({ idea, draggable, moveHere, readOnView = true }: { ide
         <span data-testid="idea-time">{`${idea.source === 'phone' ? 'من الجوال' : 'من اللابتوب'} · ${ideaTime(idea.createdAt as number)}`}</span>
         <span style={{ flex: 1 }} />
         <span data-testid="idea-badge" style={{ height: 22, display: 'inline-flex', alignItems: 'center', padding: '0 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', ...(badge.none ? { border: '1px solid var(--color-border)', color: 'var(--color-text)' } : { background: 'var(--color-accent-soft)', color: 'var(--tan-600)' }) }}>{badge.label}</span>
+        {mobile && <button aria-label="خيارات الفكرة" data-testid="idea-more" disabled={offline} onClick={() => setState({ ideaSheet: idea.id })} style={{ width: 44, height: 44, border: 'none', borderRadius: 8, background: 'var(--color-surface-strong)', color: 'var(--color-text)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="more" size={18} /></button>}
       </div>
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+      {!mobile && <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
         <Button variant="outline" size="sm" icon="film" disabled={offline} onClick={(e) => openMenu(at(e).x, at(e).y, convertMenu(idea.id), 'convert-menu')} data-testid="idea-convert">حوّلها إلى…</Button>
         {moveHere
           ? <Button variant="ghost" size="sm" disabled={offline} onClick={() => moveIdea(idea.id, moveHere)} data-testid="idea-move-here">انقلها لهذا المشروع</Button>
@@ -112,7 +113,7 @@ export function IdeaCard({ idea, draggable, moveHere, readOnView = true }: { ide
         <span style={{ flex: 1 }} />
         <button title="تعديل" data-testid="idea-edit" disabled={offline} className="h-strong" onClick={() => setState({ ideaEdit: idea.id })} style={btn}><Icon name="edit" size={16} /></button>
         <button title="حذف" data-testid="idea-delete" disabled={offline} className="h-strong" onClick={() => deleteIdea(idea.id)} style={btn}><Icon name="trash" size={16} /></button>
-      </div>
+      </div>}
     </div>
   );
 }

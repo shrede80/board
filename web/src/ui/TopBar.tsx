@@ -14,7 +14,7 @@ const iconBtn: React.CSSProperties = {
 };
 
 /** Undo / redo arrows (SPEC §7.1: clear ↶ ↷ instead of the prototype's swap arrows). */
-function UndoIcon({ flip }: { flip?: boolean }) {
+export function UndoIcon({ flip }: { flip?: boolean }) {
   return (
     <svg viewBox="0 0 24 24" width={19} height={19} style={{ transform: flip ? 'scaleX(-1)' : undefined }} aria-hidden="true">
       <path d="M9 14 4 9l5-5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
