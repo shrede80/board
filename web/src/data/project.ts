@@ -30,6 +30,8 @@ export interface PScene extends Row {
   boardZ: number;
   boardLocked: boolean;
   characterIds: string[];
+  /** the scene's own cover (e.g. from an idea) when no shot carries it */
+  coverImg: Img | null;
   noteIds: string[];
   moodboardIds: string[];
   shots: PShot[];
@@ -137,6 +139,7 @@ export function deriveProject(store: Store, images: Map<string, ImageMeta>, pid:
       noteIds: (links.get(r.id)?.notes ?? []).filter((n) => noteIds.has(n)),
       moodboardIds: (links.get(r.id)?.mbs ?? []).filter((m) => mbIds.has(m)),
       shots: shotsBy.get(r.id) ?? [],
+      coverImg: r.coverImageId ? img(r.coverImageId as string) : null,
     }));
 
   const inbox: PInbox[] = live(store.inboxItems, pid)
@@ -178,7 +181,7 @@ export function sceneCover(sc: PScene): Img | null {
     }
   }
   const first = sc.shots.find((s) => s.images.length);
-  return first ? coverOf(first) : null;
+  return first ? coverOf(first) : sc.coverImg;
 }
 
 export const sceneDur = (sc: PScene) => sc.shots.reduce((a, s) => a + (Number(s.durationS) || 0), 0);

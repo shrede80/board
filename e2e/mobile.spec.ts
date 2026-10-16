@@ -11,7 +11,7 @@ async function laptop(browser: Browser): Promise<Page> {
   return page;
 }
 
-test('phone: status change shows on the laptop within 10 s; quick capture lands in the laptop inbox', async ({ page, browser }) => {
+test('phone: status change shows on the laptop within 10 s; quick capture lands in the laptop ideas', async ({ page, browser }) => {
   // Laptop prepares a project with two shots and stays open on the storyboard.
   const lap = await laptop(browser);
   await newProject(lap, 'تصوير الجوال', 'short');
@@ -58,18 +58,20 @@ test('phone: status change shows on the laptop within 10 s; quick capture lands 
     return Array.from(new Uint8Array(await b.arrayBuffer()));
   });
   await page.getByTestId('m-camera').setInputFiles({ name: 'photo.png', mimeType: 'image/png', buffer: Buffer.from(png) });
-  await expect(page.getByTestId('toast')).toContainText('وصل إلى الوارد');
+  await expect(page.getByTestId('toast')).toContainText('وصل إلى الأفكار');
   await page.getByTestId('m-note').fill('تذكير: نحتاج إذن الحارس');
   await page.getByTestId('m-send').click();
   await expect(page.getByText('أُرسل مؤخراً')).toBeVisible();
 
-  // Laptop: both items appear in «الوارد» (polling), the photo is dragged onto a shot
-  await lap.getByText(/^الوارد/).click();
-  await expect(lap.getByTestId('inbox-item')).toHaveCount(2, { timeout: 12_000 });
-  await expect(lap.getByText('الوارد 2')).toBeVisible();
-  const photo = lap.getByTestId('inbox-item').filter({ hasText: 'زاوية جميلة عند المدخل' });
+  // Laptop: both ideas appear in the library «الأفكار» tab (polling), the photo idea is dragged onto a shot
+  await lap.locator('[data-component=LibraryPanel]').getByText(/^الأفكار/).click();
+  const note = lap.getByTestId('idea-card').filter({ hasText: 'تذكير: نحتاج إذن الحارس' });
+  await expect(note).toHaveCount(1, { timeout: 12_000 });
+  const photo = lap.getByTestId('idea-card').filter({ hasText: 'زاوية جميلة عند المدخل' });
+  await expect(photo.getByTestId('idea-time')).toContainText('من الجوال');
   await photo.dragTo(rows.nth(0).getByTestId('shot-card').first());
-  await expect(lap.getByTestId('inbox-item')).toHaveCount(1);
+  await expect(photo).toHaveCount(0);
+  await expect(note).toHaveCount(1);
   await saved(lap);
   await rows.nth(0).getByTestId('shot-card').first().click();
   await expect(lap.getByTestId('gallery-tile')).toHaveCount(1);

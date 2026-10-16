@@ -116,7 +116,9 @@ export function ProjectSettingsDialog() {
 }
 
 export function DuplicateProjectDialog() {
-  const p = useProject();
+  const open = useProject();
+  const target = useApp((s) => s.dupTarget);
+  const p = target ?? (open ? { id: open.id, name: open.name } : null);
   const [keep, setKeep] = useState(false);
   const busy = useApp((s) => s.offline);
   if (!p) return null;

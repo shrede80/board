@@ -18,11 +18,11 @@ export async function login(page: Page) {
     await pw.fill(PASSWORD);
     await page.keyboard.press('Enter');
   }
-  await expect(page.getByTestId('save-indicator').or(page.locator('[data-component=MobileApp]'))).toBeVisible();
+  await expect(page.getByTestId('greeting').or(page.getByTestId('save-indicator')).or(page.locator('[data-component=MobileApp]')).first()).toBeVisible();
 }
 
 export async function newProject(page: Page, name: string, template = 'ad') {
-  await page.getByTestId('crumb-home').click();
+  if (await page.getByTestId('crumb-home').isVisible()) await page.getByTestId('crumb-home').click();
   await page.getByTestId('new-project').click();
   await page.getByTestId('np-name').fill(name);
   await page.getByTestId(`tpl-${template}`).click();

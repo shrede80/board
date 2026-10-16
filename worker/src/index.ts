@@ -12,7 +12,7 @@ import { duplicateProject } from './duplicate';
 import { APP_VERSION, VERSION_HEADER } from '../../shared/version';
 import { applyOps, parseOps } from './ops';
 import { exportProject, importProject } from './portable';
-import { changes, customValues, getSettings, listProjects, listTrash, snapshot } from './queries';
+import { changes, customValues, getSettings, home, listProjects, listTrash, ownerChanges, search, snapshot } from './queries';
 import { BadRequest, isId, OWNER_ID, toApi } from './rows';
 
 type App = { Bindings: Env };
@@ -175,6 +175,13 @@ app.patch('/api/settings', async (c) => {
 });
 
 app.get('/api/projects', async (c) => c.json(await listProjects(c.env.DB)));
+app.get('/api/home', async (c) => c.json(await home(c.env.DB)));
+app.get('/api/changes', async (c) => {
+  const since = Number(c.req.query('since'));
+  if (!Number.isFinite(since) || since < 0) throw new BadRequest('since');
+  return c.json(await ownerChanges(c.env.DB, since));
+});
+app.get('/api/search', async (c) => c.json(await search(c.env.DB, c.req.query('q') ?? '')));
 
 app.get('/api/projects/:id', async (c) => {
   const s = await snapshot(c.env.DB, c.req.param('id'));

@@ -117,8 +117,8 @@ test('drag a character and a location onto a scene row: linked and filterable', 
   // clicking the character filters to its scenes
   await page.getByTestId('lib-character').first().click();
   await expect(page.getByTestId('filter-banner')).toContainText('تعرض: مشاهد سارة (1)');
-  const ops = await rows.evaluateAll((els) => els.map((e) => getComputedStyle(e).opacity));
-  expect(ops.filter((o) => o === '1')).toHaveLength(1);
+  // the dim fades in (CSS transition), so wait for it to settle
+  await expect.poll(() => rows.evaluateAll((els) => els.filter((e) => getComputedStyle(e).opacity === '1').length)).toBe(1);
   await page.getByTestId('editor-close').click();
   await page.locator('[data-testid=filter-banner] button').click();
   await expect(page.getByTestId('filter-banner')).toHaveCount(0);

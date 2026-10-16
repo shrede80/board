@@ -31,18 +31,30 @@ export async function afterLogin() {
   await loadInitial();
 }
 
+/** Phones keep the project screen until the phone Home arrives (UPDATE-1 phase C). */
+const isPhone = () => typeof matchMedia !== 'undefined' && matchMedia('(max-width: 760px)').matches;
+
 async function loadInitial() {
   const settings = await api<Settings>('/api/settings');
   applySettings(settings);
-  const projects = await api<{ id: string }[]>('/api/projects');
-  let pid = settings.lastProjectId && projects.some((p) => p.id === settings.lastProjectId) ? settings.lastProjectId : (projects.find((p) => !(p as { archived?: boolean }).archived) ?? projects[0])?.id;
-  if (!pid) {
-    // First run (SPEC §3.6): no projects yet → open an empty «مشروع جديد».
-    pid = uid('pr');
-    await api('/api/ops', { method: 'POST', json: { ops: [{ op: 'create', entity: 'projects', id: pid, fields: { name: 'مشروع جديد', template: 'blank', aspect: '16:9' } }] } });
-  }
-  await openProject(pid);
+  if (isPhone()) {
+    const projects = await api<{ id: string; archived?: boolean }[]>('/api/projects');
+    let pid = settings.lastProjectId && projects.some((p) => p.id === settings.lastProjectId) ? settings.lastProjectId : (projects.find((p) => !p.archived) ?? projects[0])?.id;
+    if (!pid) {
+      pid = uid('pr');
+      await api('/api/ops', { method: 'POST', json: { ops: [{ op: 'create', entity: 'projects', id: pid, fields: { name: 'مشروع جديد', template: 'blank', aspect: '16:9' } }] } });
+    }
+    await openProject(pid);
+  } else await showHome(); // the app opens on Home (UPDATE-1 ق2)
   startPolling();
+}
+
+/** Home: no project open (UPDATE-1 ب1). */
+export async function showHome() {
+  await engine.idle();
+  setState({ screen: 'home', projectId: null, editor: null, filter: null, selection: [], modal: null, dragPos: null, guides: [], popMenu: null, projMenu: false, menu: false, renaming: null });
+  await engine.loadHome();
+  setState({ loaded: true });
 }
 
 export function applySettings(s: Settings) {
@@ -77,7 +89,7 @@ export async function setBoardSnap(on: boolean) {
 
 export async function openProject(id: string) {
   await engine.idle();
-  setState({ loaded: false, projectId: id, editor: null, filter: null, selection: [], modal: null, dragPos: null, guides: [] });
+  setState({ loaded: false, projectId: id, screen: 'app', editor: null, filter: null, selection: [], modal: null, dragPos: null, guides: [], popMenu: null, menu: false });
   await engine.load(id);
   setState({ loaded: true });
   api('/api/settings', { method: 'PATCH', json: { lastProjectId: id } }).catch(() => {});
@@ -192,7 +204,7 @@ interface ShotDefaults {
   rigId: unknown;
   motion: unknown;
 }
-function newShotFields(prev: ShotDefaults | undefined) {
+export function newShotFields(prev: ShotDefaults | undefined) {
   const b = prev ?? { cameraId: 'cam-zve10', lens: 'lens-sigma1850', focalMm: 35, rigId: 'sup-benro', motion: 'ثابتة' };
   return {
     description: '', cameraId: b.cameraId ?? null, lens: b.lens ?? null, focalMm: b.focalMm ?? null, size: 'MS', angle: 'مستوى العين',
@@ -448,45 +460,6 @@ export function newCharacterForScene(sceneId: string) {
   commit([...createEntityOps(p, 'character', id), { op: 'create', entity: 'sceneCharacters', id: `${sceneId}:${id}`, fields: { projectId: p.id, sceneId, characterId: id } }], { history: 'شخصية جديدة' });
 }
 
-// ---------- inbox ----------
-
-export function inboxTo(target: { shotId?: string; sceneId?: string; board?: { x: number; y: number } }, inboxId: string) {
-  const p = project();
-  const it = p?.library.inbox.find((x) => x.id === inboxId);
-  if (!p || !it) return;
-  const ops: Op[] = [{ op: 'delete', entity: 'inboxItems', id: inboxId }];
-  if (target.shotId) {
-    const f = findShot(p, target.shotId);
-    if (!f) return;
-    if (it.kind === 'image' && it.image) {
-      ops.push({ op: 'create', entity: 'itemImages', id: uid('ii'), fields: { projectId: p.id, ownerKind: 'shot', ownerId: f.sh.id, imageId: it.image.imageId, position: positionAt(f.sh.images.filter((i) => i.linkId) as unknown as Row[], f.sh.images.length) } });
-      if (!f.sh.coverImageId) ops.push({ op: 'update', entity: 'shots', id: f.sh.id, fields: { coverImageId: it.image.imageId } });
-    } else {
-      const nid = uid('note');
-      ops.push({ op: 'create', entity: 'notes', id: nid, fields: { projectId: p.id, text: it.text } });
-      ops.push({ op: 'create', entity: 'sceneLinks', id: `${f.sc.id}:note:${nid}`, fields: { projectId: p.id, sceneId: f.sc.id, kind: 'note', refId: nid } });
-    }
-  }
-  if (target.sceneId) {
-    const nid = uid('note');
-    ops.push({ op: 'create', entity: 'notes', id: nid, fields: { projectId: p.id, text: it.text } });
-    ops.push({ op: 'create', entity: 'sceneLinks', id: `${target.sceneId}:note:${nid}`, fields: { projectId: p.id, sceneId: target.sceneId, kind: 'note', refId: nid } });
-  }
-  if (target.board) {
-    if (it.kind === 'image' && it.image) {
-      const mid = uid('mb');
-      ops.push({ op: 'create', entity: 'moodboards', id: mid, fields: { projectId: p.id, position: positionAt(p.library.moodboards, p.library.moodboards.length), title: it.text || 'من الجوال', swatches: [] } });
-      ops.push({ op: 'create', entity: 'itemImages', id: uid('ii'), fields: { projectId: p.id, ownerKind: 'moodboard', ownerId: mid, imageId: it.image.imageId, position: 1 } });
-      ops.push({ op: 'create', entity: 'boardCards', id: uid('bc'), fields: { projectId: p.id, kind: 'moodboard', refId: mid, x: target.board.x, y: target.board.y, z: nextZ() } });
-    } else {
-      const nid = uid('note');
-      ops.push({ op: 'create', entity: 'notes', id: nid, fields: { projectId: p.id, text: it.text } });
-      ops.push({ op: 'create', entity: 'boardCards', id: uid('bc'), fields: { projectId: p.id, kind: 'note', refId: nid, x: target.board.x, y: target.board.y, z: nextZ() } });
-    }
-  }
-  if (commit(ops, { history: 'نقل من الوارد' })) toast(target.shotId && it.kind === 'image' ? 'أصبحت الصورة مرجعاً للّقطة' : 'نُقل العنصر من الوارد');
-}
-
 // ---------- filter / modes ----------
 
 export function toggleFilter(kind: 'character' | 'location', id: string) {
@@ -518,7 +491,7 @@ export function createProject(np: { name: string; aspect: string; template: stri
     }),
   );
   setState({ modal: null });
-  void api('/api/ops', { method: 'POST', json: { ops } })
+  void engine.idle().then(() => api('/api/ops', { method: 'POST', json: { ops } }))
     .then(() => openProject(id))
     .catch(() => toast('تعذّر إنشاء المشروع', { tone: 'danger' }));
 }

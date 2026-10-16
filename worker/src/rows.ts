@@ -1,4 +1,4 @@
-import { ENTITIES, type EntityName, type FieldDef, type Row } from '../../shared/schema';
+import { ENTITIES, MAX_IDEA_IMAGES, type EntityName, type FieldDef, type Row } from '../../shared/schema';
 
 /** Fixed owner while the app is single-user (SPEC §1.1). */
 export const OWNER_ID = 'owner';
@@ -62,6 +62,7 @@ export function encodeField(entity: EntityName, name: string, f: FieldDef, v: un
     }
     case 'json': {
       if (typeof v !== 'object') throw bad('expected array/object');
+      if (entity === 'ideas' && name === 'imageIds' && (!Array.isArray(v) || v.length > MAX_IDEA_IMAGES || !v.every(isId))) throw bad('up to 10 image ids');
       const s = JSON.stringify(v);
       if (s.length > MAX_TEXT) throw bad('too long');
       return s;

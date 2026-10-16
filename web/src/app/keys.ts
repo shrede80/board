@@ -4,6 +4,7 @@ import { addFiles, type OwnerKind } from './images';
 import { closePresent, presGo, presToggle } from './present';
 import { closeMenu, getState, setState, toast } from './state';
 import { openItem } from './board';
+import { cancelChoice } from './ideas';
 import { addImageCards, copySelection, duplicateSelection, frameSelection, hasClipboard, nudge, paste, reorderSel, selectAll, startRename } from './boardActions';
 
 export function onKey(e: KeyboardEvent) {
@@ -21,6 +22,8 @@ export function onKey(e: KeyboardEvent) {
   }
   if (e.key === 'Escape') {
     if (st.popMenu) return closeMenu();
+    if (st.choice) return cancelChoice();
+    if (st.ideaEdit) return setState({ ideaEdit: null });
     if (st.renaming) return setState({ renaming: null });
     if (st.projMenu) return setState({ projMenu: false });
     if (st.pick || st.custom) setState({ pick: null, custom: null });
@@ -30,6 +33,10 @@ export function onKey(e: KeyboardEvent) {
     else if (st.editor) closeEditor();
     else if (st.selection.length) setState({ selection: [] });
     return;
+  }
+  if ((e.ctrlKey || e.metaKey) && e.code === 'KeyK') {
+    e.preventDefault();
+    return setState({ modal: st.modal === 'search' ? null : 'search', menu: false });
   }
   if (isTyping(e.target)) return;
   if (e.code === 'Space') {

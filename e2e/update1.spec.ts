@@ -45,7 +45,7 @@ test('project: rename in place, settings, delete → undo, delete → restore fr
   await page.getByTestId('project-menu').click();
   await page.getByTestId('pm-delete').click();
   await page.getByTestId('confirm-ok').click();
-  await expect(page.locator('[data-component=ProjectSwitcher]')).toBeVisible();
+  await expect(page.getByTestId('greeting')).toBeVisible();
   await page.getByTestId('toast-undo-project').click();
   await expect(page.getByTestId('project-name')).toHaveText('إعلان معدّل');
 
@@ -53,8 +53,7 @@ test('project: rename in place, settings, delete → undo, delete → restore fr
   await page.getByTestId('project-menu').click();
   await page.getByTestId('pm-delete').click();
   await page.getByTestId('confirm-ok').click();
-  await expect(page.locator('[data-component=ProjectSwitcher]')).toBeVisible();
-  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('greeting')).toBeVisible();
   await page.getByTestId('menu').click();
   await page.getByText('سلة المحذوفات').click();
   const item = page.getByTestId('trash-item').filter({ hasText: 'إعلان معدّل' });

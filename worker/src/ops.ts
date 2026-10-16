@@ -26,6 +26,42 @@ interface Prepared {
 export function parseOps(input: unknown): Op[] {
   if (!Array.isArray(input)) throw new BadRequest('ops must be an array');
   if (input.length > MAX_OPS) throw new BadRequest('too many ops');
+  return parseRaw(input).map(legacyInbox);
+}
+
+/**
+ * The inbox became the ideas box (UPDATE-1 §2.2). A device still running the old version may
+ * write inboxItems: store those as ideas (same id), so no idea is ever lost.
+ */
+function legacyInbox(op: Op): Op {
+  if (op.op === 'restore' || op.entity !== 'inboxItems') return op;
+  const map = (f: Record<string, unknown>, create: boolean) => {
+    const out: Record<string, unknown> = {};
+    if ('projectId' in f) out.projectId = f.projectId ?? null;
+    if ('sceneId' in f) out.sceneId = f.sceneId ?? null;
+    if ('text' in f) out.text = f.text ?? '';
+    if ('isNew' in f) out.isNew = f.isNew;
+    if ('imageId' in f) out.imageIds = typeof f.imageId === 'string' && f.imageId ? [f.imageId] : [];
+    if (create) {
+      out.source = 'phone';
+      if (!('imageIds' in out)) out.imageIds = [];
+    }
+    return out;
+  };
+  switch (op.op) {
+    case 'create':
+    case 'update':
+      return { op: op.op, entity: 'ideas', id: op.id, fields: map(op.fields, op.op === 'create') };
+    case 'delete':
+    case 'discard':
+      // the old inbox was emptied without the trash
+      return { op: 'discard', entity: 'ideas', id: op.id };
+    case 'undelete':
+      return { op: 'undelete', entity: 'ideas', id: op.id };
+  }
+}
+
+function parseRaw(input: unknown[]): Op[] {
   return input.map((raw, i) => {
     const o = raw as Record<string, unknown>;
     if (!o || typeof o !== 'object') throw new BadRequest(`op ${i}: invalid`);
@@ -73,7 +109,7 @@ function prepare(ops: Op[], now: number): { p: Prepared; trashIds: (string | nul
         if (Object.hasOwn(op.fields, name)) row[f.col] = encodeField(op.entity, name, f, op.fields[name]);
         else if (name === 'createdAt') row[f.col] = now;
         else if (name === 'position') row[f.col] = now + seq++; // no position given: append at the end
-        else if (name === 'projectId') throw new BadRequest(`${op.entity}: projectId required`);
+        else if (name === 'projectId' && def.scope === 'project') throw new BadRequest(`${op.entity}: projectId required`);
         else row[f.col] = f.def === undefined ? null : encodeField(op.entity, name, f, f.def);
       }
       for (const k of Object.keys(op.fields)) if (!Object.hasOwn(fields, k)) throw new BadRequest(`${op.entity}.${k}: unknown field`);
@@ -117,10 +153,10 @@ function push<K, V>(m: Map<K, V[]>, k: K, v: V) {
 
 /** Label used in the trash when the client didn't send one. */
 const KIND_LABEL: Record<string, string> = {
-  projects: 'مشروع', scenes: 'مشهد', shots: 'لقطة', notes: 'ملاحظة', characters: 'شخصية', locations: 'موقع', moodboards: 'لوحة مزاج',
+  projects: 'مشروع', scenes: 'مشهد', shots: 'لقطة', notes: 'ملاحظة', characters: 'شخصية', locations: 'موقع', moodboards: 'لوحة مزاج', ideas: 'فكرة',
 };
 const NAME_COL: Record<string, string> = {
-  projects: 'name', scenes: 'name', shots: 'description', notes: 'text', characters: 'name', locations: 'name', moodboards: 'title',
+  projects: 'name', scenes: 'name', shots: 'description', notes: 'text', characters: 'name', locations: 'name', moodboards: 'title', ideas: 'text',
 };
 
 export async function applyOps(db: D1Database, ops: Op[]): Promise<OpsResult> {

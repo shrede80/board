@@ -5,12 +5,12 @@ import { deriveProject, type PProject, type Uploads } from '../data/project';
 import type { TplType } from '../lib/constants';
 
 export type Mode = 'board' | 'storyboard';
-export type Screen = 'app' | 'equipment' | 'trash' | 'settings';
+export type Screen = 'home' | 'ideas' | 'app' | 'equipment' | 'trash' | 'settings';
 export type EditorType = 'shot' | 'scene' | 'character' | 'location' | 'moodboard' | 'note';
 export type Drag =
   | { kind: 'tpl'; type: TplType }
   | { kind: 'lib'; type: 'character' | 'location' | 'moodboard'; id: string }
-  | { kind: 'inbox'; id: string }
+  | { kind: 'idea'; id: string }
   | { kind: 'shot'; id: string }
   | { kind: 'scene'; id: string }
   | { kind: 'eshot'; id: string }
@@ -23,6 +23,12 @@ export interface Toast {
   /** extra button(s) next to the message, e.g. «فتح» or a custom undo */
   actions?: { label: string; run: () => void; testid?: string }[];
   tone: 'info' | 'danger';
+}
+
+export interface Choice {
+  title: string;
+  groups: { label?: string; options: { label: string; sub?: string; bg?: string; run: () => void; testid?: string }[] }[];
+  empty?: string;
 }
 
 /** One entry of a pop-up menu (right-click, ⋯, long-press — UPDATE-1 أ3). */
@@ -82,7 +88,7 @@ export interface UIState {
   theme: 'light' | 'dark';
   settings: Settings | null;
   libOpen: boolean;
-  libTab: 'characters' | 'locations' | 'moodboards' | 'inbox';
+  libTab: 'characters' | 'locations' | 'moodboards' | 'ideas';
   editor: { type: EditorType; id: string } | null;
   sections: Record<string, boolean>;
   selection: string[];
@@ -91,7 +97,13 @@ export interface UIState {
   toasts: Toast[];
   save: SaveState;
   offline: boolean;
-  modal: null | 'projects' | 'newProject' | 'export' | 'projectSettings' | 'duplicateProject' | 'shortcuts';
+  modal: null | 'newProject' | 'export' | 'projectSettings' | 'duplicateProject' | 'shortcuts' | 'search' | 'import';
+  /** project for «تكرار المشروع» (Home can duplicate a project that isn't open) */
+  dupTarget: { id: string; name: string } | null;
+  /** generic «اختر…» list (project, scene, shot for idea conversions) */
+  choice: Choice | null;
+  /** idea being edited (UPDATE-1 ب2) */
+  ideaEdit: string | null;
   /** «⌂ الرئيسية ‹ project ▾» menu */
   projMenu: boolean;
   popMenu: PopMenu | null;
@@ -135,11 +147,11 @@ const initialTheme = (() => {
 })();
 
 let state: UIState = {
-  auth: 'loading', loaded: false, noProjects: false, dataVersion: 0, projectId: null, mode: 'board', screen: 'app', theme: initialTheme,
+  auth: 'loading', loaded: false, noProjects: false, dataVersion: 0, projectId: null, mode: 'board', screen: 'home', theme: initialTheme,
   settings: null, libOpen: true, libTab: 'characters', editor: null,
   sections: { refs: true, basics: true, comp: true, cam: true, move: true, light: false, audio: false },
   selection: [], view: { x: 0, y: 0, z: 0.8 }, filter: null, toasts: [], save: 'saved', offline: typeof navigator !== 'undefined' ? !navigator.onLine : false,
-  modal: null, projMenu: false, popMenu: null, dragSize: null, renaming: null, newVersion: false, pickTarget: null, hoverItem: null, exportTab: 'pdf', exportScope: 'all', exportSel: [], confirm: null, dragOver: null,
+  modal: null, dupTarget: null, choice: null, ideaEdit: null, projMenu: false, popMenu: null, dragSize: null, renaming: null, newVersion: false, pickTarget: null, hoverItem: null, exportTab: 'pdf', exportScope: 'all', exportSel: [], confirm: null, dragOver: null,
   present: { open: false, i: 0, playing: false, tech: false, fill: 0 }, hoverShot: null, marquee: null, space: false, menu: false,
   pick: null, custom: null, customVal: '', flipping: false, guides: [], dragPos: null, uploads: {}, canUndo: false, canRedo: false,
 };

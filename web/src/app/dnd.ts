@@ -1,6 +1,7 @@
 import { findShot } from '../data/project';
 import { uid } from '../lib/util';
-import { addScene, commit, createFromTemplate, inboxTo, linkLib, moveScene, moveShot, nextZ } from './actions';
+import { addScene, commit, createFromTemplate, linkLib, moveScene, moveShot, nextZ } from './actions';
+import { dropIdeaOnBoard, dropIdeaOnRow, dropIdeaOnShot } from './ideas';
 import { toWorld } from './board';
 import { addFiles } from './images';
 import { addCard, addImageCards, pickImages } from './boardActions';
@@ -63,7 +64,7 @@ export function dropOnBoard(e: React.DragEvent) {
     const p = project();
     if (p) commit([{ op: 'create', entity: 'boardCards', id: uid('bc'), fields: { projectId: p.id, kind: d.type, refId: d.id, x: pos.x, y: pos.y, z: nextZ() } }], { history: 'إضافة إلى اللوحة' });
   }
-  if (d.kind === 'inbox') inboxTo({ board: pos }, d.id);
+  if (d.kind === 'idea') dropIdeaOnBoard(d.id, pos);
 }
 
 export function dropOnSbEmpty(e: React.DragEvent) {
@@ -90,11 +91,7 @@ export function dropOnRow(e: React.DragEvent, sceneId: string, d0?: Drag | null)
   }
   if (d.kind === 'lib') linkLib(sceneId, d.type, d.id);
   if (d.kind === 'shot') moveShot(d.id, sceneId, null);
-  if (d.kind === 'inbox') {
-    const it = p.library.inbox.find((x) => x.id === d.id);
-    if (it && it.kind === 'note') inboxTo({ sceneId }, d.id);
-    else toast('أفلت الصورة فوق لقطة لتصبح صورة مرجعية');
-  }
+  if (d.kind === 'idea') dropIdeaOnRow(d.id, sceneId);
   if (d.kind === 'scene') moveScene(d.id, p.scenes.findIndex((s) => s.id === sceneId));
 }
 
@@ -117,6 +114,6 @@ export function dropOnShot(e: React.DragEvent, shotId: string) {
   const f = p && findShot(p, shotId);
   if (!f) return;
   if (d.kind === 'shot' && d.id !== shotId) moveShot(d.id, f.sc.id, f.hi);
-  if (d.kind === 'inbox') inboxTo({ shotId }, d.id);
+  if (d.kind === 'idea') dropIdeaOnShot(d.id, shotId);
   if (d.kind === 'tpl' || d.kind === 'lib') dropOnRow(e, f.sc.id, d);
 }

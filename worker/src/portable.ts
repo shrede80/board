@@ -77,12 +77,15 @@ export async function exportProject(db: D1Database, projectId: string): Promise<
   );
   let rows: Partial<Record<EntityName, Row[]>> = {};
   PROJECT_ENTITIES.forEach((e, i) => (rows[e] = lists[i].results.map((r) => toApi(e, r))));
+  // the project's ideas travel with it (UPDATE-1 §2.3)
+  const ideas = await db.prepare('SELECT * FROM ideas WHERE owner_id = ? AND project_id = ? AND deleted_at IS NULL').bind(OWNER_ID, projectId).all<Record<string, unknown>>();
   const imgRes = await db
     .prepare(
       `SELECT * FROM images WHERE owner_id = ?2 AND id IN (
          SELECT image_id FROM item_images WHERE project_id = ?1 AND deleted_at IS NULL
          UNION SELECT image_id FROM inbox_items WHERE project_id = ?1 AND deleted_at IS NULL AND image_id IS NOT NULL
-         UNION SELECT ref_id FROM board_cards WHERE project_id = ?1 AND deleted_at IS NULL AND kind = 'image')`,
+         UNION SELECT ref_id FROM board_cards WHERE project_id = ?1 AND deleted_at IS NULL AND kind = 'image'
+         UNION SELECT j.value FROM ideas d, json_each(d.image_ids) j WHERE d.project_id = ?1 AND d.owner_id = ?2 AND d.deleted_at IS NULL)`,
     )
     .bind(projectId, OWNER_ID)
     .all<Record<string, unknown>>();
@@ -99,6 +102,8 @@ export async function exportProject(db: D1Database, projectId: string): Promise<
     return rest as Row;
   };
   for (const e of PROJECT_ENTITIES) rows[e] = rows[e]!.map(clean);
+  const imageIds = new Set(images.map((i) => i.id));
+  rows.ideas = ideas.results.map((r) => clean(toApi('ideas', r))).map((r) => ({ ...r, imageIds: ((r.imageIds as string[]) ?? []).filter((x) => imageIds.has(x)) }));
   return { format: PORTABLE_FORMAT, exportedAt: new Date().toISOString(), project: clean(toApi('projects', proj)), rows, images };
 }
 
@@ -183,6 +188,20 @@ export async function importProject(db: D1Database, input: unknown, imageMap: Re
   for (const e of PROJECT_ENTITIES) {
     counts[e] = rows[e]!.length;
     for (const r of rows[e]!) ops.push({ op: 'create', entity: e, id: ids.get(r.id)!, fields: { ...fieldsOf(e, r), projectId } });
+  }
+
+  // ideas of the project (files from before Update 1 have none)
+  const rawIdeas = (p.rows as Record<string, unknown>).ideas;
+  if (Array.isArray(rawIdeas)) {
+    for (const r of (rawIdeas as Row[]).filter((x) => x && typeof x === 'object' && isId(x.id)).slice(0, 2000)) {
+      const sceneId = typeof r.sceneId === 'string' ? ids.get(r.sceneId) ?? null : null;
+      const imageIds = (Array.isArray(r.imageIds) ? (r.imageIds as unknown[]) : []).map((x) => (typeof x === 'string' ? img.get(x) : undefined)).filter((x): x is string => !!x).slice(0, 10);
+      ops.push({
+        op: 'create', entity: 'ideas', id: newId(r.id.includes('-') ? r.id : `idea-${r.id}`),
+        fields: { projectId, sceneId, text: typeof r.text === 'string' ? r.text : '', imageIds, source: r.source === 'phone' ? 'phone' : 'laptop', isNew: false },
+      });
+    }
+    counts.ideas = ops.filter((o) => o.op === 'create' && o.entity === 'ideas').length;
   }
 
   if (placeholderRows.length) {

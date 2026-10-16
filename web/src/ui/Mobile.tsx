@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { Op } from '../../../shared/schema';
+import { MAX_IDEA_IMAGES, type Op } from '../../../shared/schema';
 import { commit, openProject } from '../app/actions';
 import { uploadFile } from '../app/images';
 import { getState, useApp, useEquipment, useProject } from '../app/state';
@@ -10,7 +10,7 @@ import { ORDER, STATUS, type Status } from '../lib/constants';
 import { frameBg, mmss, pad2, uid } from '../lib/util';
 
 /**
- * Phone UI (SPEC §1.5): shot list + status change + quick capture to «الوارد». No board.
+ * Phone UI (SPEC §1.5): shot list + status change + quick capture to «الأفكار». No board.
  * Same engine as the laptop, so a status change here reaches the laptop on its next poll.
  */
 type Tab = 'list' | 'capture';
@@ -199,27 +199,26 @@ function Capture({ projectOpts, onProject, dimOp, offline, onSent }: { projectOp
   const [sent, setSent] = useState<{ k: string; text: string; bg: string }[]>([]);
   useEffect(() => setScene(''), [p?.id]);
   if (!p) return null;
-  const send = (items: { imageId: string | null; text: string; localUrl?: string }[]) => {
+  const send = (text: string, imageIds: string[], localUrl?: string) => {
     const pid = getState().projectId!;
-    const ops: Op[] = items.map((it) => ({
-      op: 'create', entity: 'inboxItems', id: uid('in'),
-      fields: { projectId: pid, kind: it.imageId ? 'image' : 'note', imageId: it.imageId, text: it.text, sceneId: scene || null, isNew: true },
-    }));
+    const ops: Op[] = [{
+      op: 'create', entity: 'ideas', id: uid('id'),
+      fields: { projectId: pid, sceneId: scene || null, text, imageIds, source: 'phone', isNew: true, createdAt: Date.now() },
+    }];
     if (!commit(ops, { history: false })) return;
-    setSent((s) => [...items.map((it) => ({ k: uid('s'), text: it.text, bg: it.localUrl ? `center / cover no-repeat url("${it.localUrl}")` : 'var(--color-surface-strong)' })), ...s].slice(0, 4));
+    setSent((s) => [{ k: uid('s'), text: text || 'صورة', bg: localUrl ? `center / cover no-repeat url("${localUrl}")` : 'var(--color-surface-strong)' }, ...s].slice(0, 4));
     setNote('');
-    onSent('وصل إلى الوارد');
+    onSent('وصل إلى الأفكار');
   };
   const onPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = [...(e.target.files ?? [])];
+    const files = [...(e.target.files ?? [])].slice(0, MAX_IDEA_IMAGES);
     e.target.value = '';
     if (!files.length) return;
     setBusy(true);
     try {
-      const text = note.trim() || 'صورة من الجوال';
-      const items = [];
-      for (const f of files) items.push({ imageId: await uploadFile(f), text, localUrl: URL.createObjectURL(f) });
-      send(items);
+      const ids = [];
+      for (const f of files) ids.push(await uploadFile(f));
+      send(note.trim(), ids, URL.createObjectURL(files[0]));
     } catch {
       onSent('فشل رفع الصورة — أعد المحاولة');
     } finally {
@@ -242,8 +241,8 @@ function Capture({ projectOpts, onProject, dimOp, offline, onSent }: { projectOp
       <Field label="ملاحظة نصية"><Textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} disabled={offline} placeholder="فكرة لقطة، ملاحظة عن الموقع…" data-testid="m-note" /></Field>
       <Field label="المشروع"><Select options={projectOpts} value={p.id} onChange={onProject} /></Field>
       <Field label="ربط بمشهد (اختياري)"><Select options={[{ value: '', label: 'بدون ربط' }, ...p.scenes.map((s, i) => ({ value: s.id, label: `${pad2(i + 1)} · ${s.name}` }))]} value={scene} onChange={(e) => setScene(e.target.value)} /></Field>
-      <Button variant="primary" size="lg" icon="send" onClick={() => !cantSend && send([{ imageId: null, text: note.trim() }])} disabled={cantSend} style={{ width: '100%' }} data-testid="m-send">أرسل إلى الوارد</Button>
-      <span style={{ fontSize: 12, color: 'var(--color-text-muted)', textAlign: 'center', lineHeight: 1.6 }}>كل ما تلتقطه يصل إلى «الوارد» في مكتبة اللابتوب.</span>
+      <Button variant="primary" size="lg" icon="send" onClick={() => !cantSend && send(note.trim(), [])} disabled={cantSend} style={{ width: '100%' }} data-testid="m-send">أرسل إلى الأفكار</Button>
+      <span style={{ fontSize: 12, color: 'var(--color-text-muted)', textAlign: 'center', lineHeight: 1.6 }}>كل ما تلتقطه يصل إلى «الأفكار» في الرئيسية ومكتبة المشروع.</span>
       {sent.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <span style={{ fontSize: 13, fontWeight: 700 }}>أُرسل مؤخراً</span>

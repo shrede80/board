@@ -196,7 +196,7 @@ const ShotCard = memo(function ShotCard({ sh, sceneId, num, hex, ar }: { sh: PSh
         if (!d && !hasFiles(e)) return;
         e.preventDefault();
         e.stopPropagation();
-        if (!d || d.kind === 'shot' || d.kind === 'inbox') setOver({ kind: 'shot', id: sh.id });
+        if (!d || d.kind === 'shot' || d.kind === 'idea') setOver({ kind: 'shot', id: sh.id });
         else setOver({ kind: 'row', id: sceneId });
       }}
       onDrop={(e) => dropOnShot(e, sh.id)}

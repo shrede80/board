@@ -1,15 +1,13 @@
-import { useEffect, useState } from 'react';
-import { createProject, openProject, undo } from '../app/actions';
+import { useState } from 'react';
+import { createProject, undo } from '../app/actions';
 import { exportProjectZip, exportXlsx, importProjectZip, printPdf, readProjectZip, shotCols, shotRows, type ImportPreview } from '../app/exporters';
 import { dismissToast, setState, useApp, useEquipment, useProject } from '../app/state';
-import { api } from '../data/api';
 import { allShots, camLine, coverOf, eqName, moodHex, moveLine, sceneDur } from '../data/project';
-import { Badge, Button, Card, Checkbox, Field, Icon, Input, Radio, Table, Toast } from '../ds/ds';
+import { Button, Card, Checkbox, Field, Icon, Input, Radio, Table, Toast } from '../ds/ds';
 import { TEMPLATES } from '../lib/constants';
-import { fmtDate, frameBg, imageUrl, mmss, pad2, type Img } from '../lib/util';
+import { frameBg, imageUrl, mmss, pad2 } from '../lib/util';
 import { Overlay } from './Pages';
 import { AspectPicker, DuplicateProjectDialog, ProjectSettingsDialog, ShortcutsDialog, StagePicker } from './ProjectDialogs';
-import { STAGE_LABEL } from '../lib/constants';
 
 const close = () => setState({ modal: null });
 const dialog: React.CSSProperties = { maxWidth: '100%', maxHeight: '100%', overflowY: 'auto', background: 'var(--color-bg)', borderRadius: 14, boxShadow: 'var(--shadow-lift)', padding: 28 };
@@ -20,62 +18,13 @@ export function Modals() {
   if (!modal) return null;
   return (
     <Overlay onClose={close}>
-      {modal === 'projects' && <ProjectSwitcher />}
       {modal === 'newProject' && <NewProjectDialog />}
       {modal === 'export' && <ExportDialog />}
       {modal === 'projectSettings' && <ProjectSettingsDialog />}
       {modal === 'duplicateProject' && <DuplicateProjectDialog />}
       {modal === 'shortcuts' && <ShortcutsDialog />}
+      {modal === 'import' && <ImportDialog />}
     </Overlay>
-  );
-}
-
-interface Summary { id: string; name: string; aspect: string; updatedAt: number; scenes: number; shots: number; durationS: number; coverImageId: string | null; coverPlaceholder: Img['placeholder']; coverMood: string | null; client: string; stage: string; archived: boolean }
-
-function ProjectSwitcher() {
-  const pid = useApp((s) => s.projectId);
-  const [list, setList] = useState<Summary[] | null>(null);
-  useEffect(() => {
-    api<Summary[]>('/api/projects').then(setList).catch(() => setList([]));
-  }, []);
-  return (
-    <div data-component="ProjectSwitcher" style={{ ...dialog, width: 900 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30 }}>المشاريع</h2>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <Button variant="primary" size="sm" icon="plus" onClick={() => setState({ modal: 'newProject' })} data-testid="new-project">مشروع جديد</Button>
-          <button title="إغلاق" onClick={close} style={xBtn}><Icon name="x" size={18} /></button>
-        </div>
-      </div>
-      {[false, true].map((arch) => {
-        const items = (list ?? []).filter((x) => !!x.archived === arch);
-        if (arch && !items.length) return null;
-        return (
-      <div key={String(arch)}>
-      {arch && <h3 style={{ margin: '26px 0 12px', fontSize: 15, fontWeight: 700, color: 'var(--color-text-muted)' }}>{`المؤرشفة (${items.length})`}</h3>}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(250px,1fr))', gap: 16, opacity: arch ? 0.75 : 1 }}>
-        {items.map((pj) => {
-          const cur = pj.id === pid;
-          const cover: Img | null = pj.coverImageId ? { imageId: pj.coverImageId, placeholder: pj.coverPlaceholder } : null;
-          return (
-            <button key={pj.id} data-testid="project-card" onClick={() => (cur ? close() : void openProject(pj.id))} style={{ display: 'flex', flexDirection: 'column', textAlign: 'right', padding: 0, border: `1px solid ${cur ? 'var(--color-accent)' : 'var(--color-border-subtle)'}`, borderRadius: 14, overflow: 'hidden', background: 'var(--color-bg)', cursor: 'pointer', color: 'var(--color-text)', boxShadow: 'var(--shadow-card)' }}>
-              <div style={{ height: 130, width: '100%', background: frameBg(cover, cover ? moodHex(pj.coverMood) : '#3a342c'), position: 'relative' }}>
-                {cur && <span style={{ position: 'absolute', top: 10, insetInlineStart: 10 }}><Badge tone="accent">مفتوح الآن</Badge></span>}
-                <span style={{ position: 'absolute', top: 10, insetInlineEnd: 10 }}><Badge tone="dark">{STAGE_LABEL[pj.stage] ?? ''}</Badge></span>
-              </div>
-              <div style={{ padding: '12px 14px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 17, lineHeight: 1.35 }}>{pj.name}</span>
-                <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{[pj.client, `${pj.scenes} مشاهد`, mmss(pj.durationS), pj.aspect].filter(Boolean).join(' · ')}</span>
-                <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{`آخر تعديل ${fmtDate(pj.updatedAt)}`}</span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-      </div>
-        );
-      })}
-    </div>
   );
 }
 
@@ -125,8 +74,7 @@ function ExportDialog() {
   const scope = useApp((s) => s.exportScope);
   const sel = useApp((s) => s.exportSel);
   const [busy, setBusy] = useState('');
-  const [pre, setPre] = useState<ImportPreview | null>(null);
-  const [impErr, setImpErr] = useState('');
+  const [err, setErr] = useState('');
   if (!p) return null;
   const shots = allShots(p).filter((x) => scope === 'all' || sel.includes(x.sc.id));
   const pages: (typeof shots)[] = [];
@@ -142,7 +90,7 @@ function ExportDialog() {
     try {
       await f();
     } catch (e) {
-      setImpErr(e instanceof Error && /[؀-ۿ]/.test(e.message) ? e.message : 'تعذّرت العملية، حاول مرة أخرى.');
+      setErr(e instanceof Error && /[؀-ۿ]/.test(e.message) ? e.message : 'تعذّرت العملية، حاول مرة أخرى.');
     } finally {
       setBusy('');
     }
@@ -253,28 +201,8 @@ function ExportDialog() {
                   <div style={{ display: 'flex' }}><Button variant="primary" icon="download" loading={busy === 'zip'} onClick={() => void run('zip', () => exportProjectZip(p))} data-testid="export-zip">حفظ نسخة المشروع</Button></div>
                 </div>
               </Card>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <span style={{ fontSize: 14, fontWeight: 700 }}>استيراد مشروع من ملف</span>
-                {!pre ? (
-                  <label className="h-accent" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: 80, border: '1.5px dashed var(--color-border)', borderRadius: 8, cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: 14, fontWeight: 600 }}>
-                    <Icon name="upload" size={18} />اختر ملف ‎.zip
-                    <input type="file" accept=".zip,application/zip" data-testid="import-input" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; setImpErr(''); if (f) void readProjectZip(f).then(setPre).catch((x: Error) => setImpErr(x.message)); }} />
-                  </label>
-                ) : (
-                  <Card>
-                    <div data-testid="import-preview" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      <span style={{ fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 17 }}>{pre.name}</span>
-                      <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>{`${pre.counts.scenes} مشاهد · ${pre.counts.shots} لقطة · ${pre.counts.images} صورة · ${pre.counts.library} عناصر مكتبة`}</span>
-                      <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>سيُنشأ مشروع جديد باسم «{pre.name} (مستورد)» — لن يتغيّر أي مشروع موجود.</span>
-                      <div style={{ display: 'flex', gap: 10 }}>
-                        <Button variant="primary" loading={busy === 'import'} onClick={() => void run('import', () => importProjectZip(pre))} data-testid="import-confirm">تأكيد الاستيراد</Button>
-                        <Button variant="ghost" onClick={() => setPre(null)}>إلغاء</Button>
-                      </div>
-                    </div>
-                  </Card>
-                )}
-                {impErr && <span data-testid="import-error" style={{ fontSize: 13, color: 'var(--color-danger)', fontWeight: 600 }}>{impErr}</span>}
-              </div>
+              {err && <span data-testid="export-error" style={{ fontSize: 13, color: 'var(--color-danger)', fontWeight: 600 }}>{err}</span>}
+              <ImportPanel />
             </div>
           )}
         </div>
@@ -318,6 +246,60 @@ export function Toasts() {
           ) : t.msg} />
         </div>
       ))}
+    </div>
+  );
+}
+
+/** Import a project file (.zip) — in «تصدير» and from Home («استيراد مشروع»). */
+function ImportPanel() {
+  const [busy, setBusy] = useState(false);
+  const [pre, setPre] = useState<ImportPreview | null>(null);
+  const [impErr, setImpErr] = useState('');
+  const run = async () => {
+    if (!pre) return;
+    setBusy(true);
+    try {
+      await importProjectZip(pre);
+    } catch (e) {
+      setImpErr(e instanceof Error && /[؀-ۿ]/.test(e.message) ? e.message : 'تعذّرت العملية، حاول مرة أخرى.');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <span style={{ fontSize: 14, fontWeight: 700 }}>استيراد مشروع من ملف</span>
+      {!pre ? (
+        <label className="h-accent" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: 80, border: '1.5px dashed var(--color-border)', borderRadius: 8, cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: 14, fontWeight: 600 }}>
+          <Icon name="upload" size={18} />اختر ملف ‎.zip
+          <input type="file" accept=".zip,application/zip" data-testid="import-input" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; setImpErr(''); if (f) void readProjectZip(f).then(setPre).catch((x: Error) => setImpErr(x.message)); }} />
+        </label>
+      ) : (
+        <Card>
+          <div data-testid="import-preview" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <span style={{ fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 17 }}>{pre.name}</span>
+            <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>{`${pre.counts.scenes} مشاهد · ${pre.counts.shots} لقطة · ${pre.counts.images} صورة · ${pre.counts.library} عناصر مكتبة`}</span>
+            <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>سيُنشأ مشروع جديد باسم «{pre.name} (مستورد)» — لن يتغيّر أي مشروع موجود.</span>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <Button variant="primary" loading={busy} onClick={() => void run()} data-testid="import-confirm">تأكيد الاستيراد</Button>
+              <Button variant="ghost" onClick={() => setPre(null)}>إلغاء</Button>
+            </div>
+          </div>
+        </Card>
+      )}
+      {impErr && <span data-testid="import-error" style={{ fontSize: 13, color: 'var(--color-danger)', fontWeight: 600 }}>{impErr}</span>}
+    </div>
+  );
+}
+
+function ImportDialog() {
+  return (
+    <div data-component="ImportDialog" style={{ ...dialog, width: 560, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 28 }}>استيراد مشروع</h2>
+        <button title="إغلاق" onClick={close} style={xBtn}><Icon name="x" size={18} /></button>
+      </div>
+      <ImportPanel />
     </div>
   );
 }

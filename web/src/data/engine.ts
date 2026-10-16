@@ -62,6 +62,8 @@ const MAX_SERVER_ERRORS = 6;
 export class Engine {
   store: Store = emptyStore();
   images = new Map<string, ImageMeta>();
+  /** Home: scene numbers for the ideas' badges (no project loaded there) */
+  sceneNums = new Map<string, number>();
   projectId: string | null = null;
   history = new History(100);
   saveState: SaveState = 'saved';
@@ -99,6 +101,27 @@ export class Engine {
     this.ev.change();
   }
 
+  /**
+   * Home (UPDATE-1 ب1): no project open — every project row, the ideas and equipment.
+   * Polling then reads the owner-wide changes.
+   */
+  async loadHome() {
+    const s = await api<{ now: number; rows: Partial<Record<EntityName, Row[]>>; images: ImageMeta[]; settings: Settings; sceneNums: Record<string, number> }>('/api/home');
+    this.sceneNums = new Map(Object.entries(s.sceneNums ?? {}));
+    const store = emptyStore();
+    for (const e of ENTITY_NAMES) for (const r of s.rows[e] ?? []) store[e].set(r.id, r);
+    this.store = store;
+    this.images = new Map(s.images.map((i) => [i.id, i]));
+    this.projectId = null;
+    this.since = s.now;
+    this.versions = new Map();
+    this.pending = new Map();
+    this.trashHidden = new Map();
+    this.history.clear();
+    this.ev.settings(s.settings);
+    this.ev.change();
+  }
+
   /** Equipment only (used by pages that work without an open project). */
   async loadEquipment() {
     const rows = await api<Row[]>('/api/equipment');
@@ -108,9 +131,9 @@ export class Engine {
   }
 
   async poll(): Promise<boolean> {
-    if (!this.projectId) return false;
     const pid = this.projectId;
-    const res = await api<ChangesRes>(`/api/projects/${encodeURIComponent(pid)}/changes?since=${Math.max(0, this.since - OVERLAP_MS)}`);
+    const since = Math.max(0, this.since - OVERLAP_MS);
+    const res = await api<ChangesRes>(pid ? `/api/projects/${encodeURIComponent(pid)}/changes?since=${since}` : `/api/changes?since=${since}`);
     if (pid !== this.projectId) return false;
     this.since = res.now;
     for (const i of res.images) this.images.set(i.id, i);

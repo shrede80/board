@@ -373,7 +373,7 @@ const SceneBody = memo(function SceneBody({ p, sc, si, on, w, renaming }: { p: P
           <div key={sh.id} data-flip={`shot-${sh.id}`} title="فتح اللقطة"
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => (e.stopPropagation(), openEditor('shot', sh.id))}
-            onDragOver={(e) => { if (currentDrag()?.kind === 'inbox') { e.preventDefault(); e.stopPropagation(); } }}
+            onDragOver={(e) => { if (currentDrag()?.kind === 'idea') { e.preventDefault(); e.stopPropagation(); } }}
             onDrop={(e) => dropOnShot(e, sh.id)}
             style={{ width: ar >= 1 ? 46 : 22, height: ar >= 1 ? Math.round(46 / ar) : 38, borderRadius: 3, background: frameBg(coverOf(sh), hex), cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,.25)' }} />
         ))}

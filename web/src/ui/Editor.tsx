@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
-  addShot, closeEditor, deleteScene, deleteShot, editorNav, inboxTo, moveShot, newCharacterForScene, newLocationForScene, openEditor, toggleCharacter, unlink, upd,
+  addShot, closeEditor, deleteScene, deleteShot, editorNav, moveShot, newCharacterForScene, newLocationForScene, openEditor, toggleCharacter, unlink, upd,
 } from '../app/actions';
 import { currentDrag, dragEnd, dragStart, hasFiles, setOver } from '../app/dnd';
 import { addFiles, moveImage, removeImage, retryUpload, setCover, type OwnerKind } from '../app/images';
@@ -11,6 +11,7 @@ import { Button, EmptyState, Icon, Input, Textarea } from '../ds/ds';
 import { ANGLES, GENERAL, MOODS, MOVES, ORDER, SIZES, STATUS } from '../lib/constants';
 import { frameBg, mmss, pad2, type Img } from '../lib/util';
 import { deleteLib, duplicateLib } from '../app/boardActions';
+import { dropIdeaOnShot } from '../app/ideas';
 import { avatar } from './Library';
 
 const label: React.CSSProperties = { fontSize: 13, fontWeight: 600, color: 'var(--color-text-muted)' };
@@ -100,13 +101,13 @@ function Gallery({ owner, target, hex, aspect }: { owner: { images: Img[]; cover
   return (
     <>
       <div data-component="ImageGallery" data-testid="gallery"
-        onDragOver={(e) => { const d = currentDrag(); if (!hasFiles(e) && !(d?.kind === 'inbox')) return; e.preventDefault(); setOver({ kind: 'gallery', id: target.id }); }}
+        onDragOver={(e) => { const d = currentDrag(); if (!hasFiles(e) && !(d?.kind === 'idea')) return; e.preventDefault(); setOver({ kind: 'gallery', id: target.id }); }}
         onDragLeave={() => getState().dragOver?.kind === 'gallery' && setState({ dragOver: null })}
         onDrop={(e) => {
           e.preventDefault();
           const d = currentDrag();
           dragEnd();
-          if (d?.kind === 'inbox' && target.type === 'shot') inboxTo({ shotId: target.id }, d.id);
+          if (d?.kind === 'idea' && target.type === 'shot') dropIdeaOnShot(d.id, target.id);
           else if (e.dataTransfer.files.length) addFiles(target, e.dataTransfer.files);
         }}
         style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 8 }}>

@@ -11,6 +11,9 @@ import { TopBar, UpdateBanner } from './TopBar';
 import { MenuLayer, PickTargetDialog } from './Menu';
 import { MobileApp, useIsMobile } from './Mobile';
 import { Workspace } from './Workspace';
+import { HomeScreen } from './Home';
+import { IdeaEditDialog, IdeasPage } from './Ideas';
+import { ChoiceDialog, SearchDialog } from './Search';
 
 function Loading({ mobile }: { mobile: boolean }) {
   if (mobile) {
@@ -44,6 +47,7 @@ export function AppRoot() {
   const loaded = useApp((s) => s.loaded);
   const screen = useApp((s) => s.screen);
   const offline = useApp((s) => s.offline);
+  const modal = useApp((s) => s.modal);
   const mobile = useIsMobile();
   useEffect(() => {
     wireKeys();
@@ -65,11 +69,16 @@ export function AppRoot() {
             </div>
           )}
           {screen === 'app' && <Workspace />}
-          {screen !== 'app' && <PageBack />}
+          {screen === 'home' && <HomeScreen />}
+          {screen === 'ideas' && <IdeasPage />}
+          {(screen === 'equipment' || screen === 'trash' || screen === 'settings') && <PageBack />}
           {screen === 'equipment' && <EquipmentPage />}
           {screen === 'trash' && <TrashPage />}
           {screen === 'settings' && <SettingsPage />}
           <Modals />
+          {modal === 'search' && <SearchDialog />}
+          <ChoiceDialog />
+          <IdeaEditDialog />
           <PresentationMode />
         </>
       )}

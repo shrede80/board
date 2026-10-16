@@ -205,6 +205,23 @@ export const ENTITIES = {
       position: r('position'),
     },
   },
+  /**
+   * Ideas box (UPDATE-1 ب2): global to the owner; project and scene are optional and can
+   * change («نقل لمشروع»). Replaces inboxItems (old clients' inbox writes are stored here).
+   */
+  ideas: {
+    table: 'ideas', scope: 'owner', trashable: true,
+    fields: {
+      projectId: tn('project_id'),
+      sceneId: tn('scene_id'),
+      text: t('text'),
+      /** ordered image ids (≤ 10) */
+      imageIds: j('image_ids'),
+      source: e('source', ['phone', 'laptop'], 'laptop'),
+      isNew: b('is_new', true),
+      createdAt: { col: 'created_at', type: 'int', createOnly: true },
+    },
+  },
   equipment: {
     table: 'equipment', scope: 'owner', trashable: false,
     fields: {
@@ -233,6 +250,9 @@ export const ENTITIES = {
 export type EntityName = keyof typeof ENTITIES;
 export const ENTITY_NAMES = Object.keys(ENTITIES) as EntityName[];
 export const PROJECT_ENTITIES = ENTITY_NAMES.filter((n) => ENTITIES[n].scope === 'project');
+/** Owner-wide rows every device keeps in sync, with or without an open project. */
+export const OWNER_SYNC: EntityName[] = ['equipment', 'ideas'];
+export const MAX_IDEA_IMAGES = 10;
 
 export function isEntityName(s: string): s is EntityName {
   return Object.prototype.hasOwnProperty.call(ENTITIES, s);

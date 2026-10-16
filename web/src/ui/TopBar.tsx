@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { redo, setMode, setTheme, undo } from '../app/actions';
-import { archiveProject, askLogout, deleteProject, goHome, reloadForUpdate, renameProject } from '../app/projects';
+import { archiveProject, askDuplicate, askLogout, deleteProject, goHome, reloadForUpdate, renameProject } from '../app/projects';
 import { openPresent } from '../app/present';
 import { engine, getState, setState, useApp, useProject } from '../app/state';
 import { fitAll } from '../app/board';
@@ -25,12 +25,80 @@ function UndoIcon({ flip }: { flip?: boolean }) {
 
 export function TopBar() {
   const p = useProject();
+  if (!p) return <HomeTopBar />;
+  return <ProjectTopBar />;
+}
+
+/** Home and pages without an open project (UPDATE-1 ب1): logo · «الرئيسية» · search · theme · menu. */
+function HomeTopBar() {
+  const theme = useApp((s) => s.theme);
+  const screen = useApp((s) => s.screen);
+  const isDark = theme === 'dark';
+  return (
+    <header data-component="TopBar" style={{ height: 60, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 14, padding: '0 18px', borderBottom: '1px solid var(--color-border-subtle)', background: 'var(--color-bg)', position: 'relative', zIndex: 30 }}>
+      <button title="الرئيسية" onClick={goHome} style={{ border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', display: 'flex' }}>
+        <img src={isDark ? '/img/logo-white.png' : '/img/logo-black.png'} alt="إبراهيم الشريدي" style={{ width: 62, height: 38, objectFit: 'cover', mixBlendMode: isDark ? 'normal' : 'multiply' }} />
+      </button>
+      {screen === 'home'
+        ? <span data-testid="crumb-home-title" style={{ fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 17 }}>الرئيسية</span>
+        : <button data-testid="crumb-home" className="h-strong" onClick={goHome} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: 'none', background: 'var(--color-surface)', color: 'var(--color-text-muted)', fontSize: 14, fontWeight: 600, padding: '6px 10px', borderRadius: 8, cursor: 'pointer' }}><Icon name="home" size={15} />الرئيسية</button>}
+      <button data-testid="open-search" onClick={() => setState({ modal: 'search' })}
+        style={{ flex: '0 1 460px', margin: '0 auto', height: 40, border: '1px solid var(--color-border)', borderRadius: 999, display: 'flex', alignItems: 'center', gap: 10, padding: '0 16px', color: 'var(--color-text-muted)', fontSize: 14, background: 'var(--color-surface)', cursor: 'text', fontFamily: 'var(--font-sans)' }}>
+        <Icon name="search" size={17} />ابحث في المشاريع والمشاهد والأفكار…
+        <span style={{ marginInlineStart: 'auto', fontSize: 12, border: '1px solid var(--color-border)', borderRadius: 4, padding: '1px 6px', direction: 'ltr' }}>Ctrl K</span>
+      </button>
+      <ThemeButton />
+      <MainMenu />
+    </header>
+  );
+}
+
+function ThemeButton() {
+  const theme = useApp((s) => s.theme);
+  const isDark = theme === 'dark';
+  return (
+    <button title={isDark ? 'الوضع الفاتح' : 'الوضع الداكن'} className="h-strong" onClick={() => void setTheme(isDark ? 'light' : 'dark')} style={{ ...iconBtn, border: '1px solid var(--color-border)', borderRadius: '50%' }}>
+      {isDark ? <Icon name="sun" size={17} /> : <span style={{ width: 15, height: 15, borderRadius: '50%', boxShadow: 'inset -5px -2px 0 0 var(--color-text)', transform: 'rotate(-20deg)' }} />}
+    </button>
+  );
+}
+
+/** ☰ معداتي · السلة · الإعدادات · تسجيل الخروج */
+function MainMenu() {
+  const menu = useApp((s) => s.menu);
+  const go = (s: 'equipment' | 'trash' | 'settings') => () => setState({ screen: s, menu: false, editor: null });
+  const menuItems: { label: string; icon: string; onClick: () => void; testid?: string }[] = [
+    { label: 'معداتي', icon: 'camera', onClick: go('equipment') },
+    { label: 'سلة المحذوفات', icon: 'trash', onClick: go('trash') },
+    { label: 'الإعدادات', icon: 'settings', onClick: go('settings') },
+    { label: 'تسجيل الخروج', icon: 'log-out', onClick: askLogout, testid: 'menu-logout' },
+  ];
+  return (
+    <div data-menu="1" style={{ position: 'relative' }}>
+      <button title="القائمة" data-testid="menu" className="h-strong" onClick={() => setState({ menu: !menu })} style={{ ...iconBtn, flexDirection: 'column', gap: 4 }}>
+        {[0, 1, 2].map((k) => <span key={k} style={{ width: 16, height: 1.75, background: 'var(--color-text)', borderRadius: 2 }} />)}
+      </button>
+      {menu && (
+        <div style={{ position: 'absolute', top: 44, insetInlineEnd: 0, width: 220, background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 8, boxShadow: 'var(--shadow-lift)', padding: 6, display: 'flex', flexDirection: 'column' }}>
+          {menuItems.map((m) => (
+            <button key={m.label} className="h-strong" data-testid={m.testid} onClick={m.onClick} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', border: 'none', background: 'transparent', borderRadius: 4, cursor: 'pointer', color: 'var(--color-text)', fontSize: 15, textAlign: 'right' }}>
+              <Icon name={m.icon} size={17} />
+              {m.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProjectTopBar() {
+  const p = useProject();
   const screen = useApp((s) => s.screen);
   const mode = useApp((s) => s.mode);
   const theme = useApp((s) => s.theme);
   const save = useApp((s) => s.save);
   const offline = useApp((s) => s.offline);
-  const menu = useApp((s) => s.menu);
   const canUndo = useApp((s) => s.canUndo);
   const canRedo = useApp((s) => s.canRedo);
   const isDark = theme === 'dark';
@@ -39,13 +107,6 @@ export function TopBar() {
   const saveMap = { saved: ['محفوظ', 'var(--color-text-muted)'], saving: ['يحفظ…', 'var(--color-text-muted)'], error: ['فشل الحفظ — إعادة المحاولة', 'var(--color-danger)'] }[save];
   const saveLabel = offline ? 'غير متصل' : saveMap[0];
   const saveColor = offline ? 'var(--color-danger)' : saveMap[1];
-  const go = (s: 'equipment' | 'trash' | 'settings') => () => setState({ screen: s, menu: false, editor: null });
-  const menuItems = [
-    { label: 'معداتي', icon: 'camera', onClick: go('equipment') },
-    { label: 'سلة المحذوفات', icon: 'trash', onClick: go('trash') },
-    { label: 'الإعدادات', icon: 'settings', onClick: go('settings') },
-    { label: 'تسجيل الخروج', icon: 'log-out', onClick: askLogout, testid: 'menu-logout' },
-  ];
   return (
     <header data-component="TopBar" style={{ height: 60, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', borderBottom: '1px solid var(--color-border-subtle)', background: 'var(--color-bg)', position: 'relative', zIndex: 30 }}>
       <button title="الرئيسية" onClick={goHome} style={{ border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', display: 'flex' }}>
@@ -85,24 +146,8 @@ export function TopBar() {
       </button>
       <Button variant="outline" size="sm" icon="play" onClick={() => openPresent(0)} disabled={offline}>عرض</Button>
       <Button variant="primary" size="sm" icon="download" onClick={() => setState({ modal: 'export' })} disabled={offline} data-testid="open-export">تصدير</Button>
-      <button title={isDark ? 'الوضع الفاتح' : 'الوضع الداكن'} className="h-strong" onClick={() => void setTheme(isDark ? 'light' : 'dark')} style={{ ...iconBtn, border: '1px solid var(--color-border)', borderRadius: '50%' }}>
-        {isDark ? <Icon name="sun" size={17} /> : <span style={{ width: 15, height: 15, borderRadius: '50%', boxShadow: 'inset -5px -2px 0 0 var(--color-text)', transform: 'rotate(-20deg)' }} />}
-      </button>
-      <div data-menu="1" style={{ position: 'relative' }}>
-        <button title="القائمة" data-testid="menu" className="h-strong" onClick={() => setState({ menu: !menu })} style={{ ...iconBtn, flexDirection: 'column', gap: 4 }}>
-          {[0, 1, 2].map((k) => <span key={k} style={{ width: 16, height: 1.75, background: 'var(--color-text)', borderRadius: 2 }} />)}
-        </button>
-        {menu && (
-          <div style={{ position: 'absolute', top: 44, insetInlineEnd: 0, width: 220, background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 8, boxShadow: 'var(--shadow-lift)', padding: 6, display: 'flex', flexDirection: 'column' }}>
-            {menuItems.map((m) => (
-              <button key={m.label} className="h-strong" data-testid={m.testid} onClick={m.onClick} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', border: 'none', background: 'transparent', borderRadius: 4, cursor: 'pointer', color: 'var(--color-text)', fontSize: 15, textAlign: 'right' }}>
-                <Icon name={m.icon} size={17} />
-                {m.label}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      <ThemeButton />
+      <MainMenu />
     </header>
   );
 }
@@ -120,7 +165,7 @@ function Breadcrumb() {
   const items: { label: string; icon: string; key?: string; run: () => void; danger?: boolean; testid: string }[] = [
     { label: 'إعادة التسمية', icon: 'edit', key: 'F2', run: () => setState({ renaming: { kind: 'project', id: p.id } }), testid: 'pm-rename' },
     { label: 'إعدادات المشروع…', icon: 'settings', run: () => setState({ modal: 'projectSettings' }), testid: 'pm-settings' },
-    { label: 'تكرار المشروع', icon: 'repeat', run: () => setState({ modal: 'duplicateProject' }), testid: 'pm-duplicate' },
+    { label: 'تكرار المشروع', icon: 'repeat', run: () => askDuplicate(p.id, p.name), testid: 'pm-duplicate' },
     { label: 'تصدير…', icon: 'download', run: () => setState({ modal: 'export' }), testid: 'pm-export' },
     { label: p.archived ? 'إلغاء الأرشفة' : 'أرشفة', icon: 'folder', run: () => archiveProject(!p.archived), testid: 'pm-archive' },
   ];

@@ -21,10 +21,11 @@ export function EqSprite() {
 }
 
 export function PageBack() {
+  const projectId = useApp((s) => s.projectId);
   return (
     <div style={{ flexShrink: 0, padding: '14px 32px 0', maxWidth: 1144, width: '100%', margin: '0 auto' }}>
-      <button data-testid="back-to-app" onClick={() => (setState({ screen: 'app' }), setTimeout(fitAll, 30))} style={{ display: 'flex', alignItems: 'center', gap: 6, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: 14, fontWeight: 600, padding: '6px 0' }}>
-        <Icon name="arrow-right" size={15} />العودة إلى المشروع
+      <button data-testid="back-to-app" onClick={() => (projectId ? (setState({ screen: 'app' }), setTimeout(fitAll, 30)) : setState({ screen: 'home' }))} style={{ display: 'flex', alignItems: 'center', gap: 6, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: 14, fontWeight: 600, padding: '6px 0' }}>
+        <Icon name="arrow-right" size={15} />{projectId ? 'العودة إلى المشروع' : 'العودة إلى الرئيسية'}
       </button>
     </div>
   );
