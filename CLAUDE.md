@@ -1,6 +1,6 @@
 # لوحة المشاهد — context for Claude Code sessions
 
-**Read first in every new session:** this file, then `PROGRESS.md` (where we stopped), then `updates/update-2/UPDATE-2.md` (top authority for Update 2), `updates/update-1/UPDATE-1.md` (Update 1; wins over SPEC where they differ), then `SPEC.md` and `prototype/HANDOFF.md`.
+**Read first in every new session:** this file, then `PROGRESS.md` (where we stopped), then `updates/update-3/UPDATE-3.md` (top authority for Update 3), `updates/update-2/UPDATE-2.md` (Update 2), `updates/update-1/UPDATE-1.md` (Update 1; wins over SPEC where they differ), then `SPEC.md` and `prototype/HANDOFF.md`.
 
 ## ⚠️ Rule one (Update 2): challenge cards are SECRET
 The 20 cards of «تحدي العشرين إطاراً» are hidden from the user on purpose — the daily surprise is the point.
@@ -27,9 +27,11 @@ The 20 cards of «تحدي العشرين إطاراً» are hidden from the use
 3. One web app for laptop + mobile; mobile installs as a PWA (manifest + icons, `display: standalone`).
 4. Online-first. Exception (U1 ق6): **ideas only** (text + compressed images) queue in IndexedDB on the phone and send when back online; a small service worker caches **only the app shell** (HTML/JS/CSS/fonts/icons, versioned) — **never `/api/*` or any data**. Every other edit needs a connection (offline → clear message + disabled buttons).
 5. (U1 ق5) **Mobile = full editor** for projects, scenes, shots, library and ideas. **The free board stays laptop-only** (no moving board items on mobile).
+   (U3 ق3) This applies to the free board only: the **shot plan (مخطط التصوير)** is a new surface that mobile edits fully like the laptop (touch, drag, rotate, pinch zoom).
 6. Arabic RTL UI, prototype design system (fonts, colours, components), light + dark.
 7. Four layers against loss: undo/redo, 30-day trash, project export/import file, daily automatic backup.
 8. Out of scope (U1 ق8): multi-user/permissions, client share links, comments, AI, voice notes (exception U2 ق5: a short voice memo inside the challenge journal only), copy between projects, moving board items from mobile, connector arrows, full offline work.
+   (U3 ق8) Saved templates: a project can be saved as a template, and a scene as a template. Copying a scene into another project is allowed **only through scene templates**; other copy between projects stays out of scope.
 9. (U1 ق1) Full control: everything the user creates can be renamed, edited, duplicated where sensible, and deleted to trash with undo — laptop and phone.
 10. (U1 ق2) The app opens on **Home** on both devices; logo and the «الرئيسية ‹ project» breadcrumb go back to it.
 11. (U1 ق3) **Ideas box replaces the inbox**: global (project/scene optional), idea = text + images + links. `inbox_items` stays in the DB (no drop) but is never written again; old clients' inbox creates are stored as ideas.
@@ -48,6 +50,7 @@ The 20 cards of «تحدي العشرين إطاراً» are hidden from the use
 SPEC.md, PROMPT.md          handoff instructions (do not edit)
 prototype/                  Claude Design prototype (reference only)
 updates/update-1/           Update 1 brief (UPDATE-1.md), mockups (open *.html#theme=…&clean=1), shots
+updates/update-3/           Update 3 brief (UPDATE-3.md), mockups/*.html (interactive; &theme=dark&clean=1), shots
 updates/update-2/           Update 2 brief (UPDATE-2.md), mockups/challenge.html (#set=a|b&clean=1), shots; data/ + reference/ are SECRET (see rule one)
 reference/screenshots/      Playwright captures of every prototype state (visual reference)
 reference/sb-logic.js       readable copy of the prototype logic (sb-core + sb-view)
@@ -90,4 +93,4 @@ node scripts/check-offline.mjs          # offline start + idea queue against `vi
 
 ## Workflow
 After each phase: run tests → commit → update PROGRESS.md → send the user a 2-line Arabic summary + what he can try.
-Branch: work on `claude/sharp-cray-o2h154` (Update 2; continues the deployed code of `claude/pensive-feynman-nwosmr`). After each deployed phase, fast-forward the default branch `claude/viewfinder-app-build-7du511` to it so new sessions start from the right code.
+Branch: work on `claude/adoring-noether-cswgee` (Update 3; started from the deployed code on `claude/viewfinder-app-build-7du511`). After each deployed phase, fast-forward the default branch `claude/viewfinder-app-build-7du511` to it so new sessions start from the right code.

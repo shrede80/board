@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-sb-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>مخطط التصوير — نموذج التحديث 3</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+:root{--cam-zve10:#c27a32;--cam-iphone15:#3b6fd8;--cam-mini4:#1f9e8f;--cam-hx200v:#7b55c7;--plan-grid:rgba(20,18,16,.07);--plan-grid-strong:rgba(20,18,16,.13);--furn:#d9cdb6;--furn-edge:#8a7a62;--plan-bg:#faf8f3}
+[data-sb-theme="dark"]{--plan-grid:rgba(253,252,250,.05);--plan-grid-strong:rgba(253,252,250,.1);--furn:#3a342c;--furn-edge:#7d705d;--plan-bg:#171512}
+html,body{height:100%}
+body{overflow:hidden;background:var(--color-surface)}
+.app{position:relative;display:flex;flex-direction:column;background:var(--color-bg);overflow:hidden;margin:0 auto}
+.laptop{width:1440px;height:900px}
+.mobile{width:390px;height:844px;border:1px solid var(--color-border);border-radius:28px;margin-top:20px;box-shadow:var(--shadow-lift)}
+/* top bar */
+.top{height:60px;flex-shrink:0;display:flex;align-items:center;gap:14px;padding:0 20px;border-bottom:1px solid var(--color-border-subtle);background:var(--color-bg)}
+.top .crumb{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--color-text-muted)}
+.top .crumb b{color:var(--color-text);font-size:17px}
+.top .sp{flex:1}
+.iconbtn{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:8px;border:1px solid var(--color-border);background:var(--color-bg);cursor:pointer;color:var(--color-text)}
+.iconbtn:disabled{opacity:.4}
+.seg{display:inline-flex;border:1px solid var(--color-border);border-radius:8px;overflow:hidden}
+.seg button{height:34px;padding:0 12px;border:none;background:transparent;font-size:13px;font-weight:700;cursor:pointer;color:var(--color-text-muted)}
+.seg button.on{background:var(--color-inverse-bg);color:var(--color-inverse-text)}
+/* body */
+.body{flex:1;display:flex;min-height:0}
+.palette{width:268px;flex-shrink:0;border-inline-end:1px solid var(--color-border-subtle);display:flex;flex-direction:column;background:var(--color-bg)}
+.ptabs{display:flex;gap:4px;padding:12px 12px 8px;flex-wrap:wrap}
+.ptabs button{height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--color-border);background:transparent;font-size:13px;font-weight:700;cursor:pointer;color:var(--color-text)}
+.ptabs button.on{background:var(--color-inverse-bg);color:var(--color-inverse-text);border-color:transparent}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 12px 16px;overflow:auto}
+.pitem{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px 10px;border:1px solid var(--color-border-subtle);border-radius:10px;background:var(--color-surface);cursor:grab;font-size:12px;font-weight:700;text-align:center;user-select:none;transition:transform .15s var(--ease-standard),box-shadow .15s}
+.pitem:hover{transform:translateY(-2px);box-shadow:var(--shadow-card)}
+.pitem svg{width:46px;height:46px}
+.pitem small{font-weight:400;color:var(--color-text-muted);font-size:11px}
+.canvaswrap{flex:1;position:relative;background:var(--plan-bg);overflow:hidden;touch-action:none}
+svg.plan{width:100%;height:100%;display:block;cursor:default}
+.props{width:320px;flex-shrink:0;border-inline-start:1px solid var(--color-border-subtle);background:var(--color-bg);overflow:auto;padding:18px}
+.props h3{margin:0 0 4px;font-size:18px}
+.props .sub{font-size:13px;color:var(--color-text-muted);margin-bottom:14px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field>span{font-size:13px;font-weight:700;color:var(--color-text-muted)}
+.field select,.field input[type=text]{height:40px;border:1px solid var(--color-border);border-radius:8px;background:var(--color-bg);color:var(--color-text);padding:0 10px;font-family:inherit;font-size:14px}
+.field input[type=range]{width:100%;accent-color:var(--color-accent)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.readout{display:flex;flex-direction:column;gap:4px;padding:12px;border-radius:10px;background:var(--color-surface);border:1px solid var(--color-border-subtle);margin-bottom:14px}
+.readout b{font-size:22px;font-family:var(--font-display)}
+.readout span{font-size:13px;color:var(--color-text-muted)}
+.row2{display:flex;gap:8px}
+.row2>*{flex:1}
+.legend{position:absolute;bottom:14px;inset-inline-end:14px;background:var(--color-bg);border:1px solid var(--color-border-subtle);border-radius:10px;padding:10px 12px;font-size:12px;display:flex;flex-direction:column;gap:6px;box-shadow:var(--shadow-card)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-inline-end:6px;vertical-align:middle}
+.zoomer{position:absolute;bottom:14px;inset-inline-start:14px;display:flex;gap:6px;align-items:center;background:var(--color-bg);border:1px solid var(--color-border-subtle);border-radius:10px;padding:6px;box-shadow:var(--shadow-card)}
+.zoomer span{font-size:12px;font-weight:700;min-width:48px;text-align:center;direction:ltr}
+.scale{position:absolute;top:14px;inset-inline-start:14px;font-size:11px;font-weight:700;color:var(--color-text-muted);direction:ltr;display:flex;align-items:center;gap:6px}
+.scale i{display:block;height:6px;border:1.5px solid var(--color-text-muted);border-top:none}
+.empty{color:var(--color-text-muted);font-size:14px;line-height:1.8}
+.toast{position:absolute;bottom:22px;left:50%;transform:translate(-50%,20px);opacity:0;background:var(--color-inverse-bg);color:var(--color-inverse-text);padding:10px 16px;border-radius:10px;font-size:14px;font-weight:700;transition:all .25s var(--ease-standard);pointer-events:none;z-index:80}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+/* mobile */
+.mobile .top{height:56px;padding:0 12px;gap:8px}
+.mobile .top .crumb b{font-size:16px}
+.mbar{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:6px;background:var(--color-bg);border:1px solid var(--color-border-subtle);border-radius:16px;padding:6px;box-shadow:var(--shadow-lift);z-index:20;transition:bottom .25s var(--ease-standard)}
+.mbar .iconbtn{width:46px;height:46px;border-radius:12px}
+.mbar .add{width:auto;padding:0 16px;gap:6px;background:var(--color-accent);border-color:transparent;color:#141210;font-weight:700;font-size:15px}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--color-bg);border-top-left-radius:18px;border-top-right-radius:18px;box-shadow:0 -10px 30px rgba(20,18,16,.18);transform:translateY(100%);transition:transform .28s var(--ease-standard);z-index:30;max-height:62%;display:flex;flex-direction:column}
+.sheet.on{transform:translateY(0)}
+.sheet .grab{width:40px;height:4px;border-radius:2px;background:var(--color-border);margin:8px auto 4px}
+.sheet .inner{overflow:auto;padding:6px 16px 18px}
+.sheet .pgrid{grid-template-columns:repeat(3,1fr);padding:4px 0 10px}
+.mobile .props{width:auto;border:none;padding:0}
+.mobile .field select,.mobile .field input[type=text]{height:46px;font-size:15px}
+html.clean .note-tag{display:none}
+</style>
+</head>
+<body>
+<div id="app" class="app laptop">
+  <div class="top">
+    <button class="iconbtn" title="رجوع للمشهد"><span data-i="arrow-right"></span></button>
+    <div class="crumb"><span class="hide-m">برنامج «خلية» ‹</span><b>مخطط المشهد 3 · الاستوديو</b></div>
+    <div class="sp"></div>
+    <span class="hide-m" style="display:contents">
+      <button class="btn outline sm" id="copyFrom"><span data-i="file"></span>انسخ من مشهد</button>
+      <div class="seg" id="snapSeg"><button class="on" data-snap="1">مغناطيس الشبكة</button><button data-snap="0">حر</button></div>
+      <button class="iconbtn" id="undo" title="تراجع (Ctrl+Z)"><span data-i="arrow-right"></span></button>
+      <button class="iconbtn" id="redo" title="إعادة (Ctrl+Shift+Z)"><span data-i="arrow-left"></span></button>
+      <button class="btn primary sm" id="export"><span data-i="download"></span>صورة للفريق</button>
+    </span>
+    <button class="iconbtn show-m" id="mMore" title="المزيد" style="display:none">⋯</button>
+  </div>
+  <div class="body">
+    <aside class="palette" id="palette">
+      <div class="ptabs" id="ptabs"></div>
+      <div class="pgrid" id="pgrid"></div>
+      <div style="margin-top:auto;padding:12px;font-size:12px;color:var(--color-text-muted);line-height:1.7;border-top:1px solid var(--color-border-subtle)">اسحب العنصر للمخطط أو اضغطه. الكاميرات والإضاءة من معداتك.</div>
+    </aside>
+    <div class="canvaswrap" id="wrap">
+      <svg class="plan" id="svg"></svg>
+      <div class="scale" id="scale"></div>
+      <div class="zoomer hide-m"><button class="iconbtn" id="zout" style="width:32px;height:32px">−</button><span id="zlbl">100%</span><button class="iconbtn" id="zin" style="width:32px;height:32px">+</button><button class="btn outline sm" id="fit">ملاءمة الكل</button></div>
+      <div class="legend hide-m" id="legend"></div>
+      <div class="toast" id="toast"></div>
+      <span class="note-tag" data-n="1" style="top:70px;right:40%">الزاوية تُحسب من العدسة الحقيقية</span>
+      <span class="note-tag" data-n="2" style="top:260px;right:22px">مقبض الدوران · مقبض المدى</span>
+      <span class="note-tag" data-n="3" style="bottom:60px;right:42%">شبكة بالمتر · المقياس فوق</span>
+    </div>
+    <aside class="props" id="props"></aside>
+  </div>
+  <div class="mbar" id="mbar" style="display:none">
+    <button class="iconbtn add" id="mAdd"><span data-i="plus"></span>عنصر</button>
+    <button class="iconbtn" id="mUndo" title="تراجع"><span data-i="arrow-right"></span></button>
+    <button class="iconbtn" id="mRedo" title="إعادة"><span data-i="arrow-left"></span></button>
+    <button class="iconbtn" id="mFit" title="ملاءمة"><span data-i="eye"></span></button>
+    <button class="iconbtn" id="mExport" title="صورة"><span data-i="download"></span></button>
+  </div>
+  <div class="sheet" id="sheet"><div class="grab"></div><div class="inner" id="sheetInner"></div></div>
+</div>
+
+<script src="icons.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  const q = new URLSearchParams(location.hash.slice(1));
+  const MOBILE = q.get('view') === 'mobile';
+  const app = document.getElementById('app');
+  if (MOBILE) {
+    app.classList.replace('laptop', 'mobile');
+    document.querySelectorAll('.hide-m').forEach((e) => (e.style.display = 'none'));
+    document.getElementById('palette').style.display = 'none';
+    document.getElementById('props').style.display = 'none';
+    document.getElementById('mbar').style.display = 'flex';
+    document.getElementById('mMore').style.display = 'inline-flex';
+    document.querySelectorAll('.note-tag').forEach((e) => e.remove());
+  }
+  const svg = document.getElementById('svg');
+  const wrap = document.getElementById('wrap');
+  const NS = 'http://www.w3.org/2000/svg';
+
+  // ---------- equipment (ids match worker/data/equipment.json) ----------
+  const CAMS = {
+    'cam-zve10': { name: 'Sony ZV-E10', w: 23.5, color: 'var(--cam-zve10)', hex: '#c27a32', lenses: { 'lens-sigma1850': ['Sigma 18-50 F2.8', 18, 50], 'lens-sonypz': ['Sony 16-50 PZ', 16, 50] } },
+    'cam-iphone15': { name: 'iPhone 15 Pro', w: 36, color: 'var(--cam-iphone15)', hex: '#3b6fd8', builtin: { '0.5x': 13, '1x': 24, '2x': 48, '3x': 77 } },
+    'cam-mini4': { name: 'DJI Mini 4 Pro', w: 36, color: 'var(--cam-mini4)', hex: '#1f9e8f', fixed: 24 },
+    'cam-hx200v': { name: 'Sony HX200V', w: 36, color: 'var(--cam-hx200v)', hex: '#7b55c7', zoom: [27, 810] },
+  };
+  const LIGHTS = {
+    'lt-hs60b': { name: 'Neewer HS60B', beam: 55, cct: true, mods: { none: ['بدون', 55], softbox: ['سوفت بوكس 45', 95], lantern: ['فانوس 30', 360] } },
+    'lt-ua20c': { name: 'Light Stick UA20C', beam: 120, rgb: true, cct: true },
+    'lt-lm07': { name: 'Wand LM07', beam: 110, cct: true },
+    'lt-desiontal': { name: 'Desiontal LED', beam: 110, rgb: true },
+    'lt-reflector': { name: 'عاكس 60', beam: 60, bounce: true },
+    'lt-mirror': { name: 'مرآة A4', beam: 18, bounce: true },
+  };
+  const fovOf = (it) => {
+    const c = CAMS[it.cam]; const f = it.focal || c.fixed || 24;
+    const W = c.w * (it.vertical ? 9 / 16 : 1);
+    return (2 * Math.atan(W / (2 * f)) * 180) / Math.PI;
+  };
+  const cctColor = (k) => (k <= 3000 ? '#ffa94d' : k <= 3800 ? '#ffbf73' : k <= 4800 ? '#ffd9a0' : k <= 5800 ? '#ffe7b8' : '#cfe0ff');
+
+  // ---------- items (meters; rot in degrees, 0 = facing up) ----------
+  let id = 0; const nid = () => 'i' + ++id;
+  const towards = (x, y, tx, ty) => (Math.atan2(tx - x, -(ty - y)) * 180) / Math.PI;
+  let items = [
+    { id: nid(), kind: 'zone', x: 7.2, y: 11.4, w: 11.5, h: 2.4, rot: 0, label: 'الجمهور' },
+    { id: nid(), kind: 'furn', type: 'screen', x: 7.2, y: 0.8, w: 4.6, h: 0.28, rot: 0, label: 'شاشة الخلية' },
+    { id: nid(), kind: 'furn', type: 'table', x: 3.3, y: 3.4, w: 3.8, h: 0.95, rot: -36, label: 'طاولة المتسابقين' },
+    { id: nid(), kind: 'furn', type: 'desk', x: 10.6, y: 3.4, w: 2.3, h: 1.0, rot: 33, label: 'طاولة المقدّم' },
+    { id: nid(), kind: 'furn', type: 'table', x: 5.0, y: 8.9, w: 2.6, h: 0.95, rot: -34, label: 'طاولة الإخراج' },
+    ...[[1.25, 3.0], [2.3, 2.2], [3.35, 1.45], [4.4, 0.7]].map(([x, y], i) => ({ id: nid(), kind: 'person', x: x + 0.15, y: y + 0.35, w: 0.62, h: 0.62, rot: 144, label: 'متسابق ' + (i + 1), color: ['#c9a14f', '#94603f', '#6c6a3c', '#6e2c34'][i] })),
+    { id: nid(), kind: 'person', x: 11.4, y: 2.4, w: 0.62, h: 0.62, rot: -147, label: 'المقدّم', color: '#2e3d5c' },
+    { id: nid(), kind: 'person', x: 3.9, y: 9.9, w: 0.62, h: 0.62, rot: 146, label: 'المخرج', color: '#7c8288' },
+    { id: nid(), kind: 'person', x: 6.4, y: 9.75, w: 0.62, h: 0.62, rot: 180, label: 'الإعداد', color: '#7c8288' },
+    ...[2.6, 4.9, 7.2, 9.5, 11.8].map((x) => ({ id: nid(), kind: 'furn', type: 'chair', x, y: 12.0, w: 0.55, h: 0.55, rot: 180, label: '' })),
+    { id: nid(), kind: 'cam', cam: 'cam-zve10', lens: 'lens-sigma1850', focal: 24, x: 5.4, y: 6.5, rot: 0, range: 4.2, label: 'A' },
+    { id: nid(), kind: 'cam', cam: 'cam-iphone15', lens: '2x', focal: 48, x: 7.6, y: 6.9, rot: 0, range: 5.5, label: 'B' },
+    { id: nid(), kind: 'cam', cam: 'cam-hx200v', focal: 60, x: 12.9, y: 8.6, rot: 0, range: 7.5, label: 'C' },
+    { id: nid(), kind: 'light', lt: 'lt-hs60b', mod: 'softbox', cct: 5600, x: 1.0, y: 6.2, rot: 0, range: 3.2, label: 'إضاءة رئيسية' },
+    { id: nid(), kind: 'light', lt: 'lt-ua20c', rgb: '#e21e88', cct: 3200, x: 1.4, y: 0.9, rot: 0, range: 2.6, label: 'خلفية' },
+    { id: nid(), kind: 'light', lt: 'lt-hs60b', mod: 'lantern', cct: 3200, x: 12.4, y: 4.6, rot: 0, range: 1.4, label: 'فانوس المقدّم' },
+    { id: nid(), kind: 'arrow', x: 7.6, y: 6.9, pts: [[7.6, 6.9], [8.7, 6.1], [9.2, 5.3]], dashed: true, label: 'حركة B', rot: 0 },
+  ];
+  const by = (l) => items.find((i) => i.label === l);
+  by('A').rot = towards(5.4, 6.5, 3.0, 2.9); by('B').rot = towards(7.6, 6.9, 10.9, 3.1); by('C').rot = towards(12.9, 8.6, 7.0, 3.0);
+  by('إضاءة رئيسية').rot = towards(1.0, 6.2, 2.8, 2.6); by('خلفية').rot = towards(1.4, 0.9, 3.3, 3.0);
+
+  // ---------- view ----------
+  let view = { s: MOBILE ? 26 : 58, ox: MOBILE ? -0.4 : -1.2, oy: MOBILE ? -1.5 : -0.8 };
+  let sel = null, snap = true;
+  const hist = [], fut = [];
+  const save = () => { hist.push(JSON.stringify(items)); if (hist.length > 80) hist.shift(); fut.length = 0; };
+  const toPx = (x, y) => [(x - view.ox) * view.s, (y - view.oy) * view.s];
+  const toM = (px, py) => [px / view.s + view.ox, py / view.s + view.oy];
+
+  // ---------- icons (top-down, coloured) ----------
+  function camIcon(it, s) {
+    const c = CAMS[it.cam]; const h = c.hex;
+    if (it.cam === 'cam-mini4') return `<g><path d="M${-0.32 * s} ${-0.32 * s}L${0.32 * s} ${0.32 * s}M${0.32 * s} ${-0.32 * s}L${-0.32 * s} ${0.32 * s}" stroke="#20201f" stroke-width="${0.07 * s}"/>${[[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => `<circle cx="${a * 0.32 * s}" cy="${b * 0.32 * s}" r="${0.15 * s}" fill="${h}33" stroke="${h}" stroke-width="${0.035 * s}"/>`).join('')}<rect x="${-0.12 * s}" y="${-0.17 * s}" width="${0.24 * s}" height="${0.34 * s}" rx="${0.06 * s}" fill="#2a2a2c"/><circle cx="0" cy="${-0.16 * s}" r="${0.05 * s}" fill="${h}"/></g>`;
+    if (it.cam === 'cam-iphone15') return `<g><rect x="${-0.4 * s}" y="${0.02 * s}" width="${0.8 * s}" height="${0.12 * s}" rx="${0.05 * s}" fill="#55534f"/><rect x="${-0.2 * s}" y="${-0.22 * s}" width="${0.4 * s}" height="${0.26 * s}" rx="${0.05 * s}" fill="#6f6c66"/><rect x="${-0.36 * s}" y="${-0.05 * s}" width="${0.72 * s}" height="${0.1 * s}" rx="${0.04 * s}" fill="${h}"/><circle cx="${-0.08 * s}" cy="${-0.13 * s}" r="${0.045 * s}" fill="#1b1b1d"/><circle cx="${0.08 * s}" cy="${-0.13 * s}" r="${0.045 * s}" fill="#1b1b1d"/></g>`;
+    const big = it.cam === 'cam-hx200v';
+    return `<g><rect x="${-0.3 * s}" y="${-0.05 * s}" width="${0.6 * s}" height="${0.32 * s}" rx="${0.06 * s}" fill="#2d2c2a"/><rect x="${-0.3 * s}" y="${0.17 * s}" width="${0.6 * s}" height="${0.1 * s}" rx="${0.04 * s}" fill="${h}"/><rect x="${-(big ? 0.17 : 0.14) * s}" y="${-(big ? 0.42 : 0.3) * s}" width="${(big ? 0.34 : 0.28) * s}" height="${(big ? 0.4 : 0.28) * s}" rx="${0.05 * s}" fill="#151515"/><rect x="${-(big ? 0.15 : 0.12) * s}" y="${-(big ? 0.44 : 0.32) * s}" width="${(big ? 0.3 : 0.24) * s}" height="${0.05 * s}" rx="${0.02 * s}" fill="${h}"/><rect x="${0.12 * s}" y="${0.02 * s}" width="${0.12 * s}" height="${0.1 * s}" rx="${0.02 * s}" fill="#4a4844"/></g>`;
+  }
+  function lightIcon(it, s) {
+    const L = LIGHTS[it.lt]; const col = it.rgb && L.rgb ? it.rgb : cctColor(it.cct || 5600);
+    if (it.lt === 'lt-reflector') return `<g><ellipse cx="0" cy="0" rx="${0.36 * s}" ry="${0.1 * s}" fill="#e8c46a" stroke="#9a7a2e" stroke-width="${0.025 * s}"/><path d="M${-0.36 * s} 0A${0.36 * s} ${0.1 * s} 0 0 0 ${0.36 * s} 0Z" fill="#cfd3d8"/></g>`;
+    if (it.lt === 'lt-mirror') return `<rect x="${-0.18 * s}" y="${-0.04 * s}" width="${0.36 * s}" height="${0.08 * s}" fill="#dfe6ee" stroke="#8796a6" stroke-width="${0.02 * s}"/>`;
+    if (it.lt === 'lt-ua20c') return `<g><rect x="${-0.4 * s}" y="${-0.06 * s}" width="${0.8 * s}" height="${0.12 * s}" rx="${0.06 * s}" fill="#2a2a2c"/><rect x="${-0.36 * s}" y="${-0.07 * s}" width="${0.72 * s}" height="${0.05 * s}" rx="${0.02 * s}" fill="${col}"/></g>`;
+    if (it.lt === 'lt-lm07') return `<g><rect x="${-0.22 * s}" y="${-0.04 * s}" width="${0.44 * s}" height="${0.08 * s}" rx="${0.04 * s}" fill="#2a2a2c"/><rect x="${-0.18 * s}" y="${-0.05 * s}" width="${0.36 * s}" height="${0.03 * s}" fill="${col}"/></g>`;
+    if (it.lt === 'lt-desiontal') return `<g><rect x="${-0.14 * s}" y="${-0.1 * s}" width="${0.28 * s}" height="${0.2 * s}" rx="${0.03 * s}" fill="#2a2a2c"/><rect x="${-0.12 * s}" y="${-0.12 * s}" width="${0.24 * s}" height="${0.04 * s}" fill="${col}"/></g>`;
+    // HS60B with modifier
+    const head = `<rect x="${-0.17 * s}" y="${-0.02 * s}" width="${0.34 * s}" height="${0.3 * s}" rx="${0.05 * s}" fill="#3a3936"/><circle cx="0" cy="${0.13 * s}" r="${0.05 * s}" fill="#777"/>`;
+    if (it.mod === 'softbox') return `<g>${head}<path d="M${-0.15 * s} ${-0.02 * s}L${-0.42 * s} ${-0.34 * s}L${0.42 * s} ${-0.34 * s}L${0.15 * s} ${-0.02 * s}Z" fill="#f4f1ea" stroke="#9b958a" stroke-width="${0.025 * s}"/><rect x="${-0.42 * s}" y="${-0.38 * s}" width="${0.84 * s}" height="${0.05 * s}" fill="${col}"/></g>`;
+    if (it.mod === 'lantern') return `<g>${head}<circle cx="0" cy="${-0.2 * s}" r="${0.24 * s}" fill="#fbf8f1" stroke="#9b958a" stroke-width="${0.025 * s}"/></g>`;
+    return `<g>${head}<rect x="${-0.15 * s}" y="${-0.06 * s}" width="${0.3 * s}" height="${0.06 * s}" fill="${col}"/></g>`;
+  }
+  function furnIcon(it, s) {
+    const w = it.w * s, h = it.h * s, x = -w / 2, y = -h / 2;
+    const F = 'var(--furn)', E = 'var(--furn-edge)', sw = Math.max(1, 0.025 * s);
+    switch (it.type) {
+      case 'screen': return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${h / 2}" fill="#1b1a18"/>`;
+      case 'chair': return `<g><rect x="${x}" y="${y + h * 0.18}" width="${w}" height="${h * 0.82}" rx="${w * 0.18}" fill="${F}" stroke="${E}" stroke-width="${sw}"/><path d="M${x} ${y + h * 0.3}Q0 ${y - h * 0.25} ${-x} ${y + h * 0.3}" fill="none" stroke="${E}" stroke-width="${sw * 2.4}" stroke-linecap="round"/></g>`;
+      case 'roundtable': return `<circle r="${w / 2}" fill="${F}" stroke="${E}" stroke-width="${sw}"/>`;
+      case 'sofa': return `<g><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${h * 0.2}" fill="${F}" stroke="${E}" stroke-width="${sw}"/><rect x="${x + w * 0.08}" y="${y + h * 0.3}" width="${w * 0.84}" height="${h * 0.62}" rx="${h * 0.12}" fill="none" stroke="${E}" stroke-width="${sw}"/></g>`;
+      case 'door': return `<g><path d="M${x} ${y + h}L${x} ${y}" stroke="${E}" stroke-width="${sw * 2}"/><path d="M${x} ${y}A${w} ${h} 0 0 1 ${x + w} ${y + h}" fill="none" stroke="${E}" stroke-width="${sw}" stroke-dasharray="${sw * 3}"/></g>`;
+      case 'window': return `<g><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#dfe9f2" stroke="${E}" stroke-width="${sw}"/><line x1="${x}" y1="0" x2="${-x}" y2="0" stroke="${E}" stroke-width="${sw}"/></g>`;
+      case 'wall': return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#4a443b"/>`;
+      case 'plant': return `<g>${[0, 60, 120, 180, 240, 300].map((a) => `<ellipse cx="0" cy="${-w * 0.25}" rx="${w * 0.12}" ry="${w * 0.26}" fill="#6c8a4a" transform="rotate(${a})"/>`).join('')}<circle r="${w * 0.12}" fill="#4f6b33"/></g>`;
+      case 'car': return `<g><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${h * 0.3}" fill="#8a8f96" stroke="#4d5258" stroke-width="${sw}"/><rect x="${x + w * 0.22}" y="${y + h * 0.12}" width="${w * 0.5}" height="${h * 0.76}" rx="${h * 0.15}" fill="#5c626a"/></g>`;
+      case 'stage': return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${F}" stroke="${E}" stroke-width="${sw}" stroke-dasharray="${sw * 4}"/>`;
+      default: return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${Math.min(w, h) * 0.12}" fill="${F}" stroke="${E}" stroke-width="${sw}"/>`;
+    }
+  }
+  function personIcon(it, s) {
+    return `<g><ellipse cx="0" cy="${0.04 * s}" rx="${0.3 * s}" ry="${0.17 * s}" fill="${it.color}" opacity=".9"/><circle cx="0" cy="${0.02 * s}" r="${0.13 * s}" fill="#e9d9c4" stroke="${it.color}" stroke-width="${0.035 * s}"/><path d="M${-0.06 * s} ${-0.12 * s}L0 ${-0.22 * s}L${0.06 * s} ${-0.12 * s}" fill="${it.color}"/></g>`;
+  }
+
+  // ---------- render ----------
+  function render() {
+    const W = wrap.clientWidth, H = wrap.clientHeight, s = view.s;
+    let out = '';
+    // grid
+    const x0 = Math.floor(view.ox), x1 = Math.ceil(view.ox + W / s), y0 = Math.floor(view.oy), y1 = Math.ceil(view.oy + H / s);
+    for (let x = x0; x <= x1; x += 0.5) { const [px] = toPx(x, 0); out += `<line x1="${px}" y1="0" x2="${px}" y2="${H}" stroke="${x % 1 === 0 ? 'var(--plan-grid-strong)' : 'var(--plan-grid)'}"/>`; }
+    for (let y = y0; y <= y1; y += 0.5) { const [, py] = toPx(0, y); out += `<line x1="0" y1="${py}" x2="${W}" y2="${py}" stroke="${y % 1 === 0 ? 'var(--plan-grid-strong)' : 'var(--plan-grid)'}"/>`; }
+    // beams + cones under everything
+    for (const it of items) {
+      const [px, py] = toPx(it.x, it.y);
+      if (it.kind === 'cam') {
+        const f = it._fov ?? fovOf(it), r = it.range * s, a = ((it.rot - 90 - f / 2) * Math.PI) / 180, b = ((it.rot - 90 + f / 2) * Math.PI) / 180;
+        const hex = CAMS[it.cam].hex;
+        out += `<path d="M${px} ${py}L${px + r * Math.cos(a)} ${py + r * Math.sin(a)}A${r} ${r} 0 0 1 ${px + r * Math.cos(b)} ${py + r * Math.sin(b)}Z" fill="${hex}" fill-opacity="${sel === it.id ? 0.16 : 0.1}" stroke="${hex}" stroke-opacity=".55" stroke-width="1.5"/>`;
+        const mid = ((it.rot - 90) * Math.PI) / 180, lx = px + (r + 14) * Math.cos(mid), ly = py + (r + 14) * Math.sin(mid);
+        if (!MOBILE || sel === it.id) out += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="12" font-weight="700" fill="${hex}" style="direction:ltr">${it.label} · ${Math.round(it.focal || CAMS[it.cam].fixed)}mm · ${Math.round(f)}°</text>`;
+      }
+      if (it.kind === 'light') {
+        const L = LIGHTS[it.lt], beam = L.mods ? L.mods[it.mod || 'none'][1] : L.beam, col = it.rgb && L.rgb ? it.rgb : cctColor(it.cct || 5600), r = it.range * s, gid = 'g' + it.id;
+        out += `<defs><radialGradient id="${gid}" cx="${px}" cy="${py}" r="${r}" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${col}" stop-opacity=".55"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></radialGradient></defs>`;
+        if (beam >= 360) out += `<circle cx="${px}" cy="${py}" r="${r}" fill="url(#${gid})"/>`;
+        else { const a = ((it.rot - 90 - beam / 2) * Math.PI) / 180, b = ((it.rot - 90 + beam / 2) * Math.PI) / 180; out += `<path d="M${px} ${py}L${px + r * Math.cos(a)} ${py + r * Math.sin(a)}A${r} ${r} 0 0 1 ${px + r * Math.cos(b)} ${py + r * Math.sin(b)}Z" fill="url(#${gid})" stroke="#e0a64a" stroke-opacity=".45" stroke-dasharray="4 5" stroke-width="1.2"/>`; }
+      }
+    }
+    // items
+    for (const it of items) {
+      const [px, py] = toPx(it.x, it.y);
+      const on = sel === it.id;
+      if (it.kind === 'zone') {
+        const w = it.w * s, h = it.h * s;
+        out += `<g data-id="${it.id}" transform="translate(${px} ${py}) rotate(${it.rot})" style="cursor:move"><rect x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" rx="10" fill="var(--color-accent)" fill-opacity=".08" stroke="var(--color-accent)" stroke-dasharray="6 5" stroke-width="${on ? 2 : 1.4}"/><text x="${w / 2 - 12}" y="${-h / 2 + 22}" font-size="15" font-weight="700" fill="var(--color-text-muted)">${it.label}</text></g>`;
+        continue;
+      }
+      if (it.kind === 'arrow') {
+        const d = it.pts.map((p, i) => { const [a, b] = toPx(p[0], p[1]); return (i ? 'L' : 'M') + a + ' ' + b; }).join('');
+        const [ex, ey] = toPx(...it.pts[it.pts.length - 1]), [fx, fy] = toPx(...it.pts[it.pts.length - 2]);
+        const ang = Math.atan2(ey - fy, ex - fx), L = 11;
+        out += `<g data-id="${it.id}" style="cursor:move"><path d="${d}" fill="none" stroke="${CAMS['cam-iphone15'].hex}" stroke-width="2.2" stroke-dasharray="${it.dashed ? '7 6' : ''}" stroke-linecap="round"/><path d="M${ex} ${ey}L${ex - L * Math.cos(ang - 0.45)} ${ey - L * Math.sin(ang - 0.45)}L${ex - L * Math.cos(ang + 0.45)} ${ey - L * Math.sin(ang + 0.45)}Z" fill="${CAMS['cam-iphone15'].hex}"/></g>`;
+        continue;
+      }
+      let body = '', w = 0.9, h = 0.9;
+      if (it.kind === 'cam') body = camIcon(it, s);
+      else if (it.kind === 'light') body = lightIcon(it, s * 1.25);
+      else if (it.kind === 'person') body = personIcon(it, s);
+      else { body = furnIcon(it, s); w = it.w; h = it.h; }
+      out += `<g data-id="${it.id}" transform="translate(${px} ${py}) rotate(${it.rot})" style="cursor:move">${body}`;
+      if (on) out += `<rect x="${(-w / 2) * s - 6}" y="${(-h / 2) * s - 6}" width="${w * s + 12}" height="${h * s + 12}" rx="8" fill="none" stroke="var(--color-accent)" stroke-width="2" stroke-dasharray="5 4"/>`;
+      out += `</g>`;
+      if (it.kind === 'cam' || it.kind === 'person') {
+        const ty = py + (it.kind === 'person' ? 0.48 : 0.62) * s;
+        const lbl = it.kind === 'cam' ? it.label : it.label;
+        if (it.kind === 'cam') out += `<g transform="translate(${px + 0.42 * s} ${py - 0.42 * s})"><circle r="10" fill="${CAMS[it.cam].hex}"/><text text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="700" fill="#fff">${lbl}</text></g>`;
+        else if (s > 30) out += `<text x="${px}" y="${ty}" text-anchor="middle" font-size="12" font-weight="700" fill="var(--color-text)">${lbl}</text>`;
+      } else if (it.kind === 'furn' && it.label && s > 30) {
+        out += `<text x="${px}" y="${py + (it.h / 2) * s + 16}" text-anchor="middle" font-size="12" fill="var(--color-text-muted)" font-weight="700">${it.label}</text>`;
+      }
+      // handles
+      if (on && it.kind !== 'arrow') {
+        const rr = ((it.kind === 'cam' || it.kind === 'light' || it.kind === 'person') ? 0.6 : h / 2 + 0.35) * s + 10;
+        const ra = ((it.rot - 90) * Math.PI) / 180;
+        const hx = px - rr * Math.cos(ra), hy = py - rr * Math.sin(ra);
+        const hs = MOBILE ? 16 : 9;
+        out += `<line x1="${px}" y1="${py}" x2="${hx}" y2="${hy}" stroke="var(--color-accent)" stroke-width="1.5" stroke-dasharray="3 3"/><circle data-h="rot" cx="${hx}" cy="${hy}" r="${hs}" fill="var(--color-bg)" stroke="var(--color-accent)" stroke-width="2.5" style="cursor:grab"/><path d="M${hx - 4} ${hy + 1}a4 4 0 1 1 4 4" fill="none" stroke="var(--color-accent)" stroke-width="1.6" pointer-events="none"/>`;
+        if (it.kind === 'cam' || it.kind === 'light') {
+          const r = it.range * s, ex = px + r * Math.cos(ra), ey = py + r * Math.sin(ra);
+          out += `<circle data-h="range" cx="${ex}" cy="${ey}" r="${hs - 1}" fill="var(--color-accent)" stroke="var(--color-bg)" stroke-width="2.5" style="cursor:ew-resize"/>`;
+        }
+        if (it.kind === 'furn' || it.kind === 'zone') {
+          const cx = px + ((it.w / 2) * s + 6) * Math.cos((it.rot * Math.PI) / 180) - ((it.h / 2) * s + 6) * Math.sin((it.rot * Math.PI) / 180);
+          const cy = py + ((it.w / 2) * s + 6) * Math.sin((it.rot * Math.PI) / 180) + ((it.h / 2) * s + 6) * Math.cos((it.rot * Math.PI) / 180);
+          out += `<rect data-h="size" x="${cx - hs + 2}" y="${cy - hs + 2}" width="${2 * hs - 4}" height="${2 * hs - 4}" rx="3" fill="var(--color-bg)" stroke="var(--color-accent)" stroke-width="2.5" style="cursor:nwse-resize"/>`;
+        }
+      }
+    }
+    svg.innerHTML = out;
+    // scale bar: 1 m (or 2 m when zoomed out)
+    const m = view.s < 30 ? 2 : 1;
+    document.getElementById('scale').innerHTML = `<i style="width:${m * view.s}px"></i>${m} م`;
+    const z = document.getElementById('zlbl'); if (z) z.textContent = Math.round((view.s / 58) * 100) + '%';
+    renderLegend(); renderProps();
+  }
+
+  function renderLegend() {
+    const el = document.getElementById('legend'); if (!el) return;
+    const cams = items.filter((i) => i.kind === 'cam'), lights = items.filter((i) => i.kind === 'light');
+    el.innerHTML = cams.map((c) => `<div><i style="background:${CAMS[c.cam].hex}"></i><b>${c.label}</b> ${CAMS[c.cam].name} · ${Math.round(c.focal || CAMS[c.cam].fixed)}mm</div>`).join('') +
+      lights.map((l) => `<div><i style="background:${l.rgb && LIGHTS[l.lt].rgb ? l.rgb : cctColor(l.cct || 5600)};border:1px solid #c9b98f"></i>${l.label} · ${LIGHTS[l.lt].name}</div>`).join('');
+  }
+
+  // ---------- properties ----------
+  function propsHTML(it) {
+    if (!it) return `<h3>المخطط</h3><div class="sub">المشهد 3 · الاستوديو</div><div class="readout"><b>${items.filter((i) => i.kind === 'cam').length} كاميرات · ${items.filter((i) => i.kind === 'light').length} إضاءات</b><span>${items.filter((i) => i.kind === 'person').length} أشخاص على المخطط</span></div><div class="empty">اضغط أي عنصر لتعدّله.<br>اسحب المساحة الفاضية لتحريك المخطط، والعجلة للتقريب.<br>Ctrl+D تكرار · Delete حذف · R تدوير 15°</div>`;
+    if (it.kind === 'cam') {
+      const c = CAMS[it.cam], f = fovOf(it), d = 3, fw = 2 * d * Math.tan((f * Math.PI) / 360);
+      let lens = '';
+      if (c.lenses) lens = `<label class="field"><span>العدسة</span><select data-k="lens">${Object.entries(c.lenses).map(([k, v]) => `<option value="${k}" ${it.lens === k ? 'selected' : ''}>${v[0]}</option>`).join('')}</select></label><label class="field"><span>البعد البؤري: ${it.focal}mm</span><input type="range" data-k="focal" min="${c.lenses[it.lens][1]}" max="${c.lenses[it.lens][2]}" value="${it.focal}"></label>`;
+      else if (c.builtin) lens = `<div class="field"><span>العدسة</span><div class="chips">${Object.entries(c.builtin).map(([k, v]) => `<button class="chip ${it.lens === k ? 'on' : ''}" data-lens="${k}" data-f="${v}">${k} · ${v}mm</button>`).join('')}</div></div>`;
+      else if (c.zoom) lens = `<label class="field"><span>الزوم: ${it.focal}mm (مكافئ)</span><input type="range" data-k="focal" min="${c.zoom[0]}" max="300" value="${it.focal}"></label>`;
+      else lens = `<div class="field"><span>العدسة</span><span style="font-size:14px;color:var(--color-text)">ثابتة 24mm</span></div>`;
+      return `<h3><span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:${c.hex};color:#fff;text-align:center;font-size:13px;line-height:22px;margin-inline-end:6px">${it.label}</span>${c.name}</h3><div class="sub">كاميرا من معداتك</div>
+        <div class="readout"><b>${Math.round(f)}°</b><span>زاوية الرؤية · عرض الكادر على ${d} م: ${fw.toFixed(1)} م</span></div>
+        <label class="field"><span>الكاميرا</span><select data-k="cam">${Object.entries(CAMS).map(([k, v]) => `<option value="${k}" ${it.cam === k ? 'selected' : ''}>${v.name}</option>`).join('')}</select></label>
+        ${lens}
+        <div class="field"><span>اتجاه الكادر</span><div class="chips"><button class="chip ${!it.vertical ? 'on' : ''}" data-vert="0">أفقي</button><button class="chip ${it.vertical ? 'on' : ''}" data-vert="1">عمودي</button></div></div>
+        <label class="field"><span>طول الخطوط: ${it.range.toFixed(1)} م</span><input type="range" data-k="range" min="1" max="15" step=".1" value="${it.range}"></label>
+        <div class="row2"><label class="field"><span>الحرف</span><input type="text" data-k="label" value="${it.label}"></label></div>
+        <div class="row2"><button class="btn outline sm" data-act="dup">تكرار</button><button class="btn outline sm" data-act="del" style="color:var(--color-danger)">حذف</button></div>`;
+    }
+    if (it.kind === 'light') {
+      const L = LIGHTS[it.lt];
+      return `<h3>${it.label}</h3><div class="sub">${L.name} · من معداتك</div>
+        <label class="field"><span>الإضاءة</span><select data-k="lt">${Object.entries(LIGHTS).map(([k, v]) => `<option value="${k}" ${it.lt === k ? 'selected' : ''}>${v.name}</option>`).join('')}</select></label>
+        ${L.mods ? `<div class="field"><span>المُعدِّل</span><div class="chips">${Object.entries(L.mods).map(([k, v]) => `<button class="chip ${(it.mod || 'none') === k ? 'on' : ''}" data-mod="${k}">${v[0]}</button>`).join('')}</div></div>` : ''}
+        ${L.cct ? `<label class="field"><span>حرارة اللون: ${it.cct}K</span><input type="range" data-k="cct" min="2700" max="6500" step="100" value="${it.cct || 5600}"></label>` : ''}
+        ${L.rgb ? `<div class="field"><span>لون RGB</span><div class="chips">${['#e21e88', '#1326fc', '#ff4e22', '#2fbf71', ''].map((c) => `<button class="chip ${it.rgb === c || (!c && !it.rgb) ? 'on' : ''}" data-rgb="${c}">${c ? `<i style="width:14px;height:14px;border-radius:50%;background:${c};display:inline-block"></i>` : 'أبيض'}</button>`).join('')}</div></div>` : ''}
+        <label class="field"><span>المدى: ${it.range.toFixed(1)} م</span><input type="range" data-k="range" min=".5" max="8" step=".1" value="${it.range}"></label>
+        <label class="field"><span>الاسم</span><input type="text" data-k="label" value="${it.label}"></label>
+        <div class="row2"><button class="btn outline sm" data-act="dup">تكرار</button><button class="btn outline sm" data-act="del" style="color:var(--color-danger)">حذف</button></div>`;
+    }
+    if (it.kind === 'person') return `<h3>${it.label}</h3><div class="sub">شخص · من شخصيات المشهد أو اسم حر</div><label class="field"><span>الاسم</span><input type="text" data-k="label" value="${it.label}"></label><div class="field"><span>اللون</span><div class="chips">${['#c9a14f', '#94603f', '#2e3d5c', '#6c6a3c', '#6e2c34', '#7c8288'].map((c) => `<button class="chip ${it.color === c ? 'on' : ''}" data-color="${c}"><i style="width:14px;height:14px;border-radius:50%;background:${c};display:inline-block"></i></button>`).join('')}</div></div><div class="row2"><button class="btn outline sm" data-act="dup">تكرار</button><button class="btn outline sm" data-act="del" style="color:var(--color-danger)">حذف</button></div>`;
+    if (it.kind === 'furn' || it.kind === 'zone') return `<h3>${it.label || 'عنصر'}</h3><div class="sub">${it.kind === 'zone' ? 'منطقة' : 'ديكور'} · ${it.w.toFixed(1)} × ${it.h.toFixed(1)} م</div><label class="field"><span>الاسم</span><input type="text" data-k="label" value="${it.label}"></label><div class="row2"><label class="field"><span>العرض (م)</span><input type="text" data-k="w" value="${it.w.toFixed(2)}"></label><label class="field"><span>العمق (م)</span><input type="text" data-k="h" value="${it.h.toFixed(2)}"></label></div><div class="row2"><button class="btn outline sm" data-act="dup">تكرار</button><button class="btn outline sm" data-act="del" style="color:var(--color-danger)">حذف</button></div>`;
+    return `<h3>${it.label}</h3><div class="sub">سهم حركة</div><div class="row2"><button class="btn outline sm" data-act="del" style="color:var(--color-danger)">حذف</button></div>`;
+  }
+  function renderProps() {
+    const it = items.find((i) => i.id === sel);
+    const host = MOBILE ? document.getElementById('sheetInner') : document.getElementById('props');
+    if (MOBILE) {
+      const sh = document.getElementById('sheet');
+      if (sheetMode === 'palette') return;
+      sh.classList.toggle('on', !!it);
+      document.getElementById('mbar').style.bottom = it ? 'calc(62% + 10px)' : '16px';
+      if (!it) return;
+    }
+    if (host.dataset.sel === (sel || '') && host.dataset.ver === String(ver)) return;
+    host.dataset.sel = sel || ''; host.dataset.ver = String(ver);
+    host.innerHTML = MOBILE ? `<div class="props">${propsHTML(it)}</div>` : propsHTML(it);
+  }
+  let ver = 0, sheetMode = null;
+  const bump = () => { ver++; };
+
+  // tween the cone when the lens changes (signature motion)
+  function morph(it, before) {
+    const after = fovOf(it), t0 = performance.now();
+    const step = (t) => { const k = Math.min(1, (t - t0) / 260), e = 1 - Math.pow(1 - k, 3); it._fov = before + (after - before) * e; render(); if (k < 1) requestAnimationFrame(step); else { delete it._fov; render(); } };
+    requestAnimationFrame(step);
+  }
+
+  function onProps(e) {
+    const it = items.find((i) => i.id === sel); if (!it) return;
+    const t = e.target.closest('[data-k],[data-lens],[data-vert],[data-mod],[data-rgb],[data-color],[data-act]'); if (!t) return;
+    const before = it.kind === 'cam' ? fovOf(it) : 0;
+    if (t.dataset.act === 'del') { save(); items = items.filter((i) => i.id !== it.id); sel = null; bump(); render(); return; }
+    if (t.dataset.act === 'dup') { save(); const c = JSON.parse(JSON.stringify(it)); c.id = nid(); c.x += 0.5; c.y += 0.5; if (c.kind === 'cam') c.label = String.fromCharCode(65 + items.filter((i) => i.kind === 'cam').length); items.push(c); sel = c.id; bump(); render(); return; }
+    if (e.type === 'click' && !t.dataset.lens && !t.dataset.vert && !t.dataset.mod && t.dataset.rgb === undefined && !t.dataset.color) return;
+    save();
+    if (t.dataset.lens) { it.lens = t.dataset.lens; it.focal = +t.dataset.f; }
+    else if (t.dataset.vert) it.vertical = t.dataset.vert === '1';
+    else if (t.dataset.mod) it.mod = t.dataset.mod;
+    else if (t.dataset.rgb !== undefined) it.rgb = t.dataset.rgb;
+    else if (t.dataset.color) it.color = t.dataset.color;
+    else {
+      const k = t.dataset.k, v = t.value;
+      if (k === 'cam') { it.cam = v; const c = CAMS[v]; it.lens = c.lenses ? Object.keys(c.lenses)[0] : c.builtin ? '1x' : null; it.focal = c.lenses ? 24 : c.builtin ? 24 : c.fixed || 50; }
+      else if (k === 'lens') { it.lens = v; const r = CAMS[it.cam].lenses[v]; it.focal = Math.min(r[2], Math.max(r[1], it.focal)); }
+      else if (k === 'lt') { it.lt = v; it.mod = 'none'; }
+      else if (['focal', 'range', 'cct', 'w', 'h'].includes(k)) it[k] = +v || it[k];
+      else it[k] = v;
+    }
+    if (it.kind === 'cam' && ['lens', 'cam', 'vert'].some((k) => t.dataset.k === k || t.dataset[k] !== undefined) && Math.abs(fovOf(it) - before) > 0.5) morph(it, before);
+    if (!(e.type === 'input' && t.type === 'range')) bump();
+    render();
+    if (e.type === 'input' && t.type === 'range') { const lbl = t.closest('.field').querySelector('span'); if (lbl) lbl.textContent = lbl.textContent.replace(/[\d.]+(K|mm| م)/, (m0, u) => (t.dataset.k === 'range' ? (+t.value).toFixed(1) : t.value) + u); const ro = document.querySelector('.readout b'); if (ro && it.kind === 'cam') { const f = fovOf(it); ro.textContent = Math.round(f) + '°'; ro.nextElementSibling.textContent = `زاوية الرؤية · عرض الكادر على 3 م: ${(6 * Math.tan((f * Math.PI) / 360)).toFixed(1)} م`; } }
+  }
+  ['click', 'input', 'change'].forEach((ev) => { document.getElementById('props').addEventListener(ev, onProps); document.getElementById('sheetInner').addEventListener(ev, onProps); });
+
+  // ---------- palette ----------
+  const PAL = {
+    'كاميرات': Object.entries(CAMS).map(([k, c]) => ({ name: c.name.replace('Sony ', '').replace('DJI ', ''), sub: k === 'cam-mini4' ? 'درون' : k === 'cam-iphone15' ? 'جوال' : 'كاميرا', make: () => ({ kind: 'cam', cam: k, lens: c.lenses ? 'lens-sigma1850' : c.builtin ? '1x' : null, focal: c.lenses ? 24 : c.builtin ? 24 : c.fixed || 50, rot: 0, range: 4, label: String.fromCharCode(65 + items.filter((i) => i.kind === 'cam').length) }) })),
+    'إضاءة': Object.entries(LIGHTS).map(([k, l]) => ({ name: l.name.replace('Neewer ', '').replace('Light Stick ', ''), sub: l.bounce ? 'ارتداد' : 'ضوء', make: () => ({ kind: 'light', lt: k, mod: 'none', cct: 5600, rot: 0, range: 2.5, label: l.name.replace('Neewer ', '') }) })),
+    'أشخاص': [['شخص', '#7c8288'], ['المقدّم', '#2e3d5c'], ['متسابق', '#c9a14f'], ['ضيف', '#94603f']].map(([n, c]) => ({ name: n, sub: 'من الشخصيات', make: () => ({ kind: 'person', w: 0.62, h: 0.62, rot: 0, label: n, color: c }) })),
+    'ديكور': [['table', 'طاولة', 1.6, 0.8], ['roundtable', 'طاولة دائرية', 1, 1], ['chair', 'كرسي', 0.55, 0.55], ['sofa', 'كنبة', 2, 0.9], ['desk', 'مكتب', 1.4, 0.7], ['screen', 'شاشة', 1.6, 0.14], ['stage', 'منصة', 4, 2], ['door', 'باب', 0.9, 0.9], ['window', 'نافذة', 1.2, 0.15], ['wall', 'جدار', 4, 0.15], ['plant', 'نبتة', 0.6, 0.6], ['car', 'سيارة', 4.5, 1.8]].map(([t, n, w, h]) => ({ name: n, sub: `${w}×${h} م`, make: () => ({ kind: 'furn', type: t, w, h, rot: 0, label: n }) })),
+    'رسم': [{ name: 'منطقة', sub: 'مثل الجمهور', make: () => ({ kind: 'zone', w: 4, h: 2, rot: 0, label: 'منطقة' }) }, { name: 'سهم حركة', sub: 'كاميرا أو ممثل', make: () => ({ kind: 'arrow', pts: [[0, 0], [1.5, -0.8], [2.5, -0.8]], dashed: true, rot: 0, label: 'حركة' }) }, { name: 'نص', sub: 'ملاحظة على المخطط', make: () => ({ kind: 'zone', w: 2.4, h: 0.8, rot: 0, label: 'نص' }) }],
+  };
+  let ptab = 'كاميرات';
+  function thumb(make) {
+    const it = { id: 'thumb', x: 0, y: 0, ...make() };
+    const s = it.kind === 'furn' ? 36 / Math.max(it.w, it.h * 1.4, 1) : 52;
+    let b = it.kind === 'cam' ? camIcon(it, s) : it.kind === 'light' ? lightIcon(it, s) : it.kind === 'person' ? personIcon(it, s) : it.kind === 'furn' ? furnIcon(it, s) : it.kind === 'zone' ? `<rect x="-18" y="-11" width="36" height="22" rx="5" fill="var(--color-accent)" fill-opacity=".12" stroke="var(--color-accent)" stroke-dasharray="4 3"/>` : `<path d="M-16 8Q0 -14 16 -6" fill="none" stroke="#3b6fd8" stroke-width="2.4" stroke-dasharray="5 4"/>`;
+    if (it.kind === 'cam') b = `<path d="M0 0L-14 -24A28 28 0 0 1 14 -24Z" fill="${CAMS[it.cam].hex}" fill-opacity=".18"/>` + b;
+    return `<svg viewBox="-24 -24 48 48">${b}</svg>`;
+  }
+  function renderPalette(host) {
+    const tabs = Object.keys(PAL).map((k) => `<button class="${k === ptab ? 'on' : ''}" data-tab="${k}">${k}</button>`).join('');
+    const grid = PAL[ptab].map((p, i) => `<div class="pitem" data-add="${i}">${thumb(p.make)}<span>${p.name}</span><small>${p.sub}</small></div>`).join('');
+    if (host) host.innerHTML = `<div class="ptabs">${tabs}</div><div class="pgrid">${grid}</div>`;
+    else { document.getElementById('ptabs').innerHTML = tabs; document.getElementById('pgrid').innerHTML = grid; }
+  }
+  function addFromPalette(i, mx, my) {
+    save();
+    const W = wrap.clientWidth, H = wrap.clientHeight;
+    const [cx, cy] = mx == null ? toM(W / 2, H / 2) : toM(mx, my);
+    const it = { id: nid(), x: +cx.toFixed(2), y: +cy.toFixed(2), ...PAL[ptab][i].make() };
+    if (it.kind === 'arrow') it.pts = it.pts.map(([a, b]) => [a + cx, b + cy]);
+    items.push(it); sel = it.id; bump(); render();
+    const g = svg.querySelector(`[data-id="${it.id}"]`); if (g) { g.animate([{ opacity: 0, transform: g.getAttribute('transform') + ' scale(.7)' }, { opacity: 1, transform: g.getAttribute('transform') }], { duration: 220, easing: 'cubic-bezier(.2,0,0,1)' }); }
+  }
+  document.addEventListener('click', (e) => {
+    const tb = e.target.closest('[data-tab]'); if (tb) { ptab = tb.dataset.tab; renderPalette(MOBILE ? document.getElementById('sheetInner') : null); return; }
+    const ad = e.target.closest('[data-add]'); if (ad && !dragAdd) { addFromPalette(+ad.dataset.add); if (MOBILE) closeSheet(); }
+  });
+  // drag from palette (laptop)
+  let dragAdd = null;
+  document.getElementById('pgrid').addEventListener('pointerdown', (e) => { const ad = e.target.closest('[data-add]'); if (!ad) return; dragAdd = { i: +ad.dataset.add, moved: false }; });
+  window.addEventListener('pointermove', (e) => { if (dragAdd) dragAdd.moved = true; });
+  window.addEventListener('pointerup', (e) => {
+    if (!dragAdd) return; const d = dragAdd; setTimeout(() => (dragAdd = null));
+    const r = wrap.getBoundingClientRect();
+    if (d.moved && e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom) addFromPalette(d.i, e.clientX - r.left, e.clientY - r.top);
+  });
+
+  // ---------- canvas interaction (mouse + touch, pinch on phone) ----------
+  const ptrs = new Map(); let drag = null;
+  const snapV = (v) => (snap ? Math.round(v * 4) / 4 : +v.toFixed(2));
+  svg.addEventListener('pointerdown', (e) => {
+    svg.setPointerCapture(e.pointerId);
+    const r = svg.getBoundingClientRect(); const mx = e.clientX - r.left, my = e.clientY - r.top;
+    ptrs.set(e.pointerId, [mx, my]);
+    if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; drag = { mode: 'pinch', d0: Math.hypot(a[0] - b[0], a[1] - b[1]), s0: view.s, c: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], o: { ...view } }; return; }
+    const h = e.target.closest('[data-h]'), g = e.target.closest('[data-id]');
+    const it = items.find((i) => i.id === sel);
+    if (h && it) { save(); drag = { mode: h.dataset.h, it }; return; }
+    if (g) { const t = items.find((i) => i.id === g.dataset.id); if (sel !== t.id) { sel = t.id; bump(); } save(); const [wx, wy] = toM(mx, my); drag = { mode: 'move', it: t, dx: wx - t.x, dy: wy - t.y, moved: false }; render(); return; }
+    if (sel) { sel = null; bump(); render(); }
+    drag = { mode: 'pan', mx, my, o: { ...view } };
+  });
+  svg.addEventListener('pointermove', (e) => {
+    const r = svg.getBoundingClientRect(); const mx = e.clientX - r.left, my = e.clientY - r.top;
+    if (ptrs.has(e.pointerId)) ptrs.set(e.pointerId, [mx, my]);
+    if (!drag) return;
+    if (drag.mode === 'pinch' && ptrs.size === 2) { const [a, b] = [...ptrs.values()]; const s = Math.max(12, Math.min(160, drag.s0 * (Math.hypot(a[0] - b[0], a[1] - b[1]) / drag.d0))); const [wx, wy] = [drag.c[0] / drag.o.s + drag.o.ox, drag.c[1] / drag.o.s + drag.o.oy]; view.s = s; view.ox = wx - drag.c[0] / s; view.oy = wy - drag.c[1] / s; render(); return; }
+    const [wx, wy] = toM(mx, my), it = drag.it;
+    if (drag.mode === 'pan') { view.ox = drag.o.ox - (mx - drag.mx) / view.s; view.oy = drag.o.oy - (my - drag.my) / view.s; }
+    else if (drag.mode === 'move') { const nx = snapV(wx - drag.dx), ny = snapV(wy - drag.dy); if (it.kind === 'arrow') { const ddx = nx - it.x, ddy = ny - it.y; it.pts = it.pts.map(([a, b]) => [a + ddx, b + ddy]); } it.x = nx; it.y = ny; drag.moved = true; }
+    else if (drag.mode === 'rot') { let a = (Math.atan2(wx - it.x, -(wy - it.y)) * 180) / Math.PI + 180; if (!e.altKey) a = Math.round(a / 15) * 15; it.rot = a; }
+    else if (drag.mode === 'range') it.range = Math.max(0.5, Math.min(15, +Math.hypot(wx - it.x, wy - it.y).toFixed(1)));
+    else if (drag.mode === 'size') { const c = Math.cos((-it.rot * Math.PI) / 180), s2 = Math.sin((-it.rot * Math.PI) / 180), lx = (wx - it.x) * c - (wy - it.y) * s2, ly = (wx - it.x) * s2 + (wy - it.y) * c; it.w = Math.max(0.3, snapV(Math.abs(lx) * 2)); it.h = Math.max(0.1, snapV(Math.abs(ly) * 2)); }
+    render();
+  });
+  const end = (e) => { ptrs.delete(e.pointerId); if (drag && drag.mode !== 'pan' && drag.mode !== 'pinch') bump(); if (drag && drag.mode === 'move' && !drag.moved) hist.pop(); drag = ptrs.size ? drag : null; if (ptrs.size < 2 && drag && drag.mode === 'pinch') drag = null; render(); };
+  svg.addEventListener('pointerup', end); svg.addEventListener('pointercancel', end);
+  svg.addEventListener('wheel', (e) => { e.preventDefault(); const r = svg.getBoundingClientRect(); const mx = e.clientX - r.left, my = e.clientY - r.top; const [wx, wy] = toM(mx, my); view.s = Math.max(12, Math.min(160, view.s * (e.deltaY < 0 ? 1.1 : 0.9))); view.ox = wx - mx / view.s; view.oy = wy - my / view.s; render(); }, { passive: false });
+  window.addEventListener('keydown', (e) => {
+    const it = items.find((i) => i.id === sel);
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); (e.shiftKey ? redo : undo)(); }
+    else if (it && (e.key === 'Delete' || e.key === 'Backspace') && !/INPUT|SELECT/.test(document.activeElement.tagName)) { save(); items = items.filter((i) => i !== it); sel = null; bump(); render(); }
+    else if (it && e.key.toLowerCase() === 'r' && !/INPUT/.test(document.activeElement.tagName)) { save(); it.rot = (it.rot + (e.shiftKey ? -15 : 15)) % 360; render(); }
+    else if (it && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') { e.preventDefault(); document.querySelector('[data-act="dup"]')?.click(); }
+  });
+  function undo() { if (!hist.length) return; fut.push(JSON.stringify(items)); items = JSON.parse(hist.pop()); if (!items.find((i) => i.id === sel)) sel = null; bump(); render(); }
+  function redo() { if (!fut.length) return; hist.push(JSON.stringify(items)); items = JSON.parse(fut.pop()); bump(); render(); }
+  function fit() {
+    const W = wrap.clientWidth, H = wrap.clientHeight; let a = 1e9, b = 1e9, c = -1e9, d = -1e9;
+    for (const it of items) { const r = (it.w || 1) / 2 + 0.5; a = Math.min(a, it.x - r); b = Math.min(b, it.y - r); c = Math.max(c, it.x + r); d = Math.max(d, it.y + r); }
+    const s0 = view.s, o0 = { ...view }, s1 = Math.min(W / (c - a), H / (d - b)) * 0.92, ox1 = (a + c) / 2 - W / 2 / s1, oy1 = (b + d) / 2 - H / 2 / s1, t0 = performance.now();
+    const step = (t) => { const k = Math.min(1, (t - t0) / 300), e = 1 - Math.pow(1 - k, 3); view.s = s0 + (s1 - s0) * e; view.ox = o0.ox + (ox1 - o0.ox) * e; view.oy = o0.oy + (oy1 - o0.oy) * e; render(); if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  }
+  const toast = (t) => { const el = document.getElementById('toast'); el.textContent = t; el.classList.add('on'); setTimeout(() => el.classList.remove('on'), 1800); };
+  document.getElementById('undo').onclick = undo; document.getElementById('redo').onclick = redo;
+  document.getElementById('mUndo').onclick = undo; document.getElementById('mRedo').onclick = redo;
+  document.getElementById('fit').onclick = fit; document.getElementById('mFit').onclick = fit;
+  document.getElementById('zin').onclick = () => { view.s = Math.min(160, view.s * 1.2); render(); };
+  document.getElementById('zout').onclick = () => { view.s = Math.max(12, view.s / 1.2); render(); };
+  document.getElementById('export').onclick = document.getElementById('mExport').onclick = () => toast('انحفظت صورة المخطط · PNG');
+  document.getElementById('copyFrom').onclick = () => toast('اختر مشهداً: المشهد 1 · المشهد 2 (نموذج)');
+  document.getElementById('snapSeg').onclick = (e) => { const b = e.target.closest('[data-snap]'); if (!b) return; snap = b.dataset.snap === '1'; [...e.currentTarget.children].forEach((c) => c.classList.toggle('on', c === b)); };
+  // phone: «+ عنصر» opens the palette sheet
+  function closeSheet() { sheetMode = null; document.getElementById('sheet').classList.remove('on'); document.getElementById('mbar').style.bottom = '16px'; document.getElementById('sheetInner').dataset.sel = '-'; render(); }
+  document.getElementById('mAdd').onclick = () => { sel = null; sheetMode = 'palette'; renderPalette(document.getElementById('sheetInner')); document.getElementById('sheet').classList.add('on'); document.getElementById('mbar').style.bottom = 'calc(62% + 10px)'; render(); };
+
+  // states for screenshots: #sel=A (select camera A), #sheet=palette, #theme=dark
+  renderPalette();
+  render();
+  const s0 = q.get('sel'); if (s0) { const it = by(s0); if (it) { sel = it.id; bump(); render(); } }
+  if (q.get('sheet') === 'palette') document.getElementById('mAdd').click();
+  if (MOBILE && !s0) fit();
+  window.addEventListener('resize', render);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+@font-face{font-family:'thmanyah Sans';src:url('fonts/thmanyah-sans-400.woff2') format('woff2');font-weight:400}
+@font-face{font-family:'thmanyah Sans';src:url('fonts/thmanyah-sans-700.woff2') format('woff2');font-weight:700}
+@font-face{font-family:'thmanyah Serif Display';src:url('fonts/thmanyah-serif-display-700.woff2') format('woff2');font-weight:700}
+@font-face{font-family:'thmanyah Serif Display';src:url('fonts/thmanyah-serif-display-900.woff2') format('woff2');font-weight:900}
+@font-face{font-family:'thmanyah Serif Text';src:url('fonts/thmanyah-serif-text-400.woff2') format('woff2');font-weight:400}
+@font-face{font-family:'thmanyah Serif Text';src:url('fonts/thmanyah-serif-text-700.woff2') format('woff2');font-weight:700}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--color-bg);color:var(--color-text);font-family:var(--font-sans);direction:rtl;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;color:inherit}
+.ic{display:inline-flex;flex-shrink:0;width:var(--s,18px);height:var(--s,18px)}
+.ic svg{width:100%;height:100%}
+
+/* shared atoms */
+.btn{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 16px;border-radius:var(--radius-sm);border:1px solid transparent;font-size:15px;font-weight:700;background:transparent;cursor:pointer;white-space:nowrap}
+.btn.primary{background:var(--color-accent);color:#141210}
+.btn.outline{border-color:var(--color-border);background:var(--color-bg)}
+.btn.ghost{color:var(--color-text-muted)}
+.btn.sm{height:32px;padding:0 12px;font-size:13px}
+.btn.lg{height:52px;padding:0 22px;font-size:16px;border-radius:var(--radius-md)}
+.badge{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.badge.accent{background:var(--color-accent);color:#141210}
+.badge.soft{background:var(--color-accent-soft);color:var(--tan-600)}
+[data-sb-theme="dark"] .badge.soft{color:var(--tan-400)}
+.badge.ink{background:var(--color-inverse-bg);color:var(--color-inverse-text)}
+.badge.outline{border:1px solid var(--color-border);color:var(--color-text)}
+.badge.glass{background:rgba(20,18,16,.62);color:#fdfcfa;backdrop-filter:blur(4px)}
+.muted{color:var(--color-text-muted)}
+.serif{font-family:var(--font-serif-text)}
+.display{font-family:var(--font-display)}
+.chip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid var(--color-border);border-radius:999px;font-size:13px;font-weight:700;background:transparent;white-space:nowrap}
+.chip.on{background:var(--color-inverse-bg);color:var(--color-inverse-text);border-color:transparent}
+.chip.soft{background:var(--color-accent-soft);border-color:var(--color-accent)}
+.bar{height:6px;border-radius:3px;background:var(--color-surface-strong);overflow:hidden;display:flex}
+.bar i{display:block;height:100%}
+.bar .shot{background:var(--color-text)}
+.bar .appr{background:var(--color-accent)}
+.frame{background:#1c1916;position:relative;overflow:hidden}
+.menu{position:absolute;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:var(--shadow-lift);padding:6px;min-width:230px;z-index:60}
+.menu .it{display:flex;align-items:center;gap:10px;height:38px;padding:0 10px;border-radius:4px;font-size:14px;font-weight:700}
+.menu .it .k{margin-inline-start:auto;font-size:12px;color:var(--color-text-muted);font-weight:400;direction:ltr}
+.menu .it.hl{background:var(--color-surface-strong)}
+.menu .it.danger{color:var(--color-danger)}
+.menu .sep{height:1px;background:var(--color-border-subtle);margin:5px 4px}
+.menu .sw{display:flex;gap:6px;padding:4px 10px 8px 10px}
+.menu .sw span{width:22px;height:22px;border-radius:50%;border:1px solid var(--color-border-subtle)}
+.menu .sw span.on{box-shadow:0 0 0 2px var(--color-bg),0 0 0 4px var(--color-accent)}
+.dots{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;border:none;background:transparent;cursor:pointer}
+.note-tag{position:absolute;font-family:var(--font-sans);font-size:12px;font-weight:700;background:#a33a2a;color:#fff;border-radius:999px;padding:4px 10px;box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:nowrap;z-index:90}
+.note-tag::before{content:attr(data-n);display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#fff;color:#a33a2a;margin-inline-end:6px;font-size:11px}

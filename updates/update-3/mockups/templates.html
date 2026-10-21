@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-sb-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>القوالب المحفوظة — نموذج التحديث 3</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+body{background:var(--color-surface)}
+.app{position:relative;width:1440px;height:900px;margin:0 auto;background:var(--color-bg);overflow:hidden}
+.top{height:60px;display:flex;align-items:center;gap:14px;padding:0 24px;border-bottom:1px solid var(--color-border-subtle)}
+.top img{height:30px}
+.wrapc{padding:28px 40px}
+h1{font-family:var(--font-display);font-size:44px;margin:0 0 6px}
+h2{font-family:var(--font-display);font-size:28px;margin:0}
+.sec{margin-top:26px}
+.sechead{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+.sechead .muted{font-size:14px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.pc{border:1px solid var(--color-border-subtle);border-radius:12px;overflow:hidden;background:var(--color-bg);box-shadow:var(--shadow-card);position:relative}
+.pc .im{height:120px;position:relative}
+.pc .tx{padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.pc .tx b{font-size:16px}
+.pc .tx span{font-size:13px;color:var(--color-text-muted)}
+.pc .use{position:absolute;bottom:12px;inset-inline-start:12px}
+.tpl{border-style:dashed;border-color:var(--color-accent)}
+.tag{position:absolute;top:10px;inset-inline-end:10px}
+.scenechips{display:flex;gap:10px;flex-wrap:wrap}
+.sc{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--color-border-subtle);border-radius:12px;background:var(--color-surface);font-weight:700;font-size:14px}
+.sc i{width:42px;height:30px;border-radius:6px;display:block}
+.dim{position:absolute;inset:0;background:rgba(20,18,16,.38);display:flex;align-items:center;justify-content:center;z-index:40}
+.dlg{width:560px;background:var(--color-bg);border-radius:16px;box-shadow:var(--shadow-lift);padding:24px;animation:pin .22s cubic-bezier(.2,0,0,1)}
+@keyframes pin{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+.dlg h3{margin:0 0 6px;font-size:22px}
+.dlg .sub{color:var(--color-text-muted);font-size:14px;margin-bottom:16px}
+.inp{height:46px;border:1px solid var(--color-border);border-radius:8px;display:flex;align-items:center;padding:0 12px;font-size:15px;margin-bottom:14px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.opt{display:flex;flex-direction:column;gap:3px;padding:12px 14px;border:1px solid var(--color-border);border-radius:10px;text-align:right}
+.opt.on{border-color:var(--color-accent);background:var(--color-accent-soft)}
+.opt b{font-size:15px}
+.opt span{font-size:12px;color:var(--color-text-muted)}
+.list{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;font-size:14px}
+.list div{display:flex;align-items:center;gap:8px}
+.ok{width:20px;height:20px;border-radius:50%;background:var(--color-accent);color:#141210;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.no{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--color-border);display:inline-flex}
+.foot{display:flex;gap:8px;justify-content:flex-start}
+.menu{top:64px;inset-inline-end:430px}
+html.clean .note-tag{display:none}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<script src="icons.js"></script>
+<script>
+(function () {
+  const q = new URLSearchParams(location.hash.slice(1));
+  if (q.get('theme')) document.documentElement.setAttribute('data-sb-theme', q.get('theme'));
+  if (q.get('clean')) document.documentElement.classList.add('clean');
+  const dark = q.get('theme') === 'dark';
+  const ic = (n, s = 16) => `<span class="ic" style="--s:${s}px"><svg viewBox="0 0 24 24">${(window.ICONS || {})[n] || ''}</svg></span>`;
+  const fr = (hex, x = 40, y = 40) => `background:radial-gradient(85% 75% at ${x}% ${y}%, ${hex}d9 0%, ${hex}40 40%, transparent 72%), linear-gradient(150deg,#2b2722,#0e0d0b)`;
+  const state = q.get('state') || 'home';
+  const projects = [['إعلان مشروع سكني — حي الياسمين', 'تحضير · 6 مشاهد · 22 لقطة', '#c9a14f'], ['فيديو كليب — ليل الرياض', 'تصوير · 6 مشاهد', '#2e3d5c'], ['وثائقي قصير — الحرفيون', 'منتهي · 5 مشاهد', '#94603f']];
+  const tpls = [['قالب: إعلان عقار', '8 مشاهد · 34 لقطة · مخططات 3', '#c9a14f'], ['قالب: مطعم — ريل 30ث', '5 مشاهد · 14 لقطة', '#c27a32'], ['قالب: مقابلة شركة', '4 مشاهد · 12 لقطة · مخطط كاميرتين', '#7c8288']];
+  const sceneT = [['مقابلة بكاميرتين', '#7c8288'], ['ريفيل درون في الذهبية', '#c9a14f'], ['المنتج البطل — أوربت', '#94603f'], ['جولة داخلية بالجيمبل', '#cdb488']];
+  const home = `<div class="top"><img src="img/${dark ? 'logo-white' : 'logo-black'}.png"><span style="flex:1"></span><span class="chip">ابحث… Ctrl K</span></div>
+    <div class="wrapc"><h1>مساء الخير يا إبراهيم</h1><div style="display:flex;gap:10px"><button class="btn primary">${ic('plus')}مشروع جديد</button><button class="btn outline">استيراد مشروع</button></div>
+    <div class="sec"><div class="sechead"><h2>مشاريعي</h2></div><div class="cards">${projects.map((p) => `<div class="pc"><div class="im" style="${fr(p[2])}"></div><div class="tx"><b>${p[0]}</b><span>${p[1]}</span></div></div>`).join('')}</div></div>
+    <div class="sec"><div class="sechead"><h2>قوالبي</h2><span class="muted">ابدأ مشروع من شغل سويته قبل</span></div><div class="cards">${tpls.map((p) => `<div class="pc tpl"><span class="badge soft tag">قالب</span><div class="im" style="${fr(p[2], 60, 50)};opacity:.85"></div><div class="tx"><b>${p[0]}</b><span>${p[1]}</span></div></div>`).join('')}<div class="pc" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--color-text-muted);font-weight:700;border-style:dashed;min-height:186px">${ic('bookmark', 22)}احفظ أي مشروع كقالب<span style="font-weight:400;font-size:13px">من ⋯ على المشروع</span></div></div></div>
+    <div class="sec"><div class="sechead"><h2 style="font-size:22px">قوالب المشاهد</h2><span class="muted">تضيفها لأي مشروع من «+ مشهد»</span></div><div class="scenechips">${sceneT.map((s) => `<div class="sc"><i style="${fr(s[1])}"></i>${s[0]}</div>`).join('')}</div></div></div>
+    <span class="note-tag" data-n="1" style="top:520px;right:40px">قسم «قوالبي» تحت المشاريع · مخفي إذا ما فيه قوالب</span>`;
+  const newDlg = `<div class="dim"><div class="dlg"><h3>مشروع جديد</h3><div class="sub">اختر بداية، وكل شي يتعدّل بعدين.</div><div class="inp">اسم المشروع</div>
+    <div style="font-size:13px;font-weight:700;color:var(--color-text-muted);margin-bottom:8px">قوالب البرنامج</div><div class="opts" style="grid-template-columns:repeat(5,1fr)">${['إعلان', 'فيديو كليب', 'فيلم قصير', 'وثائقي', 'فارغ'].map((t, i) => `<div class="opt ${i === 0 ? '' : ''}"><b>${t}</b></div>`).join('')}</div>
+    <div style="font-size:13px;font-weight:700;color:var(--color-text-muted);margin-bottom:8px">قوالبي</div><div class="opts">${tpls.map((t, i) => `<div class="opt ${i === 0 ? 'on' : ''}"><b>${t[0].replace('قالب: ', '')}</b><span>${t[1]}</span></div>`).join('')}</div>
+    <div class="foot"><button class="btn primary">إنشاء</button><button class="btn ghost">إلغاء</button></div></div></div>
+    <span class="note-tag" data-n="2" style="top:430px;right:460px">قوالبك جنب قوالب البرنامج</span>`;
+  const saveDlg = `<div class="dim"><div class="dlg"><h3>احفظ كقالب</h3><div class="sub">نسخة من «إعلان مشروع سكني — حي الياسمين» تبدأ منها مشاريع جديدة. المشروع الأصلي ما يتغيّر.</div><div class="inp">قالب: إعلان عقار</div>
+    <div class="list"><div><span class="ok">✓</span>المشاهد واللقطات بكل تفاصيلها</div><div><span class="ok">✓</span>المخططات واللوحة الحرة</div><div><span class="ok">✓</span>الشخصيات والمواقع ولوحات المزاج والصور</div><div><span class="no"></span>العميل وتاريخ التصوير ما ينحفظون</div><div><span class="no"></span>حالة اللقطات ترجع «مخططة»</div></div>
+    <div class="foot"><button class="btn primary">${ic('bookmark')}احفظ القالب</button><button class="btn ghost">إلغاء</button></div></div></div>`;
+  const sceneMenu = `<div class="top"><b style="font-size:17px">إعلان مطعم — جمر</b><span style="flex:1"></span><span class="badge soft">الستوري بورد</span></div>
+    <div style="padding:20px 24px"><div style="display:flex;gap:10px"><button class="btn outline">${ic('plus')}مشهد</button></div>
+    <div class="menu" style="position:absolute;top:118px;right:24px;width:300px"><div class="it hl">${ic('plus')}مشهد فاضي</div><div class="sep"></div><div style="padding:6px 10px;font-size:12px;color:var(--color-text-muted);font-weight:700">من قوالب المشاهد</div>${sceneT.map((s) => `<div class="it"><i style="width:34px;height:24px;border-radius:5px;display:block;${fr(s[1])}"></i>${s[0]}</div>`).join('')}<div class="sep"></div><div class="it" style="font-weight:400;color:var(--color-text-muted)">${ic('bookmark')}احفظ مشهداً كقالب: من ⋯ على المشهد</div></div></div>
+    <span class="note-tag" data-n="3" style="top:150px;right:340px">المشهد يُنسخ بلقطاته ومخططه · الشخصيات والمواقع تُربط بالموجود بنفس الاسم أو تُضاف</span>`;
+  document.getElementById('app').innerHTML = state === 'new' ? home + newDlg : state === 'save' ? home + saveDlg : state === 'scene' ? sceneMenu : home;
+})();
+</script>
+</body>
+</html>

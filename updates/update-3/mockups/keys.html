@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-sb-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>اختصاراتك — نموذج التحديث 3</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+body{background:var(--color-surface)}
+.app{position:relative;width:1440px;height:900px;margin:0 auto;background:var(--color-bg);overflow:hidden;background-image:radial-gradient(circle,rgba(140,120,90,.35) 1.2px,transparent 1.7px);background-size:24px 24px}
+.dim{position:absolute;inset:0;background:rgba(20,18,16,.38);display:flex;align-items:center;justify-content:center}
+.dlg{width:900px;height:760px;background:var(--color-bg);border-radius:16px;box-shadow:var(--shadow-lift);display:flex;flex-direction:column;overflow:hidden}
+.hd{display:flex;align-items:center;gap:14px;padding:20px 24px 14px}
+.hd h2{margin:0;font-family:var(--font-display);font-size:28px}
+.hd .sp{flex:1}
+.x{width:36px;height:36px;border-radius:8px;border:1px solid var(--color-border);background:var(--color-bg);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.tools{display:flex;align-items:center;gap:10px;padding:0 24px 14px;border-bottom:1px solid var(--color-border-subtle)}
+.search{flex:1;height:42px;border:1px solid var(--color-border);border-radius:8px;display:flex;align-items:center;gap:8px;padding:0 12px;color:var(--color-text-muted)}
+.search input{border:none;outline:none;background:transparent;flex:1;font:inherit;font-size:15px;color:var(--color-text)}
+.os{font-size:12px;color:var(--color-text-muted)}
+.body{flex:1;display:flex;min-height:0}
+.nav{width:200px;flex-shrink:0;border-inline-start:1px solid var(--color-border-subtle);padding:12px;display:flex;flex-direction:column;gap:2px;overflow:auto}
+.nav a{display:flex;align-items:center;justify-content:space-between;height:38px;padding:0 12px;border-radius:8px;font-size:14px;font-weight:700;color:var(--color-text-muted);cursor:pointer;text-decoration:none}
+.nav a.on{background:var(--color-surface-strong);color:var(--color-text)}
+.nav a small{font-weight:400;font-size:12px}
+.list{flex:1;overflow:auto;padding:4px 24px 24px}
+.grp{margin-top:14px}
+.grp h3{font-size:13px;color:var(--color-text-muted);margin:6px 0 4px;font-weight:700}
+.row{display:flex;align-items:center;gap:12px;min-height:50px;border-bottom:1px solid var(--color-border-subtle);padding:4px 2px;position:relative}
+.row .nm{flex:1;font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+.row .nm .dot{width:7px;height:7px;border-radius:50%;background:var(--color-accent)}
+.row .hint{font-size:12px;color:var(--color-text-muted);font-weight:400}
+.keys{display:flex;align-items:center;gap:6px;direction:ltr}
+.chipk{display:inline-flex;align-items:center;gap:4px;min-height:34px;padding:3px 6px;border-radius:8px;border:1px solid transparent;cursor:pointer;transition:background .15s,border-color .15s}
+.chipk:hover{background:var(--color-surface);border-color:var(--color-border)}
+.chipk.none{color:var(--color-text-muted);font-size:13px;padding:0 10px;border:1px dashed var(--color-border)}
+.chipk.lock{cursor:default}
+.chipk.lock:hover{background:transparent;border-color:transparent}
+kbd{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 7px;border-radius:6px;border:1px solid var(--color-border);border-bottom-width:2px;background:var(--color-bg);font-family:var(--font-sans);font-size:13px;font-weight:700}
+.rec{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:8px;border:1.5px solid var(--color-accent);background:var(--color-accent-soft);font-size:13px;font-weight:700;direction:rtl;animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--color-accent) 25%,transparent)}}
+.reset{width:30px;height:30px;border-radius:6px;border:none;background:transparent;cursor:pointer;color:var(--color-text-muted);display:inline-flex;align-items:center;justify-content:center;font-size:16px}
+.reset:hover{background:var(--color-surface)}
+.lockic{color:var(--color-text-subtle,var(--color-text-muted))}
+.warn{position:absolute;left:0;top:calc(100% - 2px);z-index:5;width:440px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:10px;box-shadow:var(--shadow-lift);padding:12px 14px;font-size:14px;line-height:1.6;animation:pin .2s cubic-bezier(.2,0,0,1)}
+@keyframes pin{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.warn .acts{display:flex;gap:8px;margin-top:8px}
+.warn.red{border-color:color-mix(in srgb,var(--color-danger) 50%,transparent)}
+.ft{display:flex;align-items:center;gap:10px;padding:12px 24px;border-top:1px solid var(--color-border-subtle);font-size:13px;color:var(--color-text-muted)}
+.ft .sp{flex:1}
+html.clean .note-tag{display:none}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="dim"><div class="dlg">
+    <div class="hd"><h2>اختصاراتك</h2><span class="badge soft" id="cnt"></span><span class="sp"></span><button class="x" title="إغلاق"><span data-i="x"></span></button></div>
+    <div class="tools"><label class="search"><span data-i="search" style="--s:16px"></span><input id="q" placeholder="ابحث عن أمر أو زر… مثل «تكرار» أو D"></label><span class="os" id="os"></span></div>
+    <div class="body"><nav class="nav" id="nav"></nav><div class="list" id="list"></div></div>
+    <div class="ft"><span>اضغط على أي اختصار عشان تغيّره · <b>Esc</b> يلغي · <b>Delete</b> يشيل الاختصار</span><span class="sp"></span><button class="btn outline sm" id="resetAll">رجّع الكل للافتراضي</button></div>
+  </div></div>
+</div>
+<script src="icons.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  const q = new URLSearchParams(location.hash.slice(1));
+  const MAC = q.get('os') === 'mac' || (q.get('os') !== 'win' && /Mac|iPhone|iPad/.test(navigator.platform));
+  document.getElementById('os').textContent = MAC ? 'الأزرار معروضة لماك' : 'الأزرار معروضة لويندوز';
+  // keys are stored by physical key (e.code) so the Arabic layout works: e.g. 'Alt+KeyD'
+  const L = { Mod: MAC ? '⌘' : 'Ctrl', Alt: MAC ? '⌥' : 'Alt', Shift: MAC ? '⇧' : 'Shift', BracketRight: ']', BracketLeft: '[', Equal: '=', Minus: '-', Slash: '?', Enter: 'Enter', Escape: 'Esc', Delete: 'Delete', Space: 'مسافة', ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓', Backslash: '\\' };
+  const label = (k) => k === 'Shift+Slash' ? ['?'] : k.split('+').map((p) => L[p] || p.replace(/^Key/, '').replace(/^Digit/, ''));
+  const G = [
+    ['general', 'عام', [
+      ['search', 'البحث', 'Mod+KeyK'], ['undo', 'تراجع', 'Mod+KeyZ'], ['redo', 'إعادة', 'Mod+Shift+KeyZ'],
+      ['mode-board', 'لوحة الأفكار', 'Alt+Digit1'], ['mode-sb', 'الستوري بورد', 'Alt+Digit2'], ['library', 'إظهار / إخفاء المكتبة', 'Alt+KeyL'],
+      ['theme', 'الوضع الداكن', null], ['sheet', 'ورقة الاختصارات', 'Shift+Slash'], ['esc', 'إغلاق / إلغاء', 'Escape', 1]]],
+    ['move', 'تحريك ومحاذاة', [
+      ['nudge', 'تحريك 1px', 'ArrowLeft', 1, 'ويطلع خط المحاذاة'], ['nudge-stop', 'خطوة للمحطة التالية', 'Shift+ArrowLeft', 1, 'توقف عند أول خط محاذاة أو شبكة'], ['nudge-jump', 'قفزة لخط المحاذاة', 'Alt+ArrowLeft', 1],
+      ['al-r', 'محاذاة لليمين', 'Alt+KeyD'], ['al-l', 'محاذاة لليسار', 'Alt+KeyA'], ['al-t', 'محاذاة للأعلى', 'Alt+KeyW'], ['al-b', 'محاذاة للأسفل', 'Alt+KeyS'],
+      ['al-h', 'توسيط أفقي', 'Alt+KeyH'], ['al-v', 'توسيط عمودي', 'Alt+KeyV'], ['di-h', 'توزيع أفقي', 'Alt+Shift+KeyH'], ['di-v', 'توزيع عمودي', 'Alt+Shift+KeyV'],
+      ['uniform', 'توحيد العرض', null], ['magnet', 'تشغيل / إيقاف المغناطيس', 'KeyM'], ['alt-drag', 'إيقاف المحاذاة وقت السحب', 'Alt', 1, 'اضغطه وأنت تسحب']]],
+    ['add', 'إضافة', [
+      ['add-scene', 'مشهد', 'KeyS'], ['add-note', 'ملاحظة', 'KeyN'], ['add-heading', 'عنوان', 'KeyT'], ['add-frame', 'إطار', 'KeyF'], ['frame-sel', 'إطار حول المحدد', 'Mod+KeyG'],
+      ['add-image', 'صورة', 'KeyI'], ['add-char', 'شخصية', null], ['add-loc', 'موقع', null], ['add-mood', 'لوحة مزاج', null]]],
+    ['edit', 'تحرير', [
+      ['copy', 'نسخ · قص · لصق', 'Mod+KeyC', 1, MAC ? 'و ⌘X · ⌘V' : 'و Ctrl X · Ctrl V'], ['dup', 'تكرار', 'Mod+KeyD'], ['all', 'تحديد الكل', 'Mod+KeyA'],
+      ['fwd', 'للأمام', 'BracketRight'], ['bwd', 'للخلف', 'BracketLeft'], ['front', 'للأعلى', 'Mod+BracketRight'], ['back', 'للأسفل', 'Mod+BracketLeft'],
+      ['lock', 'قفل / فك القفل', 'KeyL'], ['open', 'فتح المحدد', 'Enter'], ['rename', 'إعادة التسمية', 'F2'], ['del', 'حذف', 'Delete', 1]]],
+    ['view', 'العرض', [
+      ['fit', 'ملاءمة الكل', 'Shift+Digit1'], ['zoom-sel', 'تكبير على المحدد', 'Shift+Digit2'], ['zoom-100', 'حجم 100%', 'Shift+Digit0'],
+      ['zoom-in', 'تكبير', 'Equal'], ['zoom-out', 'تصغير', 'Minus'], ['pan', 'تحريك اللوحة', 'Space', 1, 'مسافة + سحب'], ['arrange', 'ترتيب تلقائي', null]]],
+    ['sb', 'الستوري بورد', [
+      ['sb-shot', 'لقطة جديدة في المشهد المحدد', 'KeyN'], ['sb-scene', 'مشهد جديد', 'Shift+KeyN'], ['sb-dup', 'تكرار اللقطة', 'Mod+KeyD'],
+      ['sb-next', 'اللقطة التالية (والمحرر مفتوح)', 'Alt+ArrowLeft'], ['sb-prev', 'اللقطة السابقة', 'Alt+ArrowRight'], ['sb-done', 'تصوّرت ✓', null]]],
+    ['plan', 'مخطط التصوير', [
+      ['pl-cam', 'كاميرا', 'KeyC'], ['pl-light', 'ضوء', 'KeyL'], ['pl-person', 'شخص', 'KeyP'], ['pl-rot', 'تدوير 15°', 'KeyR'], ['pl-rot-back', 'تدوير عكسي', 'Shift+KeyR'],
+      ['pl-nudge', 'تحريك 5 سم', 'ArrowLeft', 1, 'و ' + L.Shift + ' للمحطة التالية'], ['pl-fit', 'ملاءمة', 'Shift+Digit1']]],
+  ];
+  // contexts: general keys clash with everything; the others only inside their own screen (the board groups share one)
+  const CTX = { general: 'all', move: 'board', add: 'board', edit: 'board', view: 'board', sb: 'sb', plan: 'plan' };
+  const ACT = {};
+  for (const [g, , rows] of G) for (const r of rows) ACT[r[0]] = { id: r[0], name: r[1], def: r[2], locked: !!r[3], hint: r[4] || '', group: g, key: r[2] };
+  const RESERVED = MAC ? ['Mod+KeyW', 'Mod+KeyT', 'Mod+KeyN', 'Mod+KeyQ', 'Mod+KeyR', 'Mod+KeyL', 'Mod+KeyH', 'Mod+KeyM', 'Mod+Tab', 'Mod+Shift+KeyT', 'Mod+Shift+KeyL', 'Mod+Backquote'] : ['Mod+KeyW', 'Mod+KeyT', 'Mod+KeyN', 'Mod+KeyR', 'Mod+KeyL', 'Mod+Tab', 'Mod+Shift+KeyT', 'F5', 'F11', 'F12', 'Alt+F4'];
+  let rec = null, warn = null, filter = '', active = 'general';
+
+  const clash = (a, key) => Object.values(ACT).find((b) => b.id !== a.id && b.key === key && (CTX[a.group] === CTX[b.group] || CTX[a.group] === 'all' || CTX[b.group] === 'all'));
+  const kb = (key) => label(key).map((p) => `<kbd>${p}</kbd>`).join('');
+
+  function rowHTML(a) {
+    const changed = a.key !== a.def;
+    let right;
+    if (rec === a.id) right = `<span class="rec">اضغط الاختصار الجديد…</span>`;
+    else if (a.locked) right = `<span class="chipk lock" title="ثابت">${kb(a.key)}</span><span class="lockic" data-i="lock" style="--s:14px" title="ثابت ما يتغيّر"></span>`;
+    else right = a.key ? `<span class="chipk" data-edit="${a.id}">${kb(a.key)}</span>` : `<span class="chipk none" data-edit="${a.id}">+ أضف اختصار</span>`;
+    const rs = changed && !a.locked ? `<button class="reset" data-reset="${a.id}" title="الافتراضي">↺</button>` : '<span style="width:30px"></span>';
+    let w = '';
+    if (warn && warn.id === a.id) {
+      w = warn.kind === 'reserved'
+        ? `<div class="warn red"><span style="direction:ltr;display:inline-flex;gap:4px">${kb(warn.key)}</span> محجوز للمتصفح أو النظام. اختر غيره.<div class="acts"><button class="btn outline sm" data-cancel>تمام</button></div></div>`
+        : `<div class="warn"><span style="direction:ltr;display:inline-flex;gap:4px">${kb(warn.key)}</span> مستخدم لـ «${warn.other.name}». تبي تبدّلهم؟<div class="hint" style="font-size:12px;color:var(--color-text-muted)">«${warn.other.name}» ياخذ ${warn.oldKey ? 'الاختصار القديم' : 'بدون اختصار'}.</div><div class="acts"><button class="btn primary sm" data-swap>بدّل</button><button class="btn ghost sm" data-cancel>ألغِ</button></div></div>`;
+    }
+    return `<div class="row" data-row="${a.id}"><span class="nm">${changed ? '<i class="dot"></i>' : ''}${a.name}${a.hint ? `<span class="hint">${a.hint}</span>` : ''}</span><span class="keys">${right}</span>${rs}${w}</div>`;
+  }
+
+  function render() {
+    const f = filter.trim().toLowerCase();
+    const match = (a) => !f || a.name.includes(f) || (a.key && label(a.key).join(' ').toLowerCase().includes(f));
+    let html = '';
+    for (const [g, title] of G) {
+      const rows = Object.values(ACT).filter((a) => a.group === g && match(a));
+      if (rows.length) html += `<div class="grp" id="g-${g}"><h3>${title}</h3>${rows.map(rowHTML).join('')}</div>`;
+    }
+    document.getElementById('list').innerHTML = html || '<div style="padding:40px;text-align:center;color:var(--color-text-muted)">ما فيه أمر بهالاسم</div>';
+    document.getElementById('nav').innerHTML = G.map(([g, title]) => { const ch = Object.values(ACT).filter((a) => a.group === g && a.key !== a.def).length; return `<a class="${g === active ? 'on' : ''}" data-nav="${g}">${title}${ch ? `<small>${ch} معدّل</small>` : ''}</a>`; }).join('');
+    const changed = Object.values(ACT).filter((a) => a.key !== a.def).length;
+    document.getElementById('cnt').textContent = changed ? `${changed} معدّل` : 'الافتراضي';
+    document.querySelectorAll('#list [data-i]').forEach((el) => { el.classList.add('ic'); el.innerHTML = `<svg viewBox="0 0 24 24">${window.ICONS[el.dataset.i]}</svg>`; });
+  }
+
+  document.getElementById('list').addEventListener('click', (e) => {
+    const t = e.target.closest('[data-edit],[data-reset],[data-swap],[data-cancel]');
+    if (!t) return;
+    if (t.dataset.edit) { rec = t.dataset.edit; warn = null; }
+    else if (t.dataset.reset) { ACT[t.dataset.reset].key = ACT[t.dataset.reset].def; warn = null; }
+    else if (t.hasAttribute('data-swap')) { warn.other.key = warn.oldKey; ACT[warn.id].key = warn.key; warn = null; }
+    else { warn = null; }
+    render();
+  });
+  document.getElementById('nav').addEventListener('click', (e) => { const a = e.target.closest('[data-nav]'); if (!a) return; active = a.dataset.nav; render(); document.getElementById('g-' + active)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  document.getElementById('q').addEventListener('input', (e) => { filter = e.target.value; render(); });
+  document.getElementById('resetAll').onclick = () => { for (const a of Object.values(ACT)) a.key = a.def; rec = warn = null; render(); };
+
+  window.addEventListener('keydown', (e) => {
+    if (!rec) return;
+    e.preventDefault();
+    const a = ACT[rec];
+    if (e.key === 'Escape') { rec = null; return render(); }
+    if (e.key === 'Delete' || e.key === 'Backspace') { a.key = null; rec = null; return render(); }
+    if (['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) return; // wait for the real key
+    const parts = [];
+    if (e.ctrlKey || e.metaKey) parts.push('Mod');
+    if (e.altKey) parts.push('Alt');
+    if (e.shiftKey) parts.push('Shift');
+    parts.push(e.code);
+    const key = parts.join('+');
+    rec = null;
+    if (RESERVED.includes(key)) { warn = { id: a.id, kind: 'reserved', key }; return render(); }
+    const other = clash(a, key);
+    if (other && !other.locked) { warn = { id: a.id, kind: 'clash', key, other, oldKey: a.key }; return render(); }
+    if (other && other.locked) { warn = { id: a.id, kind: 'reserved', key }; return render(); }
+    a.key = key;
+    render();
+  });
+
+  // states for screenshots
+  const st = q.get('state');
+  ACT['dup'].key = 'Mod+KeyD';
+  if (st === 'rec') { ACT['add-note'].key = 'KeyQ'; ACT['magnet'].key = 'Shift+KeyM'; active = 'move'; rec = 'al-r'; }
+  if (st === 'conflict') { active = 'move'; warn = { id: 'al-r', kind: 'clash', key: 'Mod+KeyD', other: ACT['dup'], oldKey: 'Alt+KeyD' }; }
+  if (st === 'reserved') { active = 'add'; warn = { id: 'add-char', kind: 'reserved', key: 'Mod+KeyW' }; }
+  render();
+  if (st === 'rec' || st === 'conflict') document.getElementById('g-move').scrollIntoView({ block: 'start' });
+  if (st === 'reserved') document.getElementById('g-add').scrollIntoView({ block: 'start' });
+  const tags = { list: ['1', 'اضغط على أي اختصار وغيّره · يتحفظ ويتزامن مع أجهزتك', 'top:70px;left:300px'], rec: ['2', 'يسجّل الزر اللي تضغطه · يشتغل حتى والكيبورد عربي', 'top:70px;left:300px'], conflict: ['3', 'لو الزر مستخدم: يسألك تبدّل', 'top:70px;left:300px'], reserved: ['4', 'أزرار المتصفح والنظام محجوزة', 'top:70px;left:300px'] };
+  const t = tags[st || 'list'];
+  if (t) document.getElementById('app').insertAdjacentHTML('beforeend', `<span class="note-tag" data-n="${t[0]}" style="${t[2]}">${t[1]}</span>`);
+})();
+</script>
+</body>
+</html>

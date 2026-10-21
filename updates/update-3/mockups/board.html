@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-sb-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>اللوحة الحرة: الأسهم والمقابض — نموذج التحديث 3</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+body{background:var(--color-surface)}
+.app{position:relative;width:1440px;height:900px;margin:0 auto;background:var(--color-bg);overflow:hidden;display:flex;flex-direction:column}
+.top{height:60px;flex-shrink:0;display:flex;align-items:center;gap:14px;padding:0 20px;border-bottom:1px solid var(--color-border-subtle)}
+.top img{height:30px}
+.crumb{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--color-text-muted)}
+.crumb b{color:var(--color-text);font-size:17px}
+.seg{display:inline-flex;gap:4px;padding:4px;border-radius:999px;background:var(--color-surface)}
+.seg span{height:34px;padding:0 18px;border-radius:999px;display:inline-flex;align-items:center;font-weight:700;font-size:14px;color:var(--color-text-muted)}
+.seg span.on{background:var(--color-accent);color:#141210}
+.main{flex:1;display:flex;min-height:0}
+.stage{flex:1;position:relative;overflow:hidden;background-color:var(--color-bg);background-image:radial-gradient(circle,var(--board-dot,rgba(140,120,90,.35)) 1.2px,transparent 1.7px);background-size:24px 24px;touch-action:none;user-select:none;outline:none}
+.world{position:absolute;left:0;top:0;transform-origin:0 0}
+.it{position:absolute;cursor:grab}
+.it.on{z-index:50}
+.it.on>.body{box-shadow:0 0 0 2px var(--color-accent),var(--shadow-card)}
+.it.moving{cursor:grabbing}
+.scene>.body{background:var(--color-bg);border:1px solid var(--color-border-subtle);border-radius:12px;overflow:hidden;box-shadow:var(--shadow-card);position:relative}
+.scene .ph{background-size:cover;background-position:center;position:relative}
+.scene .num{position:absolute;top:8px;inset-inline-end:12px;font-family:var(--font-display);font-weight:900;font-size:40px;line-height:1;color:#fdfcfa;text-shadow:0 2px 10px rgba(0,0,0,.55)}
+.scene .tx{padding:10px 12px 12px;display:flex;flex-direction:column;gap:7px}
+.scene .tx b{font-family:var(--font-serif-text);font-size:18px}
+.scene .meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--color-text-muted);flex-wrap:wrap}
+.scene .pill{height:22px;padding:0 9px;border:1px solid var(--color-accent);border-radius:999px;display:inline-flex;align-items:center;font-weight:700;color:var(--color-text);font-size:11px}
+.note>.body{background:#efe6d6;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;box-shadow:var(--shadow-card);overflow:hidden}
+[data-sb-theme="dark"] .note>.body{background:#3a332a}
+.note .lb{font-size:12px;font-weight:700;color:var(--color-text-muted);display:flex;align-items:center;gap:6px}
+.note .t{font-family:var(--font-serif-text);font-size:16px;line-height:1.6}
+.image>.body{background:var(--color-bg);border:1px solid var(--color-border-subtle);border-radius:10px;overflow:hidden;box-shadow:var(--shadow-card)}
+.image .ph{background-size:cover;background-position:center}
+.image .cap{padding:8px 12px;font-size:13px;color:var(--color-text-muted);line-height:1.5}
+.heading>.body{font-family:var(--font-display);font-weight:900;line-height:1.1;padding:4px 6px;border-radius:6px}
+.ov{position:absolute;left:0;top:0;pointer-events:none}
+.hd{position:absolute;pointer-events:auto;display:flex;align-items:center;justify-content:center;touch-action:none}
+.hd i{display:block;background:var(--color-bg);border:2px solid var(--color-accent);border-radius:3px;box-sizing:border-box;transition:transform .12s var(--ease-standard),background .12s}
+.hd:hover i{background:var(--color-accent);transform:scale(1.15)}
+.guide{position:absolute;background:var(--tan-600);pointer-events:none;transition:opacity .35s}
+.guide.fade{opacity:0}
+.tip{position:absolute;background:var(--color-accent);color:#141210;font-size:12px;font-weight:700;border-radius:6px;padding:3px 8px;direction:ltr;white-space:nowrap;pointer-events:none}
+.hud{position:absolute;bottom:26px;left:50%;transform:translate(-50%,8px);opacity:0;background:var(--color-inverse-bg);color:var(--color-inverse-text);border-radius:999px;padding:9px 16px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:10px;transition:opacity .2s,transform .2s cubic-bezier(.2,0,0,1);pointer-events:none;white-space:nowrap;z-index:80}
+.hud.show{opacity:1;transform:translate(-50%,0)}
+.hud kbd,.panel kbd{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 7px;border-radius:6px;border:1px solid var(--color-border);border-bottom-width:2px;background:var(--color-bg);color:var(--color-text);font-family:var(--font-sans);font-size:13px;font-weight:700;direction:ltr}
+.hud kbd{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:inherit}
+.zc{position:absolute;bottom:22px;left:18px;display:flex;align-items:center;gap:2px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:8px;box-shadow:var(--shadow-card);padding:4px;z-index:60}
+.zc button{height:30px;border:none;background:transparent;border-radius:4px;cursor:pointer;padding:0 10px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+.zc button.on{background:var(--color-accent-soft);color:var(--tan-600)}
+.zc .sp{width:1px;height:18px;background:var(--color-border)}
+.panel{width:400px;flex-shrink:0;border-inline-start:1px solid var(--color-border-subtle);background:var(--color-bg);overflow:auto;padding:20px 22px 30px}
+.panel h2{margin:0 0 4px;font-family:var(--font-display);font-size:26px}
+.panel .sub{font-size:14px;color:var(--color-text-muted);margin-bottom:16px;line-height:1.6}
+.panel h3{font-size:15px;margin:18px 0 8px;display:flex;align-items:center;gap:8px}
+.kr{display:flex;align-items:flex-start;gap:12px;padding:9px 0;border-bottom:1px solid var(--color-border-subtle);font-size:14px;line-height:1.55}
+.kr .keys{display:flex;gap:4px;flex-shrink:0;width:140px;justify-content:flex-start;direction:ltr;flex-wrap:wrap}
+.kr .keys span{align-self:center;color:var(--color-text-muted);font-size:12px}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.cmp>div{border:1px solid var(--color-border-subtle);border-radius:10px;padding:10px;background:var(--color-surface);font-size:12.5px;line-height:1.55}
+.cmp b{display:block;font-size:13px;margin-bottom:4px}
+.cmp .bad b{color:var(--color-danger)}
+.cmp .good b{color:var(--color-success)}
+.rules{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.rules div{display:flex;gap:8px;align-items:center;font-size:13.5px}
+.rules i{width:26px;height:26px;border-radius:6px;background:var(--color-accent-soft);display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;color:var(--tan-600);flex-shrink:0}
+.try{margin-top:14px;padding:12px 14px;border-radius:10px;background:var(--color-accent-soft);font-size:13.5px;line-height:1.65}
+html.clean .note-tag{display:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <img data-logo alt="">
+    <div class="crumb"><span>الرئيسية</span><span>›</span><b>إعلان مشروع سكني — حي الياسمين</b></div>
+    <span style="flex:1"></span>
+    <div class="seg"><span class="on">لوحة الأفكار</span><span>الستوري بورد</span></div>
+    <span style="flex:1"></span>
+    <span class="badge soft">نموذج تفاعلي</span>
+  </div>
+  <div class="main">
+    <div class="stage" id="stage" tabindex="0">
+      <div class="world" id="world"></div>
+      <div class="ov world" id="ov"></div>
+      <div class="hud" id="hud"></div>
+      <div class="zc">
+        <button id="snapBtn" class="on" title="المحاذاة · M">مغناطيس المحاذاة <kbd style="min-width:20px;height:20px;font-size:11px;padding:0 5px;border-radius:5px;border:1px solid var(--color-border);background:var(--color-bg)">M</kbd></button>
+        <span class="sp"></span>
+        <button id="resetBtn">رجّع الترتيب</button>
+      </div>
+    </div>
+    <aside class="panel" id="panel"></aside>
+  </div>
+</div>
+<script src="icons.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  const q = new URLSearchParams(location.hash.slice(1));
+  const MAC = q.get('os') === 'mac' || (q.get('os') !== 'win' && /Mac|iPhone|iPad/.test(navigator.platform));
+  const K = { shift: MAC ? '⇧' : 'Shift', alt: MAC ? '⌥' : 'Alt', mod: MAC ? '⌘' : 'Ctrl' };
+  const dark = document.documentElement.getAttribute('data-sb-theme') === 'dark';
+  const ic = (n, s = 16) => `<span class="ic" style="--s:${s}px"><svg viewBox="0 0 24 24">${(window.ICONS || {})[n] || ''}</svg></span>`;
+
+  // ---------- pictures (SVG with a real circle so a crop is visibly not a stretch) ----------
+  const svgURI = (s) => `url('data:image/svg+xml,${encodeURIComponent(s)}')`;
+  const scenePic = (sky1, sky2, sun) => svgURI(`<svg xmlns="http://www.w3.org/2000/svg" width="160" height="90" viewBox="0 0 160 90"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky1}"/><stop offset="1" stop-color="${sky2}"/></linearGradient></defs><rect width="160" height="90" fill="url(#g)"/><circle cx="104" cy="50" r="15" fill="${sun}" opacity=".95"/><path d="M0 64h160v26H0z" fill="#1d1915"/><path d="M14 64V40h14v24M34 64V30h10v34M118 64V44h12v20M136 64V36h16v28" fill="#2a241e"/></svg>`);
+  const roomPic = svgURI(`<svg xmlns="http://www.w3.org/2000/svg" width="160" height="100" viewBox="0 0 160 100"><rect width="160" height="100" fill="#2b2620"/><path d="M0 72h160v28H0z" fill="#3c342b"/><rect x="58" y="16" width="44" height="46" rx="2" fill="#f2d79e"/><path d="M80 16v46M58 39h44" stroke="#2b2620" stroke-width="3"/><path d="M58 62 30 100h100L102 62z" fill="#f2d79e" opacity=".28"/><circle cx="80" cy="84" r="9" fill="#c9a14f"/></svg>`);
+  const PICS = { s1: scenePic('#e7b765', '#a45b2a', '#fff1c9'), s2: scenePic('#3b4a6b', '#1d2433', '#e9e3d0') };
+
+  const INITIAL = () => [
+    { id: 'h1', kind: 'heading', x: 290, y: 0, w: 330, font: 34, label: 'مشاهد الافتتاح' },
+    { id: 's1', kind: 'scene', x: 600, y: 66, w: 280, imgH: 158, num: '01', label: '01 الافتتاحية الجوية', name: 'الافتتاحية الجوية', io: 'خارجي · نهار', loc: 'موقع المشروع', meta: '3 لقطات · 00:12' },
+    { id: 's2', kind: 'scene', x: 290, y: 93, w: 280, imgH: 158, num: '02', label: '02 الوصول', name: 'الوصول', io: 'خارجي · ليل', loc: 'مدخل المبنى', meta: '4 لقطات · 00:11' },
+    { id: 'n1', kind: 'note', x: 640, y: 412, w: 230, h: 140, label: 'الملاحظة', text: 'خفض شتر الكاميرا لدخول الضوء بشكل قليل لكي لا يُكشف حدود المكان' },
+    { id: 'i1', kind: 'image', x: 300, y: 430, w: 250, imgH: 160, label: 'الصورة', cap: 'مرجع: ضوء نافذة الصالة' },
+  ];
+  let items = INITIAL();
+  let sel = [];
+  let snap = true;
+  let guides = [], guideFade = null, kbdTimer = null;
+  let tip = null;
+  const undo = [];
+  const Z = 1, OX = 60, OY = 70;
+  const stage = document.getElementById('stage'), world = document.getElementById('world'), ov = document.getElementById('ov'), hud = document.getElementById('hud');
+  world.style.transform = ov.style.transform = `translate(${OX}px,${OY}px) scale(${Z})`;
+  const B = {};
+
+  const LIM = { note: [160, 640], image: [120, 800], scene: [220, 640], heading: [80, 900] };
+  const clamp = (v, [a, b]) => Math.min(b, Math.max(a, v));
+
+  function itemHTML(it) {
+    const on = sel.includes(it.id) ? ' on' : '';
+    if (it.kind === 'scene') return `<div class="it scene${on}" data-id="${it.id}" style="left:${it.x}px;top:${it.y}px;width:${it.w}px"><div class="body"><div class="ph" style="height:${it.imgH}px;background-image:${PICS[it.id]}"><span class="num">${it.num}</span></div><div class="tx"><b>${it.name}</b><div class="meta"><span class="pill">${it.io}</span><span>${ic('map-pin', 13)} ${it.loc}</span></div><div class="meta">${ic('film', 13)} ${it.meta}</div></div></div></div>`;
+    if (it.kind === 'note') return `<div class="it note${on}" data-id="${it.id}" style="left:${it.x}px;top:${it.y}px;width:${it.w}px"><div class="body" style="height:${it.h}px"><span class="lb">${ic('file', 13)}ملاحظة</span><span class="t">${it.text}</span></div></div>`;
+    if (it.kind === 'image') return `<div class="it image${on}" data-id="${it.id}" style="left:${it.x}px;top:${it.y}px;width:${it.w}px"><div class="body"><div class="ph" style="height:${it.imgH}px;background-image:${roomPic}"></div><div class="cap">${it.cap}</div></div></div>`;
+    return `<div class="it heading${on}" data-id="${it.id}" style="left:${it.x}px;top:${it.y}px;width:${it.w}px"><div class="body" style="font-size:${it.font}px">${it.label}</div></div>`;
+  }
+
+  function render() {
+    world.innerHTML = items.map(itemHTML).join('');
+    for (const el of world.children) {
+      const it = items.find((i) => i.id === el.dataset.id);
+      B[it.id] = { id: it.id, x: it.x, y: it.y, w: el.offsetWidth, h: el.offsetHeight, label: it.label };
+    }
+    renderOverlay();
+  }
+
+  const HANDLES = { note: ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'], image: ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'], scene: ['e', 'w', 'ne', 'nw', 'se', 'sw'], heading: ['e', 'w', 'ne', 'nw', 'se', 'sw'] };
+  const GAP = 6;
+  function renderOverlay() {
+    let h = '';
+    if (sel.length === 1) {
+      const it = items.find((i) => i.id === sel[0]), b = B[it.id];
+      const cx = b.x + b.w / 2, cy = b.y + b.h / 2, x1 = b.x, x2 = b.x + b.w, y1 = b.y, y2 = b.y + b.h;
+      for (const hd of HANDLES[it.kind]) {
+        const side = hd.length === 1;
+        const vert = hd === 'e' || hd === 'w';
+        const [vw, vh] = side ? (vert ? [8, 24] : [24, 8]) : [12, 12];
+        const [hw, hh] = side ? (vert ? [18, 36] : [36, 18]) : [22, 22];
+        let px = hd.includes('e') ? x2 + GAP + vw / 2 : hd.includes('w') ? x1 - GAP - vw / 2 : cx;
+        let py = hd.includes('s') ? y2 + GAP + vh / 2 : hd.includes('n') ? y1 - GAP - vh / 2 : cy;
+        const cur = { n: 'ns', s: 'ns', e: 'ew', w: 'ew', ne: 'nesw', sw: 'nesw', nw: 'nwse', se: 'nwse' }[hd] + '-resize';
+        h += `<span class="hd" data-h="${hd}" style="left:${px - hw / 2}px;top:${py - hh / 2}px;width:${hw}px;height:${hh}px;cursor:${cur}"><i style="width:${vw}px;height:${vh}px"></i></span>`;
+      }
+    }
+    for (const g of guides) h += g.dir === 'v' ? `<div class="guide${g.fade ? ' fade' : ''}" style="left:${g.at}px;top:${g.from}px;width:1px;height:${g.to - g.from}px"></div>` : `<div class="guide${g.fade ? ' fade' : ''}" style="top:${g.at}px;left:${g.from}px;height:1px;width:${g.to - g.from}px"></div>`;
+    if (tip) h += `<span class="tip" style="left:${tip.x}px;top:${tip.y}px">${tip.t}</span>`;
+    ov.innerHTML = h;
+  }
+
+  // ---------- alignment ----------
+  const others = (ids) => Object.values(B).filter((b) => !ids.includes(b.id));
+  function bbox(ids, dx = 0, dy = 0) {
+    const bs = ids.map((i) => B[i]);
+    return { x1: Math.min(...bs.map((b) => b.x)) + dx, y1: Math.min(...bs.map((b) => b.y)) + dy, x2: Math.max(...bs.map((b) => b.x + b.w)) + dx, y2: Math.max(...bs.map((b) => b.y + b.h)) + dy };
+  }
+  const lines = (b, ax) => (ax === 'x' ? [b.x, b.x + b.w / 2, b.x + b.w] : [b.y, b.y + b.h / 2, b.y + b.h]);
+  const mlines = (g, ax) => (ax === 'x' ? [g.x1, (g.x1 + g.x2) / 2, g.x2] : [g.y1, (g.y1 + g.y2) / 2, g.y2]);
+  function guidesFor(g, ids) {
+    const out = [], seen = new Set();
+    for (const b of others(ids)) {
+      for (const t of lines(b, 'x')) for (const m of mlines(g, 'x')) if (Math.abs(t - m) < 0.5 && !seen.has('v' + t)) { seen.add('v' + t); out.push({ dir: 'v', at: t, from: Math.min(g.y1, b.y) - 8, to: Math.max(g.y2, b.y + b.h) + 8, box: b }); }
+      for (const t of lines(b, 'y')) for (const m of mlines(g, 'y')) if (Math.abs(t - m) < 0.5 && !seen.has('h' + t)) { seen.add('h' + t); out.push({ dir: 'h', at: t, from: Math.min(g.x1, b.x) - 8, to: Math.max(g.x2, b.x + b.w) + 8, box: b }); }
+    }
+    return out;
+  }
+  function nearest(g, ids, ax, tol) {
+    let best = null;
+    for (const b of others(ids)) for (const t of lines(b, ax)) for (const m of mlines(g, ax)) { const d = t - m; if (Math.abs(d) <= tol && (!best || Math.abs(d) < Math.abs(best))) best = d; }
+    return best;
+  }
+
+  // ---------- HUD ----------
+  let hudT = null;
+  function say(keys, msg) {
+    hud.innerHTML = keys.map((k) => `<kbd>${k}</kbd>`).join('<span style="opacity:.6">+</span>') + `<span>${msg}</span>`;
+    hud.classList.add('show');
+    clearTimeout(hudT);
+    hudT = setTimeout(() => hud.classList.remove('show'), 1600);
+  }
+
+  const save = () => { undo.push(JSON.stringify(items)); if (undo.length > 60) undo.shift(); };
+
+  // ---------- pointer ----------
+  let P = null;
+  stage.addEventListener('pointerdown', (e) => {
+    stage.focus();
+    const hd = e.target.closest('.hd');
+    const el = e.target.closest('.it');
+    if (hd) {
+      e.preventDefault();
+      const it = items.find((i) => i.id === sel[0]), b = B[it.id];
+      P = { type: 'resize', h: hd.dataset.h, sx: e.clientX, sy: e.clientY, it, s: { ...it, bw: b.w, bh: b.h }, moved: false };
+    } else if (el) {
+      const id = el.dataset.id;
+      if (e.shiftKey) sel = sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id];
+      else if (!sel.includes(id)) sel = [id];
+      const orig = {};
+      for (const k of sel) { const it = items.find((i) => i.id === k); orig[k] = { x: it.x, y: it.y }; }
+      P = { type: 'move', sx: e.clientX, sy: e.clientY, orig, moved: false };
+      render();
+    } else {
+      sel = [];
+      guides = [];
+      render();
+      return;
+    }
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp, { once: true });
+  });
+
+  function onMove(e) {
+    if (!P) return;
+    const dx0 = (e.clientX - P.sx) / Z, dy0 = (e.clientY - P.sy) / Z;
+    if (!P.moved && Math.hypot(dx0, dy0) < 3) return;
+    if (!P.moved) save();
+    P.moved = true;
+    const on = snap && !e.altKey;
+    if (P.type === 'move') {
+      const ids = Object.keys(P.orig);
+      const base = {};
+      for (const k of ids) base[k] = { ...B[k], x: P.orig[k].x, y: P.orig[k].y };
+      const g0 = (() => { const bs = ids.map((k) => base[k]); return { x1: Math.min(...bs.map((b) => b.x)), y1: Math.min(...bs.map((b) => b.y)), x2: Math.max(...bs.map((b) => b.x + b.w)), y2: Math.max(...bs.map((b) => b.y + b.h)) }; })();
+      let dx = dx0, dy = dy0;
+      const g = { x1: g0.x1 + dx, x2: g0.x2 + dx, y1: g0.y1 + dy, y2: g0.y2 + dy };
+      if (on) {
+        const ax = nearest(g, ids, 'x', 6), ay = nearest(g, ids, 'y', 6);
+        if (ax != null) dx += ax;
+        if (ay != null) dy += ay;
+      }
+      dx = Math.round(dx); dy = Math.round(dy);
+      for (const k of ids) { const it = items.find((i) => i.id === k); it.x = P.orig[k].x + dx; it.y = P.orig[k].y + dy; }
+      render();
+      guides = on ? guidesFor(bbox(ids), ids) : [];
+      renderOverlay();
+    } else resizeMove(e, dx0, dy0, on);
+  }
+
+  function resizeMove(e, dx, dy, on) {
+    const { it, s, h } = P;
+    const W = h.includes('w'), E = h.includes('e'), N = h.includes('n'), S = h.includes('s');
+    const lim = LIM[it.kind];
+    const corner = h.length === 2;
+    guides = [];
+    const snapEdge = (v, ax) => {
+      if (!on) return v;
+      const self = [it.id];
+      let best = null;
+      for (const b of others(self)) for (const t of lines(b, ax)) { const d = t - v; if (Math.abs(d) <= 6 && (best == null || Math.abs(d) < Math.abs(best.d))) best = { d, t, b }; }
+      if (!best) return v;
+      guides.push(ax === 'x' ? { dir: 'v', at: best.t, from: Math.min(s.y, best.b.y) - 8, to: Math.max(s.y + s.bh, best.b.y + best.b.h) + 8 } : { dir: 'h', at: best.t, from: Math.min(s.x, best.b.x) - 8, to: Math.max(s.x + s.bw, best.b.x + best.b.w) + 8 });
+      return best.t;
+    };
+    if (!corner) {
+      if (E || W) {
+        let w = E ? snapEdge(s.x + s.w + dx, 'x') - s.x : s.x + s.w - snapEdge(s.x + dx, 'x');
+        w = Math.round(clamp(w, lim));
+        it.w = w;
+        if (W) it.x = s.x + s.w - w;
+      } else {
+        // top/bottom: notes change height, images change the photo height (crop, no stretch)
+        const extra = s.bh - (it.kind === 'note' ? s.h : s.imgH);
+        let nh = S ? snapEdge(s.y + s.bh + dy, 'y') - s.y : s.y + s.bh - snapEdge(s.y + dy, 'y');
+        nh = Math.round(clamp(nh - extra, it.kind === 'note' ? [90, 640] : [70, 900]));
+        if (it.kind === 'note') it.h = nh; else it.imgH = nh;
+        if (N) it.y = s.y + s.bh - (nh + extra);
+      }
+    } else {
+      let w = s.w + (E ? dx : -dx);
+      w = clamp(w, lim);
+      if (it.kind === 'note' && !e.shiftKey) {
+        let hh = clamp(s.h + (S ? dy : -dy), [90, 640]);
+        it.w = Math.round(w); it.h = Math.round(hh);
+        if (W) it.x = s.x + s.w - it.w;
+        if (N) it.y = s.y + s.h - it.h;
+      } else {
+        const k = w / s.w;
+        it.w = Math.round(w);
+        if (it.kind === 'heading') it.font = Math.round(clamp(s.font * k, [20, 120]));
+        else if (it.kind === 'note') it.h = Math.round(s.h * k);
+        else it.imgH = Math.round(s.imgH * k);
+        if (W) it.x = s.x + s.w - it.w;
+        render();
+        if (N) it.y = s.y + s.bh - B[it.id].h;
+      }
+    }
+    render();
+    const b = B[it.id];
+    tip = { x: b.x, y: b.y + b.h + 14, t: it.kind === 'heading' && corner ? `${it.font}px` : `${b.w} × ${b.h}` };
+    renderOverlay();
+  }
+
+  function onUp() {
+    window.removeEventListener('pointermove', onMove);
+    if (P && P.type === 'move' && P.moved && snap) {
+      // no guide on an axis → that axis lands on the dot grid (as today)
+      const ids = Object.keys(P.orig);
+      const g = bbox(ids);
+      const hasV = guides.some((x) => x.dir === 'v'), hasH = guides.some((x) => x.dir === 'h');
+      const ddx = hasV ? 0 : Math.round(g.x1 / 24) * 24 - g.x1, ddy = hasH ? 0 : Math.round(g.y1 / 24) * 24 - g.y1;
+      for (const k of ids) { const it = items.find((i) => i.id === k); it.x += ddx; it.y += ddy; }
+    }
+    P = null;
+    guides = [];
+    tip = null;
+    render();
+  }
+
+  // ---------- keyboard: arrows that align ----------
+  let lastKey = -Infinity;
+  function stepTargets(ids, ax, dir, withGrid, withAlign) {
+    const g = bbox(ids);
+    const c = [];
+    if (withAlign) for (const b of others(ids)) for (const t of lines(b, ax)) for (const m of mlines(g, ax)) { const d = t - m; if (Math.sign(d) === dir && Math.abs(d) >= 0.5) c.push({ d, b }); }
+    if (withGrid) { const e0 = ax === 'x' ? g.x1 : g.y1; const n = dir > 0 ? (Math.floor(e0 / 24) + 1) * 24 : (Math.ceil(e0 / 24) - 1) * 24; c.push({ d: n - e0, grid: true }); }
+    c.sort((a, b) => Math.abs(a.d) - Math.abs(b.d) || (a.grid ? 1 : -1));
+    return c[0] || null;
+  }
+  window.addEventListener('keydown', (e) => {
+    const mod = e.ctrlKey || e.metaKey;
+    if (mod && e.code === 'KeyZ') {
+      e.preventDefault();
+      if (undo.length) { items = JSON.parse(undo.pop()); guides = []; render(); say([K.mod, 'Z'], 'تراجع'); }
+      return;
+    }
+    if (!mod && e.code === 'KeyM') { snap = !snap; document.getElementById('snapBtn').classList.toggle('on', snap); guides = []; renderOverlay(); return say(['M'], snap ? 'المغناطيس شغّال' : 'المغناطيس طافي'); }
+    const D = { ArrowLeft: ['x', -1, '←'], ArrowRight: ['x', 1, '→'], ArrowUp: ['y', -1, '↑'], ArrowDown: ['y', 1, '↓'] }[e.key];
+    if (!D || !sel.length || mod) return;
+    e.preventDefault();
+    const [ax, dir, arrow] = D;
+    const now = performance.now();
+    if (now - lastKey > 900) save();
+    lastKey = now;
+    let d = dir, keys = [arrow], msg = '1px';
+    if (e.shiftKey) {
+      const t = stepTargets(sel, ax, dir, true, snap);
+      d = t.d;
+      keys = [K.shift, arrow];
+      msg = t.grid ? `خط الشبكة التالي (${Math.abs(Math.round(d))}px)` : `وقف عند خط المحاذاة مع «${t.b.label}»`;
+    } else if (e.altKey) {
+      keys = [K.alt, arrow];
+      if (!snap) return say(keys, 'المغناطيس طافي: شغّله عشان القفز للمحاذاة');
+      const t = stepTargets(sel, ax, dir, false, true);
+      if (!t) return say(keys, 'ما فيه شي تتحاذى معه بهالاتجاه');
+      d = t.d;
+      msg = `قفز لخط المحاذاة مع «${t.b.label}»`;
+    }
+    for (const k of sel) { const it = items.find((i) => i.id === k); if (ax === 'x') it.x += d; else it.y += d; }
+    render();
+    guides = snap ? guidesFor(bbox(sel), sel) : [];
+    if (!e.shiftKey && !e.altKey && guides.length) msg = `1px · تحاذى مع «${guides[0].box.label}»`;
+    renderOverlay();
+    say(keys, msg);
+    clearTimeout(kbdTimer);
+    kbdTimer = setTimeout(() => { guides.forEach((g) => (g.fade = true)); renderOverlay(); setTimeout(() => { if (guides.every((g) => g.fade)) { guides = []; renderOverlay(); } }, 380); }, 900);
+  });
+
+  document.getElementById('snapBtn').onclick = (e) => { snap = !snap; e.currentTarget.classList.toggle('on', snap); stage.focus(); };
+  document.getElementById('resetBtn').onclick = () => { save(); items = INITIAL(); sel = []; guides = []; render(); stage.focus(); };
+
+  // ---------- side panel ----------
+  const k = (...a) => a.map((x) => `<kbd>${x}</kbd>`).join('<span>+</span>');
+  const pre = `<svg viewBox="0 0 150 80" width="100%" style="display:block;margin:6px 0"><rect x="28" y="12" width="94" height="56" rx="7" fill="#efe6d6" stroke="#c9a14f" stroke-width="2"/><rect x="118" y="30" width="8" height="20" rx="2" fill="#fdfcfa" stroke="#c9a14f" stroke-width="2"/><rect x="24" y="30" width="8" height="20" rx="2" fill="#fdfcfa" stroke="#c9a14f" stroke-width="2"/><rect x="104" y="24" width="30" height="32" rx="4" fill="#a33a2a" opacity=".22"/></svg>`;
+  const post = `<svg viewBox="0 0 150 80" width="100%" style="display:block;margin:6px 0"><rect x="28" y="12" width="94" height="56" rx="7" fill="#efe6d6" stroke="#c9a14f" stroke-width="2"/><rect x="28" y="12" width="94" height="56" rx="7" fill="#2f8a5b" opacity=".16"/><rect x="128" y="30" width="8" height="20" rx="2" fill="#fdfcfa" stroke="#c9a14f" stroke-width="2"/><rect x="14" y="30" width="8" height="20" rx="2" fill="#fdfcfa" stroke="#c9a14f" stroke-width="2"/></svg>`;
+  document.getElementById('panel').innerHTML = `
+    <h2>الأسهم والمقابض</h2>
+    <div class="sub">جرّب هنا قبل ما ترسل التحديث. اضغط على أي عنصر ثم استخدم الأسهم.</div>
+    <h3>${ic('sparkles', 16)} الأسهم تحاذي مثل الماوس</h3>
+    <div class="kr"><div class="keys">${k('←')}${k('↑')}${k('→')}${k('↓')}</div><div>تحريك 1px. لما تتساوى الحافة أو الوسط مع عنصر ثاني، <b>يطلع خط المحاذاة</b>.</div></div>
+    <div class="kr"><div class="keys">${k(K.shift, '←')}</div><div>خطوة كبيرة <b>توقف عند أول خط محاذاة</b> أو خط شبكة، أيهما أقرب. ما تفوّت الحافة أبداً.</div></div>
+    <div class="kr"><div class="keys">${k(K.alt, '←')}</div><div><b>قفزة مباشرة</b> لأقرب خط محاذاة في هالاتجاه.</div></div>
+    <div class="kr"><div class="keys">${k(K.mod, 'Z')}</div><div>تراجع. ضغطات الأسهم المتتالية تنحسب خطوة وحدة.</div></div>
+    <h3>${ic('edit', 16)} المقابض: تحريك أو تكبير بدون لخبطة</h3>
+    <div class="cmp">
+      <div class="bad"><b>اليوم</b>${pre}نص المقبض داخل الكرت، فتمسك الطرف تبي تحرّكه ويكبر بالغلط.</div>
+      <div class="good"><b>بعد التحديث</b>${post}المقابض برّا الحافة. <b>أي مكان داخل العنصر = تحريك.</b></div>
+    </div>
+    <div class="rules">
+      <div><i>↔</i>الطرف يمدّ في اتجاه واحد. الصورة تنقصّ ولا تتمطط.</div>
+      <div><i>⤡</i>الزاوية تكبّر العنصر كله بنفس النسبة.</div>
+    </div>
+    <div class="try"><b>جرّب:</b> اختر «02 الوصول» واضغط ${k(K.shift, '↑')} مرتين: يوقف على الشبكة ثم على حافة «01». بعدها اسحب طرف الصورة: الإطار يمتد والدائرة تبقى دائرة.</div>`;
+
+  // ---------- states for screenshots ----------
+  const demo = q.get('demo');
+  if (demo === 'keys') {
+    items.find((i) => i.id === 's2').y = 66;
+    sel = ['s2'];
+    render();
+    guides = guidesFor(bbox(sel), sel);
+    renderOverlay();
+    say([K.shift, '↑'], 'وقف عند خط المحاذاة مع «01 الافتتاحية الجوية»');
+    clearTimeout(hudT);
+    stage.insertAdjacentHTML('beforeend', `<span class="note-tag" data-n="1" style="top:408px;left:330px">الأسهم تطلّع خط المحاذاة وتوقف عليه مثل الماوس</span>`);
+  } else if (demo === 'handles' || demo === 'stretch') {
+    sel = ['i1'];
+    if (demo === 'stretch') { const it = items.find((i) => i.id === 'i1'); it.w = 330; }
+    render();
+    if (demo === 'stretch') { const b = B.i1; tip = { x: b.x, y: b.y + b.h + 14, t: `${b.w} × ${b.h}` }; renderOverlay(); }
+    stage.insertAdjacentHTML('beforeend', demo === 'handles'
+      ? `<span class="note-tag" data-n="2" style="top:430px;left:640px">المقابض برّا الحافة · داخل العنصر = تحريك</span>`
+      : `<span class="note-tag" data-n="3" style="top:430px;left:420px">الطرف: الإطار امتد والصورة انقصّت بدون تمطيط</span>`);
+  } else {
+    if (q.get('sel')) sel = [q.get('sel')];
+    render();
+  }
+  stage.focus();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-sb-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>البساطة: حقولك — نموذج التحديث 3</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+body{background:var(--color-surface)}
+.app{position:relative;background:var(--color-bg);overflow:hidden;margin:0 auto;display:flex;flex-direction:column}
+.laptop{width:1440px;height:900px}
+.mobile{width:390px;height:844px;border:1px solid var(--color-border);border-radius:28px;margin-top:20px;box-shadow:var(--shadow-lift)}
+.top{height:60px;flex-shrink:0;display:flex;align-items:center;gap:14px;padding:0 20px;border-bottom:1px solid var(--color-border-subtle)}
+.top b{font-size:17px}
+.main{flex:1;display:flex;min-height:0}
+.board{flex:1;overflow:auto;padding:18px 22px 120px;background:var(--color-bg)}
+.rhythm{display:flex;gap:3px;height:28px;margin-bottom:16px}
+.rhythm i{border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:11px;font-weight:700;color:#fff;font-style:normal}
+.row{display:flex;border:1px solid var(--color-border-subtle);border-radius:14px;background:var(--color-surface);margin-bottom:18px;overflow:hidden}
+.rowhead{width:220px;flex-shrink:0;padding:16px;border-inline-start:1px solid var(--color-border-subtle);background:var(--color-bg);display:flex;flex-direction:column;gap:8px;position:relative}
+.rowhead .num{font-family:var(--font-display);font-size:38px;font-weight:900;line-height:1}
+.rowhead .name{font-size:17px;font-weight:700}
+.rowhead .addh{margin-top:auto;align-self:flex-start;height:32px;padding:0 12px;gap:4px;border-radius:8px;border:1px solid var(--color-border);background:var(--color-bg);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700;font-size:13px}
+.shots{display:flex;gap:14px;padding:16px;overflow-x:auto;flex:1}
+.card{width:190px;flex-shrink:0;background:var(--color-bg);border:1px solid var(--color-border-subtle);border-radius:8px;overflow:hidden;box-shadow:var(--shadow-card);transition:transform .18s var(--ease-standard),box-shadow .18s}
+.card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lift)}
+.card.sel{box-shadow:0 0 0 2px var(--color-accent)}
+.card .img{height:112px;position:relative}
+.card .img .n{position:absolute;top:8px;inset-inline-end:10px;font-family:var(--font-display);font-weight:900;font-size:22px;color:#fdfcfa;text-shadow:0 2px 8px rgba(0,0,0,.55)}
+.card .tx{padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.card .d{font-size:14px;font-weight:700;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .m{display:flex;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--color-text-muted)}
+.card .m span{display:inline-flex;align-items:center;gap:4px}
+.add{width:120px;flex-shrink:0;border:1.5px dashed var(--color-border);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--color-text-muted);font-weight:700;font-size:14px;background:transparent}
+.panel{width:420px;flex-shrink:0;border-inline-end:1px solid var(--color-border-subtle);background:var(--color-bg);overflow:auto;padding:16px 20px 40px;position:relative}
+.ph{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.ph h2{margin:0;font-family:var(--font-display);font-size:26px}
+.ph .sp{flex:1}
+.ib{width:36px;height:36px;border-radius:8px;border:1px solid var(--color-border);background:var(--color-bg);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.ib.on{background:var(--color-inverse-bg);color:var(--color-inverse-text)}
+.f{display:flex;flex-direction:column;gap:6px;margin-top:14px;animation:fin .22s var(--ease-standard) both}
+@keyframes fin{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.f>span{font-size:13px;font-weight:700;color:var(--color-text-muted)}
+.inp{height:44px;border:1px solid var(--color-border);border-radius:8px;display:flex;align-items:center;padding:0 12px;font-size:15px;background:var(--color-bg)}
+.refs{display:flex;gap:8px}
+.refs>div{width:120px;height:72px;border-radius:6px}
+.refs .drop{border:1.5px dashed var(--color-border);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--color-text-muted)}
+.det{margin-top:18px;border:1px solid var(--color-border-subtle);border-radius:10px;overflow:hidden}
+.det button.hd{width:100%;display:flex;align-items:center;gap:10px;padding:12px 14px;border:none;background:var(--color-surface);cursor:pointer;text-align:right}
+.det .hd b{font-size:15px}
+.det .hd small{display:block;font-size:12px;color:var(--color-text-muted);font-weight:400;margin-top:2px}
+.det .body{padding:0 14px 14px;display:none}
+.det.open .body{display:block}
+.pop{position:absolute;top:58px;inset-inline-start:16px;width:380px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:14px;box-shadow:var(--shadow-lift);padding:16px;z-index:50;display:none;animation:pin .2s var(--ease-standard)}
+@keyframes pin{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:none}}
+.pop.on{display:block}
+.pop h4{margin:0 0 4px;font-size:16px}
+.pop .sub{font-size:12px;color:var(--color-text-muted);margin-bottom:12px}
+.presets{display:flex;gap:6px;margin-bottom:12px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cols h5{margin:0 0 6px;font-size:13px;color:var(--color-text-muted)}
+.tg{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;font-size:14px;border-bottom:1px solid var(--color-border-subtle)}
+.sw{width:38px;height:22px;border-radius:11px;background:var(--color-surface-strong);position:relative;cursor:pointer;flex-shrink:0;transition:background .18s}
+.sw::after{content:'';position:absolute;top:3px;inset-inline-start:3px;width:16px;height:16px;border-radius:50%;background:var(--color-bg);box-shadow:0 1px 3px rgba(0,0,0,.25);transition:inset-inline-start .18s var(--ease-standard)}
+.sw.on{background:var(--color-accent)}
+.sw.on::after{inset-inline-start:19px}
+.sw.lock{opacity:.45;cursor:not-allowed}
+.mobile .top{height:56px;padding:0 14px}
+.sheet{flex:1;overflow:auto;padding:12px 16px 90px}
+.mfoot{position:absolute;bottom:0;left:0;right:0;height:62px;border-top:1px solid var(--color-border-subtle);background:var(--color-bg);display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-weight:700;font-size:14px}
+html.clean .note-tag{display:none}
+</style>
+</head>
+<body>
+<div id="app" class="app laptop"></div>
+<script src="icons.js"></script>
+<script>
+(function () {
+  const q = new URLSearchParams(location.hash.slice(1));
+  const MOBILE = q.get('view') === 'mobile';
+  if (q.get('theme')) document.documentElement.setAttribute('data-sb-theme', q.get('theme'));
+  if (q.get('clean')) document.documentElement.classList.add('clean');
+  const app = document.getElementById('app');
+  if (MOBILE) app.classList.replace('laptop', 'mobile');
+  const ic = (n, s = 16) => `<span class="ic" style="--s:${s}px"><svg viewBox="0 0 24 24">${(window.ICONS || {})[n] || ''}</svg></span>`;
+  const frame = (hex, x, y) => `radial-gradient(85% 75% at ${x}% ${y}%, ${hex}d9 0%, ${hex}40 40%, transparent 72%), linear-gradient(150deg, #2b2722 0%, #0e0d0b 100%)`;
+
+  // field registry: [key, label, default in «بسيط», locked]
+  const ED = [['refs', 'الصور المرجعية', 1], ['desc', 'الوصف', 1, 1], ['dur', 'المدة', 1], ['status', 'الحالة', 1], ['size', 'حجم اللقطة', 1], ['motion', 'الحركة', 1], ['angle', 'الزاوية', 0], ['camera', 'الكاميرا والعدسة', 0], ['rig', 'معدّة الحركة', 0], ['light', 'الإضاءة والمزاج', 0], ['audio', 'الصوت والحوار', 0]];
+  const CD = [['img', 'الصورة', 1, 1], ['desc', 'الوصف', 1, 1], ['dur', 'المدة', 1], ['status', 'نقطة الحالة', 1], ['size', 'الحجم', 0], ['motion', 'الحركة', 0], ['camera', 'الكاميرا', 0]];
+  const simple = () => ({ ed: Object.fromEntries(ED.map((f) => [f[0], !!f[2]])), cd: Object.fromEntries(CD.map((f) => [f[0], !!f[2]])) });
+  const full = () => ({ ed: Object.fromEntries(ED.map((f) => [f[0], true])), cd: Object.fromEntries(CD.map((f) => [f[0], true])) });
+  let prefs = q.get('preset') === 'full' ? full() : simple();
+  let preset = q.get('preset') === 'full' ? 'full' : 'simple';
+  let detOpen = q.get('det') === '1', popOn = q.get('pop') === '1';
+
+  const SHOT = { n: '2.2', desc: 'السيارة تتوقف أمام المدخل', dur: '00:03', status: 'مخططة', size: 'واسعة (WS)', motion: 'ثابتة', angle: 'مستوى العين', camera: 'ZV-E10 · Sigma 18-50 · 18mm', rig: 'ترايبود Benro', light: 'ذهبية المساء', audio: '' };
+  const SC = [
+    { n: '01', name: 'الافتتاحية الجوية', hex: '#c9a14f', shots: [['1.1', 'ريفيل: المشروع من خلف النخل', '00:04', 'WS', 'ريفيل', 'Mini 4 Pro', 1], ['1.2', 'تحليق علوي فوق الشوارع', '00:04', 'EWS', 'تحليق علوي', 'Mini 4 Pro', 0], ['1.3', 'أوربت حول المبنى الرئيسي', '00:04', 'WS', 'أوربت', 'Mini 4 Pro', 0]] },
+    { n: '02', name: 'الوصول', hex: '#c27a32', shots: [['2.1', 'منظور السائق: السيارة تدخل البوابة', '00:03', 'POV', 'دخول', 'iPhone 15 Pro', 1], ['2.2', 'السيارة تتوقف أمام المدخل', '00:03', 'WS', 'ثابتة', 'ZV-E10', 0], ['2.3', 'تتبّع العائلة من السيارة حتى الباب', '00:05', 'MS', 'تتبّع', 'iPhone 15 Pro', 0], ['2.4', 'الباب يفتح — دخول للصالة', '00:03', 'MS', 'دخول', 'iPhone 15 Pro', 0]] },
+  ];
+
+  function card(s, hex, i) {
+    const c = prefs.cd;
+    const meta = [c.size && `<span>${s[3]}</span>`, c.motion && `<span>${ic('repeat', 12)}${s[4]}</span>`, c.camera && `<span>${ic('camera', 12)}${s[5]}</span>`].filter(Boolean).join('');
+    return `<div class="card ${s[0] === '2.2' ? 'sel' : ''}"><div class="img" style="background:${frame(hex, 30 + i * 17, 40)}"><span class="n">${s[0]}</span></div><div class="tx"><div class="d">${c.status ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;${s[6] ? 'background:var(--color-text)' : 'border:1.5px solid var(--color-text-muted)'};margin-inline-end:6px"></span>` : ''}${s[1]}</div>${meta || c.dur ? `<div class="m">${c.dur ? `<span>${s[2]}</span>` : ''}${meta}</div>` : ''}</div></div>`;
+  }
+  function board() {
+    return `<div class="board"><div class="rhythm">${SC.map((s) => `<i style="flex:${s.shots.length};background:${s.hex}">${s.n}</i>`).join('')}</div>${SC.map((sc) => `<div class="row"><div class="rowhead"><span class="num">${sc.n}</span><span class="name">${sc.name}</span><span class="badge outline" style="align-self:flex-start">خارجي · نهار</span><button class="addh" title="لقطة جديدة">${ic('plus', 14)}لقطة</button></div><div class="shots">${sc.shots.map((s, i) => card(s, sc.hex, i)).join('')}<button class="add">${ic('plus', 18)}لقطة</button></div></div>`).join('')}
+      <span class="note-tag" data-n="1" style="top:182px;right:520px">«+ لقطة» آخر الصف ويتحرك معه · ما يغطي شي</span>
+      <span class="note-tag" data-n="2" style="top:300px;right:700px">زر + في رأس المشهد دايماً موجود</span></div>`;
+  }
+  function field(k) {
+    const S = SHOT;
+    switch (k) {
+      case 'refs': return `<div class="f"><span>${ic('image', 14)} الصور المرجعية</span><div class="refs"><div style="background:${frame('#c27a32', 40, 40)}"></div><div class="drop">اسحب أو الصق</div></div></div>`;
+      case 'desc': return `<div class="f"><span>الوصف</span><div class="inp">${S.desc}</div></div>`;
+      case 'dur': return `<div class="f" style="flex:1"><span>المدة</span><div class="inp" style="direction:ltr;justify-content:flex-end">00:03</div></div>`;
+      case 'status': return `<div class="f" style="flex:2"><span>الحالة</span><div class="chips" style="display:flex;gap:6px"><button class="chip on">مخططة</button><button class="chip">تصوّرت</button><button class="chip">معتمدة</button></div></div>`;
+      case 'size': return `<div class="f" style="flex:1"><span>الحجم</span><div class="inp">${S.size}</div></div>`;
+      case 'motion': return `<div class="f" style="flex:1"><span>الحركة</span><div class="inp">${S.motion}</div></div>`;
+      case 'angle': return `<div class="f"><span>الزاوية</span><div class="inp">${S.angle}</div></div>`;
+      case 'camera': return `<div class="f"><span>الكاميرا والعدسة</span><div class="inp">${S.camera}</div></div>`;
+      case 'rig': return `<div class="f"><span>معدّة الحركة</span><div class="inp">${S.rig}</div></div>`;
+      case 'light': return `<div class="f"><span>الإضاءة والمزاج</span><div class="inp">${S.light}</div></div>`;
+      case 'audio': return `<div class="f"><span>الصوت والحوار</span><div class="inp" style="color:var(--color-text-muted)">فاضي</div></div>`;
+    }
+  }
+  function editor() {
+    const e = prefs.ed, shown = ED.filter((f) => e[f[0]]).map((f) => f[0]), hidden = ED.filter((f) => !e[f[0]]).map((f) => f[0]);
+    const pair = (a, b) => (shown.includes(a) || shown.includes(b) ? `<div style="display:flex;gap:10px">${shown.includes(a) ? field(a) : ''}${shown.includes(b) ? field(b) : ''}</div>` : '');
+    const rest = shown.filter((k) => !['dur', 'status', 'size', 'motion'].includes(k)).map(field);
+    const summary = hidden.map((k) => ({ angle: SHOT.angle, camera: 'ZV-E10 · 18mm', rig: 'ترايبود', light: SHOT.light, audio: '' }[k])).filter(Boolean).join(' · ');
+    return `<div class="ph"><h2>اللقطة ${SHOT.n}</h2><span class="sp"></span><button class="ib ${popOn ? 'on' : ''}" id="tune" title="الحقول اللي تظهر">${ic('settings', 17)}</button><button class="ib" title="إغلاق">${ic('x', 17)}</button></div>
+      <div style="font-size:13px;color:var(--color-text-muted)">المشهد 02 · الوصول</div>
+      ${rest.slice(0, shown.includes('refs') ? 1 : 0).join('')}${field('desc')}${pair('dur', 'status')}${pair('size', 'motion')}${rest.slice(shown.includes('refs') ? 2 : 1).join('')}
+      ${hidden.length ? `<div class="det ${detOpen ? 'open' : ''}"><button class="hd" id="det">${ic('aperture', 18)}<span style="flex:1"><b>تفاصيل التصوير</b><small>${summary || 'فاضية'}</small></span>${ic(detOpen ? 'chevron-up' : 'chevron-down', 16)}</button><div class="body">${hidden.map(field).join('')}</div></div>` : ''}
+      <div class="pop ${popOn ? 'on' : ''}" id="pop"><h4>وش يظهر لك؟</h4><div class="sub">يتطبّق على كل اللقطات، في اللابتوب والجوال.</div>
+        <div class="presets"><button class="chip ${preset === 'simple' ? 'on' : ''}" data-preset="simple">بسيط</button><button class="chip ${preset === 'full' ? 'on' : ''}" data-preset="full">كامل</button><button class="chip ${preset === 'custom' ? 'on' : ''}" data-preset="custom">مخصص</button></div>
+        <div class="cols"><div><h5>في المحرر</h5>${ED.map((f) => `<div class="tg">${f[1]}<span class="sw ${prefs.ed[f[0]] ? 'on' : ''} ${f[3] ? 'lock' : ''}" data-t="ed.${f[0]}"></span></div>`).join('')}</div><div><h5>على الكرت</h5>${CD.map((f) => `<div class="tg">${f[1]}<span class="sw ${prefs.cd[f[0]] ? 'on' : ''} ${f[3] ? 'lock' : ''}" data-t="cd.${f[0]}"></span></div>`).join('')}</div></div>
+        <div style="font-size:12px;color:var(--color-text-muted);margin-top:10px;line-height:1.7">المخفي ما ينحذف: يظهر ملخصه في «تفاصيل التصوير».</div></div>
+      <span class="note-tag" data-n="3" style="top:14px;left:70px">زر «الحقول»</span>
+      ${hidden.length ? `<span class="note-tag" data-n="4" style="bottom:${detOpen ? 120 : 330}px;left:30px">الباقي مطوي · وملخصه ظاهر</span>` : ''}`;
+  }
+  function render() {
+    if (MOBILE) {
+      app.innerHTML = `<div class="top"><button class="ib">${ic('x', 17)}</button><b style="flex:1;text-align:center">اللقطة ${SHOT.n}</b><button class="ib ${popOn ? 'on' : ''}" id="tune">${ic('settings', 17)}</button></div><div class="sheet" style="position:relative">${editor().replace(/<div class="ph">[\s\S]*?<\/div>\s*<div style="font-size:13px/, '<div style="font-size:13px')}</div><div class="mfoot"><span>‹ السابقة</span><span class="muted" style="font-weight:400">محفوظ ✓</span><span>التالية ›</span></div>`;
+      app.querySelectorAll('.note-tag').forEach((n) => n.remove());
+      const pop = app.querySelector('#pop'); if (pop) { pop.style.cssText = 'position:fixed;top:auto;bottom:0;left:50%;transform:translateX(-50%);width:390px;border-radius:18px 18px 0 0;max-height:70%;overflow:auto;inset-inline-start:auto'; }
+    } else {
+      app.innerHTML = `<div class="top"><b>إعلان مشروع سكني — حي الياسمين</b><span style="flex:1"></span><span class="badge soft">الستوري بورد</span></div><div class="main"><aside class="panel">${editor()}</aside>${board()}</div>`;
+    }
+  }
+  app.addEventListener('click', (e) => {
+    if (e.target.closest('#tune')) { popOn = !popOn; render(); return; }
+    if (e.target.closest('#det')) { detOpen = !detOpen; render(); return; }
+    const p = e.target.closest('[data-preset]'); if (p) { preset = p.dataset.preset; if (preset === 'simple') prefs = simple(); if (preset === 'full') prefs = full(); render(); return; }
+    const t = e.target.closest('[data-t]'); if (t && !t.classList.contains('lock')) { const [g, k] = t.dataset.t.split('.'); prefs[g][k] = !prefs[g][k]; preset = 'custom'; render(); }
+  });
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-sb-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>الحركة — نموذج التحديث 3</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+:root{--e-out:cubic-bezier(.2,0,0,1);--e-in:cubic-bezier(.4,0,1,1);--e-std:cubic-bezier(.4,0,.2,1)}
+body{background:var(--color-surface);padding:28px 32px 60px}
+header{display:flex;align-items:flex-end;gap:16px;margin-bottom:22px}
+header h1{margin:0;font-family:var(--font-display);font-size:40px}
+header p{margin:6px 0 0;color:var(--color-text-muted);font-size:15px}
+header .sp{flex:1}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.tile{background:var(--color-bg);border:1px solid var(--color-border-subtle);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;min-height:270px}
+.tile h3{margin:0;font-size:17px;display:flex;align-items:center;gap:8px}
+.tile h3 .k{font-size:12px;font-weight:700;color:var(--color-text-muted);margin-inline-start:auto;unicode-bidi:isolate}
+.tile .why{font-size:13px;color:var(--color-text-muted);line-height:1.6;margin:0}
+.stage{flex:1;position:relative;border-radius:10px;background:var(--color-surface);overflow:hidden;min-height:150px}
+.play{align-self:flex-start}
+.mini{position:absolute;width:62px;height:44px;border-radius:6px;background:linear-gradient(150deg,#2b2722,#0e0d0b);box-shadow:var(--shadow-card)}
+.mini::after{content:'';position:absolute;inset:0;border-radius:6px;background:radial-gradient(70% 60% at 40% 40%,var(--h,#c9a14f) 0%,transparent 70%);opacity:.8}
+.sig{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;background:var(--color-accent);color:#141210;font-size:11px;font-weight:700}
+.reduced *{animation-duration:1ms!important;transition-duration:1ms!important}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>الحركة</h1><p>هادئة ومتنوعة: كل حركة تشرح شيئاً (من وين جا العنصر، وين راح، وش تغيّر). اضغط «شغّل» على أي مربع.</p></div>
+  <span class="sp"></span>
+  <label class="chip" style="cursor:pointer"><input type="checkbox" id="reduce" style="accent-color:var(--color-accent)"> حركة أقل</label>
+  <button class="btn primary" id="all">شغّل الكل</button>
+</header>
+<div class="grid" id="grid"></div>
+<script src="icons.js"></script>
+<script src="common.js"></script>
+<script>
+const T = [
+  ['tabs', 'التنقل بين لوحة الأفكار والستوري بورد', '240ms · ease-out', 'الشاشة الجديدة تنزلق 24px من جهة التبويب وتظهر، والقديمة تتلاشى. تعرف أنت رحت يمين ولا يسار.'],
+  ['stagger', 'دخول الكروت', '30ms بين كل كرت · 220ms', 'أول ما تفتح المشروع، الكروت تظهر وحدة ورا الثانية مثل شريط الأفلام. أول 12 كرت فقط، الباقي مباشرة.'],
+  ['panel', 'فتح المحرر', '260ms · ease-out', 'اللوحة تدخل من الجنب مع ظل يكبر. في الجوال: ورقة من تحت.'],
+  ['flip', 'إعادة الترتيب', '220ms · FLIP', 'لما تسحب لقطة لمكان جديد، الباقي ينزلق لمكانه بدل ما يقفز. وتحطها، فتستقر بنبضة خفيفة.'],
+  ['add', 'إضافة وحذف', '200ms · ease-out / 160ms · ease-in', 'العنصر الجديد يكبر من 96% مع حلقة ذهبية تختفي. المحذوف ينطوي، والفراغ ينسد بهدوء.'],
+  ['check', '«تصوّرت»', '320ms', 'علامة الصح تنرسم بخط، والكرت يخفت شوي. إحساس إنك شطبت لقطة.'],
+  ['rhythm', 'شريط إيقاع الفيلم يمتلئ', 'لحظة توقيعية · 600ms', 'لما يفتح المشروع، أجزاء الشريط تمتلئ من اليمين بالترتيب مثل التايملاين.', 1],
+  ['develop', 'الصورة «تتحمّض»', 'لحظة توقيعية · 500ms', 'الصورة أول ما تحمّل تطلع من ضبابية دافئة إلى واضحة، مثل صورة في معمل التحميض.', 1],
+  ['cone', 'زاوية الكاميرا في المخطط', '260ms · ease-out', 'تغيّر العدسة فالزاوية تتسع أو تضيق قدامك، فتفهم الفرق بين 18mm و50mm بعينك.'],
+  ['count', 'الأرقام تعدّ', '400ms', 'لما تتغير مدة المشهد أو الفيلم، الرقم يعدّ للقيمة الجديدة بدل ما يقفز.'],
+  ['toast', 'الإشعار و«تراجع»', '200ms دخول · 160ms خروج', 'يطلع من تحت بهدوء، وزر «تراجع» واضح.'],
+  ['hover', 'المرور والضغط', '150ms', 'على اللابتوب الكرت يرتفع 2px مع ظل. أي زر ينضغط إلى 97% لحظة الضغط.'],
+];
+const grid = document.getElementById('grid');
+grid.innerHTML = T.map(([k, t, d, w, s]) => `<div class="tile"><h3>${t}${s ? ' <span class="sig">توقيعية</span>' : ''}<span class="k">${d}</span></h3><p class="why">${w}</p><div class="stage" id="st-${k}"></div><button class="btn outline sm play" data-k="${k}">شغّل</button></div>`).join('');
+const st = (k) => document.getElementById('st-' + k);
+const A = (el, kf, o) => el.animate(kf, { fill: 'both', ...o });
+const H = ['#c9a14f', '#c27a32', '#94603f', '#2e3d5c', '#6c6a3c', '#6e2c34', '#cdb488', '#7c8288'];
+function mini(x, y, i, w = 62, h = 44) { return `<div class="mini" style="right:${x}px;top:${y}px;width:${w}px;height:${h}px;--h:${H[i % 8]}"></div>`; }
+const R = {
+  tabs() { const s = st('tabs'); s.innerHTML = `<div style="position:absolute;top:10px;right:10px;display:flex;gap:6px"><span class="chip on" id="t1">الستوري بورد</span><span class="chip" id="t2">لوحة الأفكار</span></div><div id="pa" style="position:absolute;inset:50px 10px 10px">${[0, 1, 2, 3].map((i) => mini(i * 70, 10, i)).join('')}${[0, 1, 2, 3].map((i) => mini(i * 70, 62, i + 3)).join('')}</div>`; const pa = s.querySelector('#pa');
+    setTimeout(() => { s.querySelector('#t1').classList.remove('on'); s.querySelector('#t2').classList.add('on'); A(pa, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(-12px)' }], { duration: 140, easing: 'cubic-bezier(.4,0,1,1)' }).onfinish = () => { pa.innerHTML = `<div style="position:absolute;right:40px;top:4px;width:90px;height:70px;border-radius:8px;background:var(--color-bg);box-shadow:var(--shadow-card)"></div><div style="position:absolute;right:150px;top:20px;width:80px;height:60px;border-radius:8px;background:#efe3c9"></div>${mini(60, 80, 2, 80, 22)}`; A(pa, [{ opacity: 0, transform: 'translateX(24px)' }, { opacity: 1, transform: 'none' }], { duration: 240, easing: 'cubic-bezier(.2,0,0,1)' }); }; }, 300); },
+  stagger() { const s = st('stagger'); s.innerHTML = [...Array(10)].map((_, i) => mini(12 + (i % 5) * 72, 18 + Math.floor(i / 5) * 62, i)).join(''); [...s.children].forEach((c, i) => A(c, [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 220, delay: i * 30, easing: 'cubic-bezier(.2,0,0,1)' })); },
+  panel() { const s = st('panel'); s.innerHTML = `${[0, 1, 2, 3].map((i) => mini(150 + i * 66, 40, i)).join('')}<div id="pp" style="position:absolute;top:0;bottom:0;right:0;width:130px;background:var(--color-bg);border-inline-start:1px solid var(--color-border-subtle);padding:12px"><div style="height:10px;width:70%;background:var(--color-surface-strong);border-radius:4px;margin-bottom:10px"></div><div style="height:28px;background:var(--color-surface);border:1px solid var(--color-border-subtle);border-radius:6px;margin-bottom:8px"></div><div style="height:28px;background:var(--color-surface);border:1px solid var(--color-border-subtle);border-radius:6px"></div></div>`; A(s.querySelector('#pp'), [{ transform: 'translateX(40px)', opacity: 0, boxShadow: '0 0 0 rgba(0,0,0,0)' }, { transform: 'none', opacity: 1, boxShadow: '-14px 0 30px rgba(20,18,16,.12)' }], { duration: 260, easing: 'cubic-bezier(.2,0,0,1)' }); },
+  flip() { const s = st('flip'); s.innerHTML = [0, 1, 2, 3, 4].map((i) => `<div class="mini" data-i="${i}" style="right:${14 + i * 72}px;top:50px;--h:${H[i]}"></div>`).join(''); const els = [...s.children];
+    setTimeout(() => { const order = [0, 3, 1, 2, 4]; const first = els.map((e) => e.getBoundingClientRect().left); order.forEach((oi, pos) => (els[oi].style.right = 14 + pos * 72 + 'px')); els.forEach((e, i) => { const dx = first[i] - e.getBoundingClientRect().left; if (dx) A(e, [{ transform: `translateX(${dx}px)` }, { transform: 'none' }], { duration: 220, easing: 'cubic-bezier(.4,0,.2,1)' }); }); A(els[3], [{ transform: 'translateX(' + (first[3] - els[3].getBoundingClientRect().left) + 'px) scale(1.06)', zIndex: 2 }, { transform: 'scale(1.03)', offset: .8 }, { transform: 'none' }], { duration: 300, easing: 'cubic-bezier(.2,0,0,1)' }); }, 300); },
+  add() { const s = st('add'); s.innerHTML = [0, 1, 2].map((i) => `<div class="mini" style="right:${14 + i * 72}px;top:50px;--h:${H[i]}"></div>`).join(''); const n = document.createElement('div'); n.className = 'mini'; n.style.cssText = `right:${14 + 3 * 72}px;top:50px;--h:${H[5]}`; s.appendChild(n);
+    A(n, [{ opacity: 0, transform: 'scale(.96)', boxShadow: '0 0 0 0 rgba(210,160,106,.9)' }, { opacity: 1, transform: 'none', boxShadow: '0 0 0 8px rgba(210,160,106,0)' }], { duration: 600, easing: 'cubic-bezier(.2,0,0,1)' });
+    setTimeout(() => { const d = s.children[1]; A(d, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.9)' }], { duration: 160, easing: 'cubic-bezier(.4,0,1,1)' }).onfinish = () => { d.remove(); [...s.children].forEach((c, i) => { const to = 14 + i * 72, from = parseFloat(c.style.right); c.style.right = to + 'px'; A(c, [{ transform: `translateX(${to - from}px)` }, { transform: 'none' }], { duration: 200, easing: 'cubic-bezier(.4,0,.2,1)' }); }); }; }, 1100); },
+  check() { const s = st('check'); s.innerHTML = `<div id="cc" style="position:absolute;right:50%;top:22px;transform:translateX(50%);width:170px;border-radius:8px;background:var(--color-bg);box-shadow:var(--shadow-card);overflow:hidden"><div class="mini" style="position:relative;width:170px;height:84px;border-radius:0"></div><div style="padding:8px 10px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="var(--color-accent)"/><path id="ck" d="M5.5 10.5l3 3 6-6.5" fill="none" stroke="#141210" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="14" stroke-dashoffset="14"/></svg>ريفيل من خلف النخل</div></div>`;
+    A(s.querySelector('#ck'), [{ strokeDashoffset: 14 }, { strokeDashoffset: 0 }], { duration: 320, delay: 250, easing: 'cubic-bezier(.2,0,0,1)' }); A(s.querySelector('#cc'), [{ opacity: 1 }, { opacity: 0.72 }], { duration: 300, delay: 450 }); },
+  rhythm() { const s = st('rhythm'); const w = [3, 2, 4, 2, 3]; s.innerHTML = `<div style="position:absolute;inset:50px 14px auto;display:flex;gap:3px;height:30px">${w.map((x, i) => `<i style="flex:${x};background:${H[i]};border-radius:4px;transform-origin:right"></i>`).join('')}</div><div style="position:absolute;top:96px;right:14px;font-family:var(--font-display);font-size:30px;font-weight:900" id="rt">01:12</div>`; [...s.querySelector('div').children].forEach((c, i) => A(c, [{ transform: 'scaleX(0)', opacity: .3 }, { transform: 'none', opacity: 1 }], { duration: 260, delay: i * 85, easing: 'cubic-bezier(.2,0,0,1)' })); },
+  develop() { const s = st('develop'); s.innerHTML = `<div id="ph" style="position:absolute;inset:16px 40px;border-radius:8px;background:radial-gradient(70% 70% at 35% 40%,#e1b56a,#7a4a1f 55%,#1c140c);"></div>`; A(s.querySelector('#ph'), [{ filter: 'blur(10px) sepia(.8) brightness(1.25)', opacity: .35, transform: 'scale(1.02)' }, { filter: 'blur(0) sepia(0) brightness(1)', opacity: 1, transform: 'none' }], { duration: 500, easing: 'cubic-bezier(.2,0,0,1)' }); },
+  cone() { const s = st('cone'); s.innerHTML = `<svg viewBox="0 0 320 150" style="position:absolute;inset:0;width:100%;height:100%"><path id="cp" fill="#c27a32" fill-opacity=".14" stroke="#c27a32" stroke-opacity=".6"/><rect x="146" y="118" width="28" height="18" rx="4" fill="#2d2c2a"/><rect x="152" y="108" width="16" height="12" rx="3" fill="#151515"/><text id="cl" x="160" y="18" text-anchor="middle" font-size="13" font-weight="700" fill="#c27a32" style="direction:ltr"></text></svg>`;
+    const p = s.querySelector('#cp'), l = s.querySelector('#cl'); const draw = (f) => { const a = (f / 2) * Math.PI / 180, r = 110; p.setAttribute('d', `M160 112L${160 - r * Math.sin(a)} ${112 - r * Math.cos(a)}A${r} ${r} 0 0 1 ${160 + r * Math.sin(a)} ${112 - r * Math.cos(a)}Z`); };
+    const seq = [[18, 66], [50, 27], [24, 52]]; let i = 0; draw(66); l.textContent = '18mm · 66°';
+    const go = () => { if (i >= seq.length - 1) return; const [, f0] = seq[i], [mm, f1] = seq[i + 1], t0 = performance.now(); l.textContent = mm + 'mm · ' + f1 + '°'; const step = (t) => { const k = Math.min(1, (t - t0) / 260), e = 1 - Math.pow(1 - k, 3); draw(f0 + (f1 - f0) * e); if (k < 1) requestAnimationFrame(step); else { i++; setTimeout(go, 600); } }; requestAnimationFrame(step); }; setTimeout(go, 400); },
+  count() { const s = st('count'); s.innerHTML = `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:10px;flex-direction:column"><div id="cn" style="font-family:var(--font-display);font-size:54px;font-weight:900;direction:ltr">00:35</div><span class="muted" style="font-size:13px">مدة الفيلم</span></div>`; const el = s.querySelector('#cn'), a = 35, b = 41, t0 = performance.now(); const step = (t) => { const k = Math.min(1, (t - t0) / 400), v = Math.round(a + (b - a) * (1 - Math.pow(1 - k, 3))); el.textContent = '00:' + String(v).padStart(2, '0'); if (k < 1) requestAnimationFrame(step); }; setTimeout(() => requestAnimationFrame(step), 250); },
+  toast() { const s = st('toast'); s.innerHTML = `<div id="ts" style="position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:var(--color-inverse-bg);color:var(--color-inverse-text);padding:10px 14px;border-radius:10px;font-size:14px;font-weight:700;display:flex;gap:14px;white-space:nowrap">انحذفت اللقطة <span style="color:var(--color-accent)">تراجع</span></div>`; const t = s.querySelector('#ts'); A(t, [{ opacity: 0, transform: 'translate(-50%,16px)' }, { opacity: 1, transform: 'translate(-50%,0)' }], { duration: 200, easing: 'cubic-bezier(.2,0,0,1)' }); setTimeout(() => A(t, [{ opacity: 1, transform: 'translate(-50%,0)' }, { opacity: 0, transform: 'translate(-50%,8px)' }], { duration: 160, easing: 'cubic-bezier(.4,0,1,1)' }), 1800); },
+  hover() { const s = st('hover'); s.innerHTML = `<div id="hv" style="position:absolute;right:50%;top:26px;transform:translateX(50%);width:150px;height:96px;border-radius:8px;background:var(--color-bg);box-shadow:var(--shadow-card);transition:transform .15s var(--e-std),box-shadow .15s"><div class="mini" style="position:relative;width:150px;height:70px;border-radius:8px 8px 0 0"></div></div><button class="btn primary sm" id="pb" style="position:absolute;bottom:12px;right:50%;transform:translateX(50%);transition:transform .1s">زر</button>`; const h = s.querySelector('#hv'), b = s.querySelector('#pb');
+    setTimeout(() => { h.style.transform = 'translateX(50%) translateY(-2px)'; h.style.boxShadow = 'var(--shadow-lift)'; }, 250); setTimeout(() => { h.style.transform = 'translateX(50%)'; h.style.boxShadow = 'var(--shadow-card)'; b.style.transform = 'translateX(50%) scale(.97)'; }, 1100); setTimeout(() => (b.style.transform = 'translateX(50%)'), 1250);
+    h.onmouseenter = () => { h.style.transform = 'translateX(50%) translateY(-2px)'; h.style.boxShadow = 'var(--shadow-lift)'; }; h.onmouseleave = () => { h.style.transform = 'translateX(50%)'; h.style.boxShadow = 'var(--shadow-card)'; }; b.onpointerdown = () => (b.style.transform = 'translateX(50%) scale(.97)'); b.onpointerup = () => (b.style.transform = 'translateX(50%)'); },
+};
+document.addEventListener('click', (e) => { const b = e.target.closest('[data-k]'); if (b) R[b.dataset.k](); });
+document.getElementById('all').onclick = () => Object.keys(R).forEach((k, i) => setTimeout(R[k], i * 120));
+document.getElementById('reduce').onchange = (e) => document.body.classList.toggle('reduced', e.target.checked);
+Object.keys(R).forEach((k) => R[k]());
+</script>
+</body>
+</html>
