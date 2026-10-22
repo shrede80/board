@@ -7,3 +7,7 @@ dist/
 test-results/
 playwright-report/
 .backups/
+
+# screenshots must never land in the repository (e2e/helpers.ts shot())
+/undefined/
+*.png.tmp

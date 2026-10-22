@@ -55,3 +55,13 @@ export async function pasteImage(page: Page, color = '#c9a14f') {
 export function shotNums(page: Page) {
   return page.getByTestId('shot-num').allTextContents();
 }
+
+/**
+ * Optional screenshot for a visual check: written only when SHOTS is set to an absolute folder
+ * outside the repository (never a relative or missing path, which once created «undefined/»).
+ */
+export async function shot(target: Page | import('@playwright/test').Locator, name: string) {
+  const dir = process.env.SHOTS;
+  if (!dir || !dir.startsWith('/') || dir.startsWith(process.cwd())) return;
+  await target.screenshot({ path: `${dir}/${name}.png` });
+}

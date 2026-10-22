@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { login } from './helpers';
+import { login, shot } from './helpers';
 
 /** Update 3 on the phone: every visible button in the scene and shot editors is ≥ 44×44 (§2.3). */
 test.describe.configure({ mode: 'serial' });
@@ -56,7 +56,7 @@ test('phone: tap targets in the scene and shot editors are at least 44×44', asy
   await expect(page.getByTestId('editor')).toBeVisible();
   await page.waitForTimeout(300);
   expect(await smallTargets(page), 'scene editor').toEqual([]);
-  if (process.env.SHOTS) await page.getByTestId('editor').screenshot({ path: `${process.env.SHOTS}/m-scene-editor.png` });
+  await shot(page.getByTestId('editor'), 'm-scene-editor');
   await page.getByTestId('editor-close').click();
   await page.getByTestId('m-strip-shot').first().click();
   await expect(page.getByTestId('editor')).toBeVisible();
