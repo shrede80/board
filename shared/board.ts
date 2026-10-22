@@ -212,7 +212,7 @@ export interface NudgeResult {
   dy: number;
   /** what stopped the move: an alignment guide, a grid line, a plain step, nothing to jump to, or the magnet is off */
   stop: 'guide' | 'grid' | 'step' | 'none' | 'off';
-  /** the box aligned with, when stop = 'guide' */
+  /** the nearest box the group is aligned with after the move (named in the bar under the board) */
   box: Box | null;
   /** guides where the moved group now sits exactly on another box's edge or centre */
   guides: Guide[];
@@ -220,24 +220,39 @@ export interface NudgeResult {
 
 const marks = (a: number, len: number) => [a, a + len / 2, a + len];
 
-/** Guides for every edge/centre of `g` that sits exactly (< eps) on an edge/centre of another box. */
+/** Empty space between two boxes (0 when they touch or overlap): how near another box is. */
+export function boxGap(a: Box, b: Box): number {
+  const dx = Math.max(0, a.x - (b.x + b.w), b.x - (a.x + a.w));
+  const dy = Math.max(0, a.y - (b.y + b.h), b.y - (a.y + a.h));
+  return Math.hypot(dx, dy);
+}
+
+/**
+ * Guides for every edge/centre of `g` that sits exactly (< eps) on an edge/centre of another box.
+ * When several boxes share a line, the guide belongs to the nearest one (it is the one the user
+ * aligned with), and spans from the group to it.
+ */
 export function exactGuides(g: Box, others: Box[], eps = 0.5): (Guide & { box: Box })[] {
-  const out: (Guide & { box: Box })[] = [];
-  const seen = new Set<string>();
+  const best = new Map<string, Guide & { box: Box }>();
+  const keep = (key: string, gd: Guide & { box: Box }) => {
+    const cur = best.get(key);
+    if (!cur || boxGap(g, gd.box) < boxGap(g, cur.box)) best.set(key, gd);
+  };
   for (const b of others) {
     for (const t of marks(b.x, b.w)) for (const m of marks(g.x, g.w)) {
-      if (Math.abs(t - m) < eps && !seen.has('v' + t)) {
-        seen.add('v' + t);
-        out.push({ dir: 'v', at: t, from: Math.min(g.y, b.y), to: Math.max(g.y + g.h, b.y + b.h), box: b });
-      }
+      if (Math.abs(t - m) < eps) keep('v' + t, { dir: 'v', at: t, from: Math.min(g.y, b.y), to: Math.max(g.y + g.h, b.y + b.h), box: b });
     }
     for (const t of marks(b.y, b.h)) for (const m of marks(g.y, g.h)) {
-      if (Math.abs(t - m) < eps && !seen.has('h' + t)) {
-        seen.add('h' + t);
-        out.push({ dir: 'h', at: t, from: Math.min(g.x, b.x), to: Math.max(g.x + g.w, b.x + b.w), box: b });
-      }
+      if (Math.abs(t - m) < eps) keep('h' + t, { dir: 'h', at: t, from: Math.min(g.x, b.x), to: Math.max(g.x + g.w, b.x + b.w), box: b });
     }
   }
+  return [...best.values()];
+}
+
+/** The nearest of the boxes the group is aligned with now. */
+function nearestOf(g: Box, gs: { box: Box }[]): Box | null {
+  let out: Box | null = null;
+  for (const x of gs) if (!out || boxGap(g, x.box) < boxGap(g, out)) out = x.box;
   return out;
 }
 
@@ -253,7 +268,8 @@ export function nudgeStep(inp: NudgeInput): NudgeResult {
   const g = inp.group;
   const at = (d: number): NudgeResult => {
     const moved = horiz ? { ...g, x: g.x + d } : { ...g, y: g.y + d };
-    return { dx: horiz ? d : 0, dy: horiz ? 0 : d, stop: 'step', box: null, guides: inp.snap ? exactGuides(moved, inp.others, eps).map(({ box: _b, ...x }) => x) : [] };
+    const gs = inp.snap ? exactGuides(moved, inp.others, eps) : [];
+    return { dx: horiz ? d : 0, dy: horiz ? 0 : d, stop: 'step', box: nearestOf(moved, gs), guides: gs.map(({ box: _b, ...x }) => x) };
   };
   if (inp.mode === 'step') return at(sign * step);
   if (!inp.snap) {
@@ -262,26 +278,28 @@ export function nudgeStep(inp: NudgeInput): NudgeResult {
   }
   // nearest alignment line ahead: any edge/centre of the group onto any edge/centre of another box
   const own = horiz ? marks(g.x, g.w) : marks(g.y, g.h);
+  // the same line on several boxes: the nearest box is the one named (UPDATE-3 §3.1)
   let best: { d: number; box: Box } | null = null;
   for (const b of inp.others) {
     for (const t of horiz ? marks(b.x, b.w) : marks(b.y, b.h)) {
       for (const m of own) {
         const d = (t - m) * sign;
-        if (d > eps && (!best || d < best.d)) best = { d, box: b };
+        if (d <= eps) continue;
+        if (!best || d < best.d - eps || (Math.abs(d - best.d) <= eps && boxGap(g, b) < boxGap(g, best.box))) best = { d, box: b };
       }
     }
   }
   if (inp.mode === 'jump') {
     if (!best) return { dx: 0, dy: 0, stop: 'none', box: null, guides: [] };
-    return { ...at(sign * best.d), stop: 'guide', box: best.box };
+    return { ...at(sign * best.d), stop: 'guide' };
   }
   // Shift: whichever comes first, the guide or the next grid line of the leading-start edge
   const p0 = horiz ? g.x : g.y;
   const nextGrid = sign > 0 ? Math.floor(p0 / grid + 1e-9) * grid + grid : Math.ceil(p0 / grid - 1e-9) * grid - grid;
   let gd = Math.abs(nextGrid - p0);
   if (gd <= eps) gd += grid;
-  if (best && best.d <= gd + 1e-9) return { ...at(sign * best.d), stop: 'guide', box: best.box };
-  return { ...at(sign * gd), stop: 'grid' };
+  if (best && best.d <= gd + 1e-9) return { ...at(sign * best.d), stop: 'guide' };
+  return { ...at(sign * gd), stop: 'grid', box: null };
 }
 
 // ---------- auto-arrange (SPEC 7ب.4, UPDATE-1 أ4: real sizes, never overlapping) ----------

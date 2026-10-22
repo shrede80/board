@@ -21,9 +21,29 @@ export function setBoardEl(el: HTMLDivElement | null) {
   if (el === boardEl) return;
   boardEl?.removeEventListener('wheel', onWheel);
   boardEl?.removeEventListener('touchstart', onTouchStart);
+  boardEl?.removeEventListener('pointermove', trackPointer);
+  boardEl?.removeEventListener('pointerleave', forgetPointer);
   boardEl = el;
   el?.addEventListener('wheel', onWheel, { passive: false });
   el?.addEventListener('touchstart', onTouchStart, { passive: false });
+  el?.addEventListener('pointermove', trackPointer);
+  el?.addEventListener('pointerleave', forgetPointer);
+}
+
+/** Where the pointer is over the board (new items from a shortcut go there, UPDATE-3 §3.3). */
+let pointerAt: { x: number; y: number } | null = null;
+function trackPointer(e: PointerEvent) {
+  pointerAt = { x: e.clientX, y: e.clientY };
+}
+function forgetPointer() {
+  pointerAt = null;
+}
+/** World position for an item added by a key: under the pointer if it is over the board, else the middle. */
+export function addPos() {
+  if (!pointerAt || !boardEl) return centerWorld();
+  const w = toWorld(pointerAt.x, pointerAt.y);
+  // same offset as centerWorld(): the point lands near the middle of a ~240×200 card
+  return { x: Math.round(w.x - 120), y: Math.round(w.y - 100) };
 }
 export const getBoardEl = () => boardEl;
 
@@ -121,14 +141,30 @@ function itemsIn(r: { x: number; y: number; w: number; h: number }) {
 }
 
 export function fitAll() {
+  fitBoxes(itemBoxes());
+}
+
+/** «تكبير على المحدد» (Shift 2). */
+export function zoomToSelection() {
+  const sel = new Set(getState().selection);
+  const bx = itemBoxes().filter((b) => sel.has(b.id));
+  if (bx.length) fitBoxes(bx, 2);
+}
+
+/** «حجم 100%» (Shift 0): zoom 1 around the middle of the screen. */
+export function zoom100() {
+  if (!boardEl) return;
+  zoomBy(1 / getState().view.z);
+}
+
+function fitBoxes(bx: Box[], maxZ = 1) {
   const p = project();
   if (!boardEl || !p) return;
   const r = boardEl.getBoundingClientRect();
-  const bx = itemBoxes();
   if (!bx.length) return setState({ view: { x: r.width / 2 - 200, y: 80, z: 1 } });
   const minX = Math.min(...bx.map((b) => b.x)), minY = Math.min(...bx.map((b) => b.y));
   const maxX = Math.max(...bx.map((b) => b.x + b.w)), maxY = Math.max(...bx.map((b) => b.y + b.h));
-  const z = Math.max(0.15, Math.min(1, (r.width - 80) / (maxX - minX), (r.height - 150) / (maxY - minY)));
+  const z = Math.max(0.15, Math.min(maxZ, (r.width - 80) / (maxX - minX), (r.height - 150) / (maxY - minY)));
   setState({ view: { z, x: (r.width - (maxX - minX) * z) / 2 - minX * z, y: Math.max(24, (r.height - 110 - (maxY - minY) * z) / 2) - minY * z } });
 }
 registerFitAll(() => setTimeout(fitAll, 30));
@@ -574,8 +610,8 @@ export function nudge(dir: NudgeDir, mode: NudgeMode, keyNames: { shift: string;
     guideTimer = setTimeout(() => setState({ guides: [], guidesFade: false }), GUIDE_FADE_MS);
   }, GUIDE_HOLD_MS);
   if (mode !== 'step' || r.guides.length) {
-    const target = r.box ?? (r.guides.length ? (others.find((o) => r.guides.some((g) => (g.dir === 'v' ? [o.x, o.x + o.w / 2, o.x + o.w] : [o.y, o.y + o.h / 2, o.y + o.h]).some((t) => Math.abs(t - g.at) < 0.5))) ?? null) : null);
-    const name = target ? itemLabel(target.id) : '';
+    // the nearest box on the line is the one named (shared/board.ts nudgeStep)
+    const name = r.box ? itemLabel(r.box.id) : '';
     if (r.stop === 'grid') hud(keys, 'وقف عند خط الشبكة');
     else if (name) hud(keys, `${mode === 'jump' ? 'قفز لخط المحاذاة' : mode === 'next' ? 'وقف عند خط المحاذاة' : 'تحاذى'} مع «${name}»`);
   }

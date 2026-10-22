@@ -1,4 +1,7 @@
+import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
+import { shownFields } from '../../shared/fields';
+import { backup } from '../src/maintenance';
 import { call, getJson, ops, setupAndLogin, upload } from './helpers';
 
 /** Update 3 data, phase A1: the photo height of a scene card on the board (UPDATE-3 §3.2, §8). */
@@ -42,5 +45,42 @@ describe('scenes.boardImgH and boardCards.h for photo cards', () => {
     const { projectId } = (await res.json()) as { projectId: string };
     const b = await getJson(`/api/projects/${projectId}`, cookie);
     expect(b.rows.scenes[0]).toMatchObject({ boardW: 300, boardImgH: null });
+  });
+});
+
+describe('prefs (UPDATE-3 §8): the fields, motion and keys settings', () => {
+  it('nothing saved = «بسيط»; a saved value syncs through /api/changes and home; unknown keys are refused', async () => {
+    const cookie = await setupAndLogin();
+    const home0 = await getJson('/api/home', cookie);
+    expect(home0.rows.prefs ?? []).toEqual([]);
+    expect(shownFields(null).shotEditor.has('camera')).toBe(false); // the default is «بسيط»
+    const t0 = Date.now() - 1;
+    await ops(cookie, [
+      { op: 'create', entity: 'prefs', id: 'fields', fields: { value: { preset: 'full' } } },
+      { op: 'create', entity: 'prefs', id: 'keys', fields: { value: { duplicate: 'Alt+KeyK' } } },
+      { op: 'create', entity: 'prefs', id: 'motion', fields: { value: { less: true } } },
+    ]);
+    const ch = await getJson(`/api/changes?since=${t0}`, cookie);
+    const byId = Object.fromEntries((ch.rows.prefs as { id: string; value: unknown }[]).map((r) => [r.id, r.value]));
+    expect(byId).toEqual({ fields: { preset: 'full' }, keys: { duplicate: 'Alt+KeyK' }, motion: { less: true } });
+    // a second write updates the same row
+    await ops(cookie, [{ op: 'update', entity: 'prefs', id: 'keys', fields: { value: {} } }]);
+    const home = await getJson('/api/home', cookie);
+    expect(home.rows.prefs.find((r: { id: string }) => r.id === 'keys').value).toEqual({});
+    // also inside a project snapshot
+    await ops(cookie, [{ op: 'create', entity: 'projects', id: 'pr-p', fields: { name: 'p' } }]);
+    const snap = await getJson('/api/projects/pr-p', cookie);
+    expect(snap.rows.prefs.map((r: { id: string }) => r.id).sort()).toEqual(['fields', 'keys', 'motion']);
+    const bad = await call('/api/ops', { method: 'POST', cookie, json: { ops: [{ op: 'create', entity: 'prefs', id: 'theme', fields: { value: 1 } }] } });
+    expect(bad.status).toBe(400);
+  });
+
+  it('the nightly backup carries the prefs', async () => {
+    const cookie = await setupAndLogin();
+    await ops(cookie, [{ op: 'create', entity: 'prefs', id: 'fields', fields: { value: { preset: 'custom', shown: { shotCard: ['camera'] } } } }]);
+    const key = await backup(env.DB, env.BUCKET, Date.now());
+    const obj = await env.BUCKET.get(key);
+    const file = JSON.parse(await obj!.text()) as { tables: Record<string, { id: string }[]> };
+    expect(file.tables.prefs.map((r) => r.id)).toEqual(['fields']);
   });
 });

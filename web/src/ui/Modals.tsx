@@ -7,7 +7,8 @@ import { Button, Card, Checkbox, Field, Icon, Input, Radio, Table, Toast } from 
 import { TEMPLATES } from '../lib/constants';
 import { frameBg, imageUrl, mmss, pad2 } from '../lib/util';
 import { Overlay } from './Pages';
-import { AspectPicker, DuplicateProjectDialog, ProjectSettingsDialog, ShortcutsDialog, StagePicker } from './ProjectDialogs';
+import { AspectPicker, DuplicateProjectDialog, ProjectSettingsDialog, StagePicker } from './ProjectDialogs';
+import { ShortcutsDialog } from './Keys';
 
 const close = () => setState({ modal: null });
 const dialog: React.CSSProperties = { maxWidth: '100%', maxHeight: '100%', overflowY: 'auto', background: 'var(--color-bg)', borderRadius: 14, boxShadow: 'var(--shadow-lift)', padding: 28 };
@@ -234,7 +235,7 @@ export function Toasts() {
   return (
     <div style={{ position: 'fixed', bottom: 104, left: '50%', transform: 'translateX(-50%)', zIndex: 95, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, pointerEvents: 'none' }}>
       {toasts.map((t) => (
-        <div key={t.id} style={{ pointerEvents: 'auto' }} data-testid="toast">
+        <div key={t.id} style={{ pointerEvents: t.leaving ? 'none' : 'auto' }} data-testid={t.leaving ? 'toast-leaving' : 'toast'} className={t.leaving ? 'anim-toast-out' : 'anim-toast-in'}>
           <Toast tone={t.tone} onDismiss={() => dismissToast(t.id)} message={t.undo || t.actions?.length ? (
             <span style={{ display: 'inline-flex', gap: 14, alignItems: 'center' }}>
               {t.msg}

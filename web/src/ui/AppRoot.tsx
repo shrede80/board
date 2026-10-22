@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { applyMotion } from '../app/motion';
 import { boot, start as retryStart } from '../app/actions';
 import { wireKeys } from '../app/keys';
 import { getState, useApp } from '../app/state';
@@ -53,6 +54,9 @@ export function AppRoot() {
   const modal = useApp((s) => s.modal);
   const bootOffline = useApp((s) => s.bootOffline);
   const mobile = useIsMobile();
+  const dv = useApp((s) => s.dataVersion);
+  // «حركة أقل» follows the synced setting (UPDATE-3 §5.3)
+  useEffect(() => applyMotion(), [dv]);
   useEffect(() => {
     wireKeys();
     installBackButton(() => isPhone() && getState().auth === 'app', phoneHome);

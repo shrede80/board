@@ -1,4 +1,4 @@
-import { ENTITIES, isEntityName, type EntityDef, type EntityName, type FieldDef, type Op, type OpsResult } from '../../shared/schema';
+import { ENTITIES, isEntityName, PREF_KEYS, type EntityDef, type EntityName, type FieldDef, type Op, type OpsResult } from '../../shared/schema';
 import { BadRequest, encodeField, isId, OWNER_ID } from './rows';
 
 /**
@@ -75,6 +75,7 @@ function parseRaw(input: unknown[]): Op[] {
     }
     if (typeof o.entity !== 'string' || !isEntityName(o.entity)) throw new BadRequest(`op ${i}: unknown entity`);
     if (!isId(o.id)) throw new BadRequest(`op ${i}: bad id`);
+    if (o.entity === 'prefs' && !(PREF_KEYS as readonly string[]).includes(o.id)) throw new BadRequest(`op ${i}: unknown pref`);
     const base = { entity: o.entity, id: o.id };
     switch (o.op) {
       case 'create':

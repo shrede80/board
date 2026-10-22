@@ -1,3 +1,6 @@
+import { FieldsSettings, openShortcuts } from './Fields';
+import { setPref, usePref } from '../app/prefs';
+import type { MotionPref } from '../app/motion';
 import { useIsMobile } from '../lib/device';
 import { useEffect, useState } from 'react';
 import type { Op, Row } from '../../../shared/schema';
@@ -251,6 +254,10 @@ export function TrashPage() {
 
 export function SettingsPage() {
   const theme = useApp((s) => s.theme);
+  const offline = useApp((s) => s.offline);
+  const mobile = useIsMobile();
+  const less = !!usePref<MotionPref>('motion')?.less;
+  const systemLess = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   const settings = useApp((s) => s.settings);
   const [pw, setPw] = useState({ cur: '', next: '', conf: '', err: '' });
   const [busy, setBusy] = useState(false);
@@ -300,6 +307,35 @@ export function SettingsPage() {
             </div>
           </div>
         </Card>
+        <Card>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }} data-testid="settings-fields">
+            <h2 style={{ margin: 0, fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 20 }}>الحقول</h2>
+            <FieldsSettings />
+          </div>
+        </Card>
+        <Card>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <h2 style={{ margin: 0, fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 20 }}>الحركة</h2>
+            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, fontSize: 15, minHeight: 44 }}>
+              <span>
+                حركة أقل
+                <span style={{ display: 'block', fontSize: 12, color: 'var(--color-text-muted)' }}>{systemLess ? 'جهازك طالب حركة أقل' : 'تلاشٍ سريع بدل الحركة'}</span>
+              </span>
+              <button role="switch" aria-checked={less} data-testid="motion-less" disabled={offline} className={`fd-sw${less ? ' on' : ''}`} onClick={() => setPref('motion', { less: !less })}><i /></button>
+            </label>
+          </div>
+        </Card>
+        {!mobile && (
+          <Card>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <h2 style={{ margin: 0, fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 20 }}>الاختصارات</h2>
+                <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>اختر أزرار الكيبورد على كيفك</span>
+              </div>
+              <Button variant="outline" size="sm" data-testid="open-shortcuts" onClick={openShortcuts}>اختصاراتك</Button>
+            </div>
+          </Card>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--color-text-muted)' }}><Icon name="clock" size={16} />{`${backup} · نسخة كل يوم`}</div>
       </div>
     </div>

@@ -144,6 +144,19 @@ describe('arrow keys align like the mouse (UPDATE-3 §3.1)', () => {
     expect(r.dx).toBe(10);
     expect(exactGuides(box('grp', 310, 0, 200, 50), [target]).some((x) => x.dir === 'v' && x.at === 410)).toBe(true);
   });
+  it('names the nearest box when several share the line (user note after A1)', () => {
+    // both boxes end at y = 330; the near one is 80px away, the far one 1200px
+    const far = box('far', 2000, 0, 280, 330), near = box('near', 420, 40, 200, 290);
+    const jump = nudgeStep({ group: box('g', 700, 190, 100, 136), others: [far, near], dir: 'down', mode: 'jump', snap: true });
+    expect(jump).toMatchObject({ dy: 4, stop: 'guide' });
+    expect(jump.box?.id).toBe('near');
+    // same with the far box listed first and the near one last
+    expect(nudgeStep({ group: box('g', 700, 190, 100, 136), others: [near, far], dir: 'down', mode: 'jump', snap: true }).box?.id).toBe('near');
+    const step = nudgeStep({ group: box('g', 700, 193, 100, 136), others: [far, near], dir: 'down', mode: 'step', snap: true });
+    expect(step.guides.filter((x) => x.dir === 'h' && x.at === 330)).toHaveLength(1);
+    expect(step.box?.id).toBe('near');
+  });
+
   it('works in metres for the plan (5 cm step, 25 cm grid)', () => {
     const r = nudgeStep({ group: { id: 'c', x: 1.1, y: 0, w: 0.4, h: 0.4 }, others: [], dir: 'right', mode: 'next', snap: true, step: 0.05, grid: 0.25, eps: 0.001 });
     expect(r.dx).toBeCloseTo(0.15, 6);

@@ -10,6 +10,9 @@ import { Badge, EmptyState, Icon } from '../ds/ds';
 import { AR, STATUS } from '../lib/constants';
 import { frameBg, mmss, pad2, textOn } from '../lib/util';
 import type { Row } from '../../../shared/schema';
+import { useFields } from './Fields';
+import { CountUp } from './Editor';
+import { avatar } from './Library';
 
 /** Space kept free under the last row: the floating dock's height + its 20px offset + 24px (UPDATE-3 §2.2). */
 const dockSpace = (dockH: number) => 20 + dockH + 24;
@@ -57,20 +60,20 @@ export function StoryboardView() {
       onDrop={dropOnSbEmpty}
       onScroll={isBoard ? undefined : onSbScroll}
       data-flipping={flipping ? '1' : undefined}
-      style={{ ['--sb-chrome-op' as string]: chromeOp, position: 'absolute', inset: 0, overflowY: 'auto', overflowX: 'hidden', opacity: isBoard ? 0 : 1, pointerEvents: isBoard ? 'none' : 'auto', backgroundColor: isBoard ? 'rgba(0,0,0,0)' : 'var(--color-bg)', transition: 'background-color 400ms var(--ease-standard)' }}
+      style={{ ['--sb-chrome-op' as string]: chromeOp, position: 'absolute', inset: 0, overflowY: 'auto', overflowX: 'hidden', opacity: isBoard ? 0 : 1, pointerEvents: isBoard ? 'none' : 'auto', backgroundColor: 'var(--color-bg)' }}
     >
       <div data-component="RhythmBar" style={{ position: 'sticky', top: 0, zIndex: 8, background: 'var(--color-bg)', padding: '12px 24px', borderBottom: '1px solid var(--color-border-subtle)', opacity: chromeOp, transition: 'opacity 400ms var(--ease-standard)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 8 }}>
           <span style={{ fontWeight: 700 }}>إيقاع الفيلم</span>
-          <span>{`${p.scenes.length} مشاهد · ${nShots} لقطة · ${mmss(total)}`}</span>
+          <span>{`${p.scenes.length} مشاهد · ${nShots} لقطة · `}<CountUp v={total} /></span>
         </div>
         <div style={{ display: 'flex', gap: 3, height: 30 }}>
           {p.scenes.map((sc, si) => {
             const hex = moodHex(sc.mood);
             const d = sceneDur(sc);
             return (
-              <button key={sc.id} title={`${sc.name} · ${mmss(d)}`} className="h-bright" onClick={() => scrollToRow(sc.id)}
-                style={{ flexGrow: Math.max(1, d), flexBasis: 0, minWidth: 24, background: hex, color: textOn(hex), border: 'none', borderRadius: 4, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 13, cursor: 'pointer', opacity: matches(sc) ? 1 : 0.3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+              <button key={sc.id} data-rhythm-seg="1" title={`${sc.name} · ${mmss(d)}`} className="h-bright" onClick={() => scrollToRow(sc.id)}
+                style={{ transformOrigin: 'right', flexGrow: Math.max(1, d), flexBasis: 0, minWidth: 24, background: hex, color: textOn(hex), border: 'none', borderRadius: 4, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 13, cursor: 'pointer', opacity: matches(sc) ? 1 : 0.3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                 <span>{pad2(si + 1)}</span>
                 <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 11 }}>{mmss(d)}</span>
               </button>
@@ -101,6 +104,8 @@ const SceneRow = memo(function SceneRow({ p, sc, si, match }: { p: PProject; sc:
   const offline = useApp((s) => s.offline);
   const hex = moodHex(sc.mood);
   const loc = p.library.locations.find((l) => l.id === sc.locationId);
+  const sf = useFields().shown.sceneCard;
+  const chars = sc.characterIds.map((id) => p.library.characters.find((c) => c.id === id)).filter((c): c is NonNullable<typeof c> => !!c);
   const rowOver = dragOver?.kind === 'row' && dragOver.id === sc.id;
   const gapOver = dragOver?.kind === 'gap' && dragOver.id === si;
   const edSel = editor?.type === 'scene' && editor.id === sc.id;
@@ -146,12 +151,19 @@ const SceneRow = memo(function SceneRow({ p, sc, si, match }: { p: PProject; sc:
               }}
               style={{ alignSelf: 'center', width: 30, height: 30, flexShrink: 0, border: 'none', borderRadius: 8, background: 'transparent', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', marginInlineStart: 'auto' }}><Icon name="more" size={17} /></button>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <Badge tone="outline">{`${sc.intExt === 'int' ? 'داخلي' : 'خارجي'} · ${sc.dayNight === 'night' ? 'ليل' : 'نهار'}`}</Badge>
-            <span data-testid="row-location" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: loc ? 'var(--color-text)' : 'var(--color-text-muted)' }}><Icon name="map-pin" size={14} />{loc ? (loc.name as string) : 'بلا موقع'}</span>
-          </div>
+          {(sf.has('intExt') || sf.has('location')) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              {sf.has('intExt') && <Badge tone="outline">{`${sc.intExt === 'int' ? 'داخلي' : 'خارجي'} · ${sc.dayNight === 'night' ? 'ليل' : 'نهار'}`}</Badge>}
+              {sf.has('location') && <span data-testid="row-location" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: loc ? 'var(--color-text)' : 'var(--color-text-muted)' }}><Icon name="map-pin" size={14} />{loc ? (loc.name as string) : 'بلا موقع'}</span>}
+            </div>
+          )}
+          {sf.has('characters') && chars.length > 0 && (
+            <div data-testid="row-characters" style={{ display: 'flex', paddingInlineEnd: 6 }}>
+              {chars.map((c) => { const a = avatar(c); return <span key={c.id} title={c.name as string} style={{ width: 24, height: 24, borderRadius: '50%', background: a.bg, border: '2px solid var(--color-bg)', marginInlineEnd: -6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#141210' }}>{a.init}</span>; })}
+            </div>
+          )}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 13, color: 'var(--color-text-muted)', marginTop: 'auto' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="clock" size={14} />{mmss(sceneDur(sc))}</span>
+            {sf.has('counts') && <span data-testid="row-counts" style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="clock" size={14} />{`${sc.shots.length} ${sc.shots.length === 1 ? 'لقطة' : 'لقطات'} · ${mmss(sceneDur(sc))}`}</span>}
             {sc.noteIds.length > 0 && <span title="ملاحظات مرتبطة" style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="file" size={14} />{sc.noteIds.length}</span>}
             {sc.moodboardIds.length > 0 && <span title="لوحات مزاج مرتبطة" style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="image" size={14} />{sc.moodboardIds.length}</span>}
             {/* always visible, however long the row (UPDATE-3 §2.1) */}
@@ -186,6 +198,7 @@ const SceneRow = memo(function SceneRow({ p, sc, si, match }: { p: PProject; sc:
 
 const ShotCard = memo(function ShotCard({ sh, sceneId, num, hex, ar }: { sh: PShot; sceneId: string; num: string; hex: string; ar: number }) {
   const eq = useEquipment();
+  const f = useFields().shown.shotCard;
   const over = useApp((s) => s.dragOver?.kind === 'shot' && s.dragOver.id === sh.id);
   const selected = useApp((s) => s.editor?.type === 'shot' && s.editor.id === sh.id);
   const hov = useApp((s) => s.hoverShot === sh.id);
@@ -194,12 +207,12 @@ const ShotCard = memo(function ShotCard({ sh, sceneId, num, hex, ar }: { sh: PSh
   const cardW = ar >= 1 ? 236 : 168, coverH = Math.round(Math.min(300, cardW / ar));
   const stop = (fn: () => void) => (e: React.MouseEvent) => (e.stopPropagation(), fn());
   const round: React.CSSProperties = { width: 28, height: 28, borderRadius: '50%', border: 'none', background: 'rgba(20,18,16,.72)', color: '#fdfcfa', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' };
-  const meta: React.CSSProperties = { width: 20, height: 20, borderRadius: '50%', background: 'var(--color-surface-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--ink-700)' };
   const cam = camLine(eq, sh as Row), mov = moveLine(eq, sh as Row);
   return (
     <article
       data-flip={`shot-${sh.id}`}
       data-component="ShotCard"
+      className="sb-lift"
       data-testid="shot-card"
       data-shot-id={sh.id}
       draggable
@@ -241,18 +254,18 @@ const ShotCard = memo(function ShotCard({ sh, sceneId, num, hex, ar }: { sh: PSh
       </div>
       <div style={{ padding: '10px 12px 12px', display: 'flex', flexDirection: 'column', gap: 7 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span title={S.label} data-testid="shot-status" data-status={sh.status} style={{ width: 9, height: 9, borderRadius: '50%', background: S.dot, border: `1.5px solid ${S.ring}`, flexShrink: 0 }} />
+          {f.has('status') && <span title={S.label} data-testid="shot-status" data-status={sh.status} style={{ width: 9, height: 9, borderRadius: '50%', background: S.dot, border: `1.5px solid ${S.ring}`, flexShrink: 0 }} />}
           <span style={{ fontSize: 14, fontWeight: 600, color: sh.description ? 'var(--color-text)' : 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sh.description || 'بدون وصف'}</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--color-text-muted)', minWidth: 0 }}>
-          <span style={meta}><Icon name="camera" size={11} /></span>
-          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cam || '—'}</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--color-text-muted)', minWidth: 0 }}>
-          <span style={meta}><Icon name="repeat" size={11} /></span>
-          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>{mov || '—'}</span>
-          <span style={{ flexShrink: 0 }}>{mmss(sh.durationS)}</span>
-        </div>
+        {/* the fields chosen in «الحقول» (UPDATE-3 §4) */}
+        {(f.has('dur') || f.has('size') || f.has('motion') || f.has('camera')) && (
+          <div data-testid="shot-card-meta" style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: 'var(--color-text-muted)', minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden' }}>
+            {f.has('dur') && <span data-testid="card-dur" style={{ flexShrink: 0 }}>{mmss(sh.durationS)}</span>}
+            {f.has('size') && <span data-testid="card-size" style={{ flexShrink: 0 }}>{sh.size as string}</span>}
+            {f.has('motion') && <span data-testid="card-motion" style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}><Icon name="repeat" size={11} /><span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{mov || '—'}</span></span>}
+            {f.has('camera') && <span data-testid="card-camera" style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}><Icon name="camera" size={11} /><span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{cam || '—'}</span></span>}
+          </div>
+        )}
       </div>
     </article>
   );

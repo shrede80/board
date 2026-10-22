@@ -24,6 +24,7 @@ export interface Toast {
   /** extra button(s) next to the message, e.g. «فتح» or a custom undo */
   actions?: { label: string; run: () => void; testid?: string }[];
   tone: 'info' | 'danger';
+  leaving?: boolean;
 }
 
 export interface Choice {
@@ -156,6 +157,12 @@ export interface UIState {
   guides: Guide[];
   /** guides left by the arrow keys fade out (UPDATE-3 §3.1) */
   guidesFade: boolean;
+  /** +1 each time a project opens: the opening motion plays once per opening (UPDATE-3 §5.3) */
+  openSeq: number;
+  /** a new shot whose editor should open with the cursor in the description (UPDATE-3 §4.4) */
+  focusDesc: string | null;
+  /** scene whose shot plan is open full screen (UPDATE-3 §6), else null */
+  plan: string | null;
   /** the storyboard is scrolling: the dock shrinks to one «+» (UPDATE-3 §2.2) */
   sbScrolling: boolean;
   /** measured height of the floating dock */
@@ -188,7 +195,7 @@ let state: UIState = {
   selection: [], view: { x: 0, y: 0, z: 0.8 }, filter: null, toasts: [], save: 'saved', offline: typeof navigator !== 'undefined' ? !navigator.onLine : false,
   modal: null, dupTarget: null, choice: null, ideaEdit: null, bootOffline: false, pending: [], addSheet: null, ideaSheet: null, mTab: 'scenes', projMenu: false, popMenu: null, dragSize: null, renaming: null, newVersion: false, pickTarget: null, hoverItem: null, exportTab: 'pdf', exportScope: 'all', exportSel: [], confirm: null, dragOver: null,
   present: { open: false, i: 0, playing: false, tech: false, fill: 0 }, hoverShot: null, marquee: null, space: false, menu: false,
-  pick: null, custom: null, customVal: '', flipping: false, guides: [], guidesFade: false, nudgeHud: null, sbScrolling: false, dockH: 84, dragPos: null, uploads: {}, canUndo: false, canRedo: false, ch: [], chVersion: 0,
+  pick: null, custom: null, customVal: '', flipping: false, guides: [], guidesFade: false, openSeq: 0, focusDesc: null, plan: null, nudgeHud: null, sbScrolling: false, dockH: 84, dragPos: null, uploads: {}, canUndo: false, canRedo: false, ch: [], chVersion: 0,
 };
 
 const listeners = new Set<() => void>();
@@ -245,8 +252,11 @@ export function toast(msg: string, o: { undo?: boolean; tone?: 'info' | 'danger'
   setState((s) => ({ toasts: [...s.toasts, { id, msg, undo: !!o.undo, actions: o.actions, tone: o.tone ?? 'info' }] }));
   setTimeout(() => dismissToast(id), o.ms ?? 5000);
 }
+/** The toast leaves in 160 ms (UPDATE-3 §5.2) before it is removed. */
 export function dismissToast(id: string) {
-  setState((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
+  if (!state.toasts.some((t) => t.id === id && !t.leaving)) return;
+  setState((s) => ({ toasts: s.toasts.map((t) => (t.id === id ? { ...t, leaving: true } : t)) }));
+  setTimeout(() => setState((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })), 160);
 }
 export function askConfirm(c: Confirm) {
   setState({ confirm: c });

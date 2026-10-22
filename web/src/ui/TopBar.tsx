@@ -6,7 +6,8 @@ import { engine, getState, setState, useApp, useProject } from '../app/state';
 import { fitAll } from '../app/board';
 import { sceneDur } from '../data/project';
 import { Button, Icon, Tabs } from '../ds/ds';
-import { mmss } from '../lib/util';
+import { tip } from '../app/keyLabels';
+import { CountUp } from './Editor';
 
 const iconBtn: React.CSSProperties = {
   width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent',
@@ -57,7 +58,7 @@ function ThemeButton() {
   const theme = useApp((s) => s.theme);
   const isDark = theme === 'dark';
   return (
-    <button title={isDark ? 'الوضع الفاتح' : 'الوضع الداكن'} className="h-strong" onClick={() => void setTheme(isDark ? 'light' : 'dark')} style={{ ...iconBtn, border: '1px solid var(--color-border)', borderRadius: '50%' }}>
+    <button title={tip(isDark ? 'الوضع الفاتح' : 'الوضع الداكن', 'theme')} className="h-strong" onClick={() => void setTheme(isDark ? 'light' : 'dark')} style={{ ...iconBtn, border: '1px solid var(--color-border)', borderRadius: '50%' }}>
       {isDark ? <Icon name="sun" size={17} /> : <span style={{ width: 15, height: 15, borderRadius: '50%', boxShadow: 'inset -5px -2px 0 0 var(--color-text)', transform: 'rotate(-20deg)' }} />}
     </button>
   );
@@ -114,7 +115,7 @@ function ProjectTopBar() {
       </button>
       <Breadcrumb />
       <div style={{ flex: 1 }} />
-      <div data-component="ModeSwitch" style={{ flexShrink: 0 }}>
+      <div data-component="ModeSwitch" title={`${tip('لوحة الأفكار', 'modeBoard')} · ${tip('الستوري بورد', 'modeStoryboard')}`} style={{ flexShrink: 0 }}>
         <Tabs
           items={[{ value: 'board', label: 'لوحة الأفكار' }, { value: 'storyboard', label: 'الستوري بورد' }]}
           value={screen === 'app' ? mode : ''}
@@ -129,14 +130,14 @@ function ProjectTopBar() {
       </div>
       <div style={{ flex: 1 }} />
       <div title="مجموع مدد اللقطات" style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontSize: 13, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>
-        <span data-testid="total-dur" style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 20, color: 'var(--color-text)' }}>{mmss(total)}</span>
+        <span data-testid="total-dur" style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 20, color: 'var(--color-text)' }}><CountUp v={total} /></span>
         <span>{`${p?.scenes.length ?? 0} مشاهد · ${nShots} لقطة`}</span>
       </div>
       <div style={{ display: 'flex', gap: 2 }}>
-        <button title={canUndo ? 'تراجع (Ctrl+Z)' : 'ما فيه تراجع'} aria-label="تراجع" data-testid="undo" className="h-strong" disabled={!canUndo || offline} onClick={() => void undo()} style={{ ...iconBtn, opacity: canUndo ? 1 : 0.35 }}>
+        <button title={canUndo ? tip('تراجع', 'undo') : 'ما فيه تراجع'} aria-label="تراجع" data-testid="undo" className="h-strong" disabled={!canUndo || offline} onClick={() => void undo()} style={{ ...iconBtn, opacity: canUndo ? 1 : 0.35 }}>
           <UndoIcon />
         </button>
-        <button title={canRedo ? 'إعادة (Ctrl+Shift+Z)' : 'ما فيه إعادة'} aria-label="إعادة" data-testid="redo" className="h-strong" disabled={!canRedo || offline} onClick={() => void redo()} style={{ ...iconBtn, opacity: canRedo ? 1 : 0.35 }}>
+        <button title={canRedo ? tip('إعادة', 'redo') : 'ما فيه إعادة'} aria-label="إعادة" data-testid="redo" className="h-strong" disabled={!canRedo || offline} onClick={() => void redo()} style={{ ...iconBtn, opacity: canRedo ? 1 : 0.35 }}>
           <UndoIcon flip />
         </button>
       </div>

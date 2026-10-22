@@ -1,11 +1,12 @@
 import { isTyping } from '../lib/util';
-import { closeEditor, deleteSelection, deleteShot, redo, undo } from './actions';
+import { closeEditor, deleteSelection, deleteShot } from './actions';
+import { isMac, runKey } from './commands';
 import { addFiles, type OwnerKind } from './images';
 import { closePresent, presGo, presToggle } from './present';
 import { closeMenu, getState, setState, toast } from './state';
-import { nudge, openItem } from './board';
+import { nudge } from './board';
 import { cancelChoice } from './ideas';
-import { addImageCards, copySelection, duplicateSelection, frameSelection, hasClipboard, paste, reorderSel, selectAll, startRename } from './boardActions';
+import { addImageCards, copySelection, hasClipboard, paste } from './boardActions';
 
 export function onKey(e: KeyboardEvent) {
   const st = getState();
@@ -34,77 +35,53 @@ export function onKey(e: KeyboardEvent) {
     else if (st.selection.length) setState({ selection: [] });
     return;
   }
-  if ((e.ctrlKey || e.metaKey) && e.code === 'KeyK') {
-    e.preventDefault();
-    return setState({ modal: st.modal === 'search' ? null : 'search', menu: false });
+  const typing = isTyping(e.target);
+  const blocked = st.screen !== 'app' ? false : !!(st.modal || st.confirm || st.popMenu);
+  if (typing) {
+    runKey(e, true, blocked);
+    return;
   }
-  if (isTyping(e.target)) return;
   if (e.code === 'Space') {
     e.preventDefault();
     if (!st.space) setState({ space: true });
   }
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
-    e.preventDefault();
-    if (e.shiftKey) void redo();
-    else void undo();
-  }
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
-    e.preventDefault();
-    void redo();
-  }
+  // fixed keys (UPDATE-3 §3.3 🔒): Delete, copy/cut/paste, the arrows
   if (e.key === 'Delete' || e.key === 'Backspace') {
-    if (st.screen !== 'app') return;
+    if (st.screen !== 'app' || blocked) return;
     if (st.mode === 'board' && st.selection.length) deleteSelection();
     else if (st.hoverShot) deleteShot(st.hoverShot);
+    return;
   }
-  if (st.screen === 'app' && !st.modal && !st.confirm && !st.popMenu) boardKeys(e);
+  if (st.screen === 'app' && !blocked && st.mode === 'board' && !st.plan && boardFixed(e)) return;
+  if (runKey(e, false, blocked)) return;
 }
 
 let pendingPaste: ReturnType<typeof setTimeout> | null = null;
 
-/** Board shortcuts (UPDATE-1 أ6, أ7). Brackets and letters by physical key, so the Arabic layout works too. */
-function boardKeys(e: KeyboardEvent) {
+/** The board's fixed keys: copy/cut/paste by physical key (the Arabic layout works too) and the arrows. */
+function boardFixed(e: KeyboardEvent): boolean {
   const st = getState();
   const mod = e.ctrlKey || e.metaKey;
-  if (e.key === '?' || (e.shiftKey && e.code === 'Slash')) return setState({ modal: 'shortcuts' });
-  if (e.key === 'F2') {
-    e.preventDefault();
-    if (st.mode === 'board' && st.selection.length === 1) startRename(st.selection[0]);
-    else if (st.projectId) setState({ renaming: { kind: 'project', id: st.projectId } });
-    return;
-  }
-  if (st.mode !== 'board') return;
   const sel = st.selection;
-  if (mod && e.code === 'KeyC' && sel.length) return (e.preventDefault(), copySelection());
-  if (mod && e.code === 'KeyX' && sel.length) return (e.preventDefault(), copySelection(true));
-  if (mod && e.code === 'KeyV') {
+  if (mod && !e.altKey && !e.shiftKey && e.code === 'KeyC') return sel.length ? (e.preventDefault(), copySelection(), true) : false;
+  if (mod && !e.altKey && !e.shiftKey && e.code === 'KeyX') return sel.length ? (e.preventDefault(), copySelection(true), true) : false;
+  if (mod && !e.altKey && !e.shiftKey && e.code === 'KeyV') {
     // the paste event decides first (photos from the system clipboard win); else our own clipboard
     if (pendingPaste) clearTimeout(pendingPaste);
     pendingPaste = setTimeout(() => {
       pendingPaste = null;
       if (hasClipboard()) paste();
     }, 80);
-    return;
+    return true;
   }
-  if (mod && e.code === 'KeyD') return (e.preventDefault(), sel.length && duplicateSelection());
-  if (mod && e.code === 'KeyA') return (e.preventDefault(), selectAll());
-  if (mod && e.code === 'KeyG') return (e.preventDefault(), sel.length && frameSelection());
-  if (e.code === 'BracketRight' && sel.length) return (e.preventDefault(), reorderSel(mod ? 'front' : 'forward'));
-  if (e.code === 'BracketLeft' && sel.length) return (e.preventDefault(), reorderSel(mod ? 'back' : 'backward'));
-  if (e.key === 'Enter' && sel.length === 1) return (e.preventDefault(), ['heading', 'frame', 'image'].includes(st.renaming ? '' : kindOf(sel[0])) ? startRename(sel[0]) : openItem(sel[0]));
   // arrows align like the mouse (UPDATE-3 §3.1): 1px · Shift = next stop · Alt = jump to the guide
   const arrows: Record<string, 'left' | 'right' | 'up' | 'down'> = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' };
   if (arrows[e.key] && sel.length && !mod) {
     e.preventDefault();
     nudge(arrows[e.key], e.altKey ? 'jump' : e.shiftKey ? 'next' : 'step', isMac() ? { shift: '⇧', alt: '⌥' } : { shift: 'Shift', alt: 'Alt' });
+    return true;
   }
-}
-
-export const isMac = () => /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
-
-function kindOf(id: string): string {
-  const el = document.querySelector<HTMLElement>(`[data-item-id="${CSS.escape(id)}"]`);
-  return el?.dataset.kind ?? '';
+  return false;
 }
 
 export function onKeyUp(e: KeyboardEvent) {

@@ -163,6 +163,11 @@ test('a character with a photo shows the photo alone; without one, its first let
   await page.getByTestId('lib-character').nth(1).dragTo(rows.nth(0));
   await saved(page);
   await rows.nth(0).getByTestId('sb-row-head').click();
+  // the characters are hidden in «بسيط» (UPDATE-3 §4): show them in the editor and on the card
+  await page.getByTestId('fields-btn').click();
+  await page.getByTestId('field-sceneEditor-characters').click();
+  await page.getByTestId('field-sceneCard-characters').click();
+  await page.getByTestId('fields-btn').click();
   await expect(page.locator('[data-where=editor]')).toHaveText(['', 'خ']);
   await page.getByTestId('editor-close').click();
 

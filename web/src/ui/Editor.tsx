@@ -1,4 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { FIELD_GROUPS } from '../../../shared/fields';
+import { reducedMotion } from '../app/motion';
+import { FieldsButton, useFields } from './Fields';
 import {
   addShot, closeEditor, deleteScene, deleteShot, editorNav, moveShot, newCharacterForScene, newLocationForScene, openEditor, toggleCharacter, unlink, upd,
 } from '../app/actions';
@@ -75,7 +78,7 @@ export function EditorPanel({ mobile = false }: { mobile?: boolean }) {
   }
   if (mobile) return <MobileEditor comp={comp} head={head} body={body} />;
   return (
-    <aside data-component={comp} data-testid="editor" style={{ width: 420, flexShrink: 0, borderInlineStart: '1px solid var(--color-border-subtle)', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column', minHeight: 0, zIndex: 16, boxShadow: 'var(--shadow-lift)' }}>
+    <aside data-component={comp} data-testid="editor" className="anim-editor" style={{ width: 420, flexShrink: 0, borderInlineStart: '1px solid var(--color-border-subtle)', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column', minHeight: 0, zIndex: 16, boxShadow: 'var(--shadow-lift)' }}>
       <div style={{ padding: '14px 18px 12px', borderBottom: '1px solid var(--color-border-subtle)', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{head.kicker}</span>
@@ -88,6 +91,7 @@ export function EditorPanel({ mobile = false }: { mobile?: boolean }) {
             <button title="التالي" className="h-strong" onClick={() => editorNav(1)} style={{ ...hdrBtn, opacity: head.nav.next ? 1 : 0.35 }}><Icon name="arrow-left" size={16} /></button>
           </div>
         )}
+        {(ed.type === 'shot' || ed.type === 'scene') && <FieldsButton kind={ed.type} />}
         <button title="إغلاق (Esc)" data-testid="editor-close" className="h-strong" onClick={closeEditor} style={hdrBtn}><Icon name="x" size={17} /></button>
       </div>
       <div style={{ flex: 1, overflowY: 'auto', padding: '4px 18px 28px' }}>{body}</div>
@@ -119,13 +123,14 @@ function MobileEditor({ comp, head, body }: { comp: string; head: { kicker: stri
   const navBtn: React.CSSProperties = { minWidth: 88, height: 44, border: 'none', background: 'transparent', color: 'var(--color-text)', fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, padding: '0 6px' };
   return (
     <MobileCtx.Provider value={true}>
-      <div data-component={comp} data-testid="editor" className="m-editor" style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'var(--color-bg)', display: 'flex', flexDirection: 'column', paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
+      <div data-component={comp} data-testid="editor" className="m-editor anim-meditor" style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'var(--color-bg)', display: 'flex', flexDirection: 'column', paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 6px 8px', borderBottom: '1px solid var(--color-border-subtle)' }}>
           <button aria-label="إغلاق" data-testid="editor-close" onClick={closeEditor} style={{ ...hdrBtn, width: 44, height: 44 }}><Icon name="x" size={22} /></button>
           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
             <span data-testid="editor-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 24, lineHeight: 1.15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{head.title.replace(/^اللقطة /, '')}</span>
             <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{head.kicker}</span>
           </div>
+          {(ed.type === 'shot' || ed.type === 'scene') && <FieldsButton kind={ed.type} />}
           {menu.length ? (
             <button aria-label="خيارات" data-testid="m-editor-more" disabled={offline} onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); openMenu(r.right, r.bottom + 4, menu, 'editor-menu'); }} style={{ ...hdrBtn, width: 44, height: 44 }}><Icon name="more" size={22} /></button>
           ) : <span style={{ width: 44 }} />}
@@ -320,29 +325,6 @@ function Picker({ k, title, display, groups, onSet, multi, chips, hint }: { k: s
   );
 }
 
-function Section({ k, title, icon, children }: { k: string; title: string; icon: string; children: React.ReactNode }) {
-  const mobile = useMobile();
-  const open = useApp((s) => !!s.sections[k]) || mobile;
-  if (mobile) {
-    return (
-      <div style={{ borderTop: '1px solid var(--color-border-subtle)', marginTop: 14, paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 700 }}><Icon name={icon} size={16} />{title}</span>
-        {children}
-      </div>
-    );
-  }
-  return (
-    <div style={{ borderTop: '1px solid var(--color-border-subtle)', marginTop: 12 }}>
-      <button onClick={() => setState((s) => ({ sections: { ...s.sections, [k]: !s.sections[k] } }))} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '14px 0', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-text)', fontSize: 15, fontWeight: 700 }}>
-        <Icon name={icon} size={17} />
-        <span style={{ flex: 1, textAlign: 'right' }}>{title}</span>
-        <Icon name={open ? 'chevron-up' : 'chevron-down'} size={16} />
-      </button>
-      {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 8 }}>{children}</div>}
-    </div>
-  );
-}
-
 function F({ title, children, hint }: { title: string; children: React.ReactNode; hint?: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -357,7 +339,6 @@ function F({ title, children, hint }: { title: string; children: React.ReactNode
 
 function ShotEditor({ p, sh, sc }: { p: PProject; sh: PShot; sc: PScene }) {
   const eq = useEquipment();
-  const refsOpen = useApp((s) => !!s.sections.refs);
   const cv = useCustomValues();
   const id = sh.id;
   const set = (patch: Record<string, unknown>, k?: string) => upd('shot', id, patch, k);
@@ -407,54 +388,62 @@ function ShotEditor({ p, sh, sc }: { p: PProject; sh: PShot; sc: PScene }) {
       chips={list.map((x) => ({ label: eqName(eq, x), onRemove: () => set({ [key]: list.filter((y) => y !== x) }) }))} />
   );
   const mobile = useMobile();
-  return (
-    <>
-      {!mobile && <button data-component="ShotEditor" onClick={() => setState((s) => ({ sections: { ...s.sections, refs: !s.sections.refs } }))} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '14px 0', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-text)', fontSize: 15, fontWeight: 700 }}>
-        <Icon name="image" size={17} />
-        <span style={{ flex: 1, textAlign: 'right' }}>الصور المرجعية</span>
-        <Icon name={refsOpen ? 'chevron-up' : 'chevron-down'} size={16} />
-      </button>}
-      {(refsOpen || mobile) && <Gallery owner={sh} target={{ type: 'shot', id }} hex={moodHex(sc.mood)} aspect={p.aspect} />}
-
-      <Section k="basics" title="الأساسيات" icon="edit">
-        <F title="الوصف (سطر واحد)"><Input value={(sh.description as string) ?? ''} onChange={(e) => set({ description: e.target.value }, 'desc')} placeholder="ماذا يحدث في اللقطة؟" data-testid="shot-desc" /></F>
-        <F title={mobile ? 'المدة' : 'المدة بالثواني'}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {mobile ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, border: '1px solid var(--color-border)', borderRadius: 8, padding: 4 }}>
-                <button aria-label="أنقص ثانية" data-testid="shot-dur-minus" onClick={() => set({ durationS: Math.max(0, (Number(sh.durationS) || 0) - 1) }, 'dur')} style={{ width: 44, height: 44, border: 'none', borderRadius: 6, background: 'var(--color-surface-strong)', color: 'var(--color-text)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="minus" size={16} /></button>
-                <span data-testid="shot-dur-value" style={{ minWidth: 72, textAlign: 'center', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20 }}>{mmss(sh.durationS)}</span>
-                <button aria-label="زد ثانية" data-testid="shot-dur-plus" onClick={() => set({ durationS: (Number(sh.durationS) || 0) + 1 }, 'dur')} style={{ width: 44, height: 44, border: 'none', borderRadius: 6, background: 'var(--color-surface-strong)', color: 'var(--color-text)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={16} /></button>
-              </div>
-            ) : (
-              <>
-                <div style={{ width: 120 }}><Input type="number" min={0} value={sh.durationS ?? 0} onChange={(e) => set({ durationS: Math.max(0, Number(e.target.value) || 0) }, 'dur')} data-testid="shot-dur" /></div>
-                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18 }}>{mmss(sh.durationS)}</span>
-              </>
-            )}
-          </div>
-        </F>
-        <F title="الحالة">
-          <div style={{ display: 'flex', gap: 6 }}>
-            {ORDER.map((k) => {
-              const S = STATUS[k], on = sh.status === k;
-              return (
-                <button key={k} data-testid={`status-${k}`} onClick={() => set({ status: k })} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: 40, border: '1px solid var(--color-border)', borderRadius: 999, background: chip(on), color: chipFg(on), fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
-                  <span style={{ width: 9, height: 9, borderRadius: '50%', background: S.dot, border: `1.5px solid ${S.ring}` }} />
-                  {S.label}
-                </button>
-              );
-            })}
-          </div>
-        </F>
-      </Section>
-
-      <Section k="comp" title="التكوين" icon="aperture">
-        <Picker k="size" title="حجم اللقطة" display={sh.size ? `${sizeLbl[1]} (${sizeLbl[0]})` : ''} groups={[{ label: 'الأحجام', options: SIZES.map((s) => ({ value: s[0], label: s[1], sub: s[0], active: sh.size === s[0] })) }, used('size', sh.size)]} onSet={(v) => set({ size: v })} />
-        <Picker k="angle" title="الزاوية" display={(sh.angle as string) ?? ''} groups={[{ label: 'الزوايا', options: ANGLES.map((a) => ({ value: a, label: a, active: sh.angle === a })) }, used('angle', sh.angle)]} onSet={(v) => set({ angle: v })} />
-      </Section>
-
-      <Section k="cam" title="الكاميرا والعدسة" icon="camera">
+  const { shown } = useFields();
+  // «+ لقطة» opens the editor with the cursor in the description (UPDATE-3 §4.4)
+  useEffect(() => {
+    if (getState().focusDesc !== id) return;
+    const t = setTimeout(() => {
+      setState({ focusDesc: null });
+      document.querySelector<HTMLInputElement>('[data-testid=editor] [data-testid=shot-desc]')?.focus();
+    }, 30);
+    return () => clearTimeout(t);
+  }, [id]);
+  const lights = sh.lightingIds ?? [], audios = sh.audioIds ?? [];
+  const F_: Record<string, React.ReactNode> = {
+    refs: <F title="الصور المرجعية"><Gallery owner={sh} target={{ type: 'shot', id }} hex={moodHex(sc.mood)} aspect={p.aspect} /></F>,
+    desc: <F title="الوصف"><Input value={(sh.description as string) ?? ''} onChange={(e) => set({ description: e.target.value }, 'desc')} placeholder="ماذا يحدث في اللقطة؟" data-testid="shot-desc" /></F>,
+    dur: (
+      <F title={mobile ? 'المدة' : 'المدة بالثواني'}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {mobile ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, border: '1px solid var(--color-border)', borderRadius: 8, padding: 4 }}>
+              <button aria-label="أنقص ثانية" data-testid="shot-dur-minus" onClick={() => set({ durationS: Math.max(0, (Number(sh.durationS) || 0) - 1) }, 'dur')} style={{ width: 44, height: 44, border: 'none', borderRadius: 6, background: 'var(--color-surface-strong)', color: 'var(--color-text)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="minus" size={16} /></button>
+              <span data-testid="shot-dur-value" style={{ minWidth: 72, textAlign: 'center', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20 }}><CountUp v={Number(sh.durationS) || 0} /></span>
+              <button aria-label="زد ثانية" data-testid="shot-dur-plus" onClick={() => set({ durationS: (Number(sh.durationS) || 0) + 1 }, 'dur')} style={{ width: 44, height: 44, border: 'none', borderRadius: 6, background: 'var(--color-surface-strong)', color: 'var(--color-text)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={16} /></button>
+            </div>
+          ) : (
+            <>
+              <div style={{ width: 72 }}><Input type="number" min={0} value={sh.durationS ?? 0} onChange={(e) => set({ durationS: Math.max(0, Number(e.target.value) || 0) }, 'dur')} data-testid="shot-dur" /></div>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18 }}><CountUp v={Number(sh.durationS) || 0} /></span>
+            </>
+          )}
+        </div>
+      </F>
+    ),
+    status: (
+      <F title="الحالة">
+        <div style={{ display: 'flex', gap: 6 }}>
+          {ORDER.map((k) => {
+            const S = STATUS[k], on = sh.status === k;
+            return (
+              <button key={k} data-testid={`status-${k}`} onClick={() => set({ status: k })} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, height: 40, padding: '0 6px', border: '1px solid var(--color-border)', borderRadius: 999, background: chip(on), color: chipFg(on), fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                <span style={{ width: 9, height: 9, borderRadius: '50%', background: S.dot, border: `1.5px solid ${S.ring}`, flexShrink: 0 }} />
+                {S.label}
+              </button>
+            );
+          })}
+        </div>
+      </F>
+    ),
+    size: <Picker k="size" title="حجم اللقطة" display={sh.size ? `${sizeLbl[1]} (${sizeLbl[0]})` : ''} groups={[{ label: 'الأحجام', options: SIZES.map((s) => ({ value: s[0], label: s[1], sub: s[0], active: sh.size === s[0] })) }, used('size', sh.size)]} onSet={(v) => set({ size: v })} />,
+    motion: (
+      <Picker k="movement" title="الحركة" display={(sh.motion as string) ?? ''}
+        groups={[{ label: sup ? `مناسبة لـ ${(sup.short as string) || (sup.name as string)}` : 'مقترحة', options: sugg.map((m) => ({ value: m, label: m, active: sh.motion === m })) }, { label: 'كل الحركات', options: MOVES.filter((m) => !sugg.includes(m)).map((m) => ({ value: m, label: m, active: sh.motion === m })) }, used('movement', sh.motion)]}
+        onSet={(v) => set({ motion: v })} />
+    ),
+    angle: <Picker k="angle" title="الزاوية" display={(sh.angle as string) ?? ''} groups={[{ label: 'الزوايا', options: ANGLES.map((a) => ({ value: a, label: a, active: sh.angle === a })) }, used('angle', sh.angle)]} onSet={(v) => set({ angle: v })} />,
+    camera: (
+      <>
         <Picker k="camera" title="الكاميرا" display={eqName(eq, sh.cameraId as string)} groups={eqOpts('camera', sh.cameraId)} onSet={onCamera} />
         {cam?.lensIds ? (
           <Picker k="lens" title={`العدسة (عدسات ${cam.short})`} display={eqName(eq, sh.lens as string)} groups={[{ label: `عدسات ${cam.short}`, options: (cam.lensIds as string[]).map((l) => ({ value: l, label: eqName(eq, l), sub: l === cam.defaultLensId ? 'الأساسية' : '', active: sh.lens === l })) }, used('lens', sh.lens)]} onSet={(v) => set({ lens: v })} />
@@ -472,41 +461,112 @@ function ShotEditor({ p, sh, sc }: { p: PProject; sh: PShot; sc: PScene }) {
         )}
         {!!cam?.fixedLens && !cam.zoomOnly && <F title="العدسة" hint="عدسة ثابتة"><Input value="عدسة ثابتة 24mm" readOnly /></F>}
         <Picker k="filter" title="الفلتر" display={sh.filter ? eqName(eq, sh.filter as string) : ''} groups={eqOpts('filter', sh.filter)} onSet={(v) => set({ filter: v })} />
-      </Section>
-
-      <Section k="move" title="الحركة" icon="repeat">
-        <Picker k="movement" title="نوع الحركة" display={(sh.motion as string) ?? ''}
-          groups={[{ label: sup ? `مناسبة لـ ${(sup.short as string) || (sup.name as string)}` : 'مقترحة', options: sugg.map((m) => ({ value: m, label: m, active: sh.motion === m })) }, { label: 'كل الحركات', options: MOVES.filter((m) => !sugg.includes(m)).map((m) => ({ value: m, label: m, active: sh.motion === m })) }, used('movement', sh.motion)]}
-          onSet={(v) => set({ motion: v })} />
-        <Picker k="support" title="معدّة الحركة" display={eqName(eq, sh.rigId as string)}
-          groups={[
-            { label: 'معداتي', options: [...virt.filter((v) => v.id !== 'sup-handheld'), ...supItems].map((i) => ({ value: i.id, label: (i.short as string) || (i.name as string), sub: ((i.motions as string[]) ?? []).slice(0, 3).join('، '), active: sh.rigId === i.id })) },
-            { label: 'بدون معدّة', options: virt.filter((v) => v.id === 'sup-handheld').map((i) => ({ value: i.id, label: i.name as string, active: sh.rigId === i.id })) },
-            { label: 'القائمة العامة', options: GENERAL.support.map((g) => ({ value: g, label: g, active: sh.rigId === g })) },
-            used('support', sh.rigId),
-          ]}
-          onSet={(v) => set({ rigId: v })} />
-      </Section>
-
-      <Section k="light" title="الإضاءة والمزاج" icon="sun">
-        {multi('lightingIds', 'معدات الإضاءة', 'lighting', sh.lightingIds ?? [])}
+      </>
+    ),
+    rig: (
+      <Picker k="support" title="معدّة الحركة" display={eqName(eq, sh.rigId as string)}
+        groups={[
+          { label: 'معداتي', options: [...virt.filter((v) => v.id !== 'sup-handheld'), ...supItems].map((i) => ({ value: i.id, label: (i.short as string) || (i.name as string), sub: ((i.motions as string[]) ?? []).slice(0, 3).join('، '), active: sh.rigId === i.id })) },
+          { label: 'بدون معدّة', options: virt.filter((v) => v.id === 'sup-handheld').map((i) => ({ value: i.id, label: i.name as string, active: sh.rigId === i.id })) },
+          { label: 'القائمة العامة', options: GENERAL.support.map((g) => ({ value: g, label: g, active: sh.rigId === g })) },
+          used('support', sh.rigId),
+        ]}
+        onSet={(v) => set({ rigId: v })} />
+    ),
+    light: (
+      <>
+        {multi('lightingIds', 'معدات الإضاءة', 'lighting', lights)}
         <F title="وصف المزاج"><Textarea value={(sh.lightingMood as string) ?? ''} onChange={(e) => set({ lightingMood: e.target.value }, 'lm')} rows={2} placeholder="مثلاً: ضوء دافئ ناعم من النافذة" /></F>
-      </Section>
-
-      <Section k="audio" title="الصوت والحوار" icon="mic">
-        {multi('audioIds', 'معدات الصوت', 'audio', sh.audioIds ?? [])}
+      </>
+    ),
+    audio: (
+      <>
+        {multi('audioIds', 'معدات الصوت', 'audio', audios)}
         <F title="الحوار"><Textarea value={(sh.dialogue as string) ?? ''} onChange={(e) => set({ dialogue: e.target.value }, 'dl')} rows={4} placeholder="نص الحوار إن وُجد" /></F>
         <F title="ملاحظات الصوت"><Textarea value={(sh.audioNotes as string) ?? ''} onChange={(e) => set({ audioNotes: e.target.value }, 'an')} rows={2} /></F>
-      </Section>
-
-      <div style={{ borderTop: '1px solid var(--color-border-subtle)', marginTop: 16, paddingTop: 16, display: 'flex' }}>
+      </>
+    ),
+  };
+  const ORDER_ED = FIELD_GROUPS.shotEditor.fields.map((f) => f.id);
+  const vis = ORDER_ED.filter((k) => shown.shotEditor.has(k));
+  const hid = ORDER_ED.filter((k) => !shown.shotEditor.has(k));
+  const lensShort = cam?.lensIds ? ((eq.get(sh.lens as string)?.short as string) || '') : '';
+  const summary: Record<string, string> = {
+    refs: sh.images.length ? `${sh.images.length} صور` : '',
+    dur: mmss(sh.durationS),
+    status: STATUS[sh.status]?.label ?? '',
+    size: sh.size ? (sizeLbl[1] as string) : '',
+    motion: (sh.motion as string) || '',
+    angle: (sh.angle as string) || '',
+    camera: [cam ? ((cam.short as string) || (cam.name as string)) : '', lensShort, sh.focalMm ? `${sh.focalMm}mm` : ''].filter(Boolean).join(' · '),
+    rig: sh.rigId ? ((sup?.short as string) || eqName(eq, sh.rigId as string)) : '',
+    light: (sh.lightingMood as string) || lights.map((x) => eqName(eq, x)).join('، '),
+    audio: (sh.dialogue as string)?.split('\n')[0]?.slice(0, 30) || audios.map((x) => eqName(eq, x)).join('، '),
+  };
+  const pair = (a: string, b: string) => {
+    const xs = [a, b].filter((k) => vis.includes(k));
+    if (!xs.length) return null;
+    if (mobile || xs.length === 1) return xs.map((k) => <div key={k}>{F_[k]}</div>);
+    return <div key={a + b} style={{ display: 'flex', gap: 10 }}>{xs.map((k) => <div key={k} style={{ flex: k === 'status' ? 1.6 : 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>{F_[k]}</div>)}</div>;
+  };
+  return (
+    <div data-component="ShotEditor" style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 14 }}>
+      {vis.includes('refs') && F_.refs}
+      {F_.desc}
+      {pair('dur', 'status')}
+      {pair('size', 'motion')}
+      {vis.filter((k) => !['refs', 'desc', 'dur', 'status', 'size', 'motion'].includes(k)).map((k) => <div key={k} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>{F_[k]}</div>)}
+      {hid.length > 0 && <Details key={id} summary={hid.map((k) => summary[k]).filter(Boolean).join(' · ')}>{hid.map((k) => <div key={k} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>{F_[k]}</div>)}</Details>}
+      <div style={{ borderTop: '1px solid var(--color-border-subtle)', marginTop: 4, paddingTop: 16, display: 'flex' }}>
         <Button variant="ghost" size="sm" icon="trash" onClick={() => deleteShot(id)}>حذف اللقطة</Button>
       </div>
-    </>
+    </div>
   );
 }
 
+/** «تفاصيل التصوير» (UPDATE-3 §4.2): the hidden fields, folded at the end, with their values summed up. */
+function Details({ summary, children }: { summary: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="fd-det" data-testid="details">
+      <button onClick={() => setOpen(!open)} aria-expanded={open} data-testid="details-toggle">
+        <Icon name="aperture" size={18} />
+        <span style={{ flex: 1, minWidth: 0 }}><b>تفاصيل التصوير</b><small data-testid="details-summary">{summary || 'فاضية'}</small></span>
+        <Icon name={open ? 'chevron-up' : 'chevron-down'} size={16} />
+      </button>
+      {open && <div className="body anim-rise">{children}</div>}
+    </div>
+  );
+}
+
+/** A number that counts to its new value (UPDATE-3 §5.2, 400 ms); instant with «حركة أقل». */
+export function CountUp({ v, fmt = mmss }: { v: number; fmt?: (n: number) => string }) {
+  const [shown, setShown] = useState(v);
+  useEffect(() => {
+    if (shown === v) return;
+    if (reducedMotion()) return setShown(v);
+    const a = shown, t0 = performance.now();
+    let raf = 0;
+    const step = (t: number) => {
+      const k = Math.min(1, (t - t0) / 400);
+      const e = 1 - (1 - k) ** 3;
+      setShown(Math.round(a + (v - a) * e));
+      if (k < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [v]);
+  return <>{fmt(shown)}</>;
+}
+
 // ---------- scene ----------
+
+/** The shot plan registers its «المخطط» button here (UPDATE-3 §6). */
+let scenePlanButton: ((sceneId: string) => React.ReactNode) | null = null;
+export function registerPlanButton(f: (sceneId: string) => React.ReactNode) {
+  scenePlanButton = f;
+}
 
 function SceneEditor({ p, sc, si }: { p: PProject; sc: PScene; si: number }) {
   const set = (patch: Record<string, unknown>, k?: string) => upd('scene', sc.id, patch, k);
@@ -520,13 +580,18 @@ function SceneEditor({ p, sc, si }: { p: PProject; sc: PScene; si: number }) {
     ...sc.noteIds.map((id) => { const n = p.notes.find((x) => x.id === id); return n && { id, icon: 'file', label: (n.text as string) || 'ملاحظة فارغة', open: () => openEditor('note', id), remove: () => unlink(sc.id, 'note', id) }; }),
     ...sc.moodboardIds.map((id) => { const m = L.moodboards.find((x) => x.id === id); return m && { id, icon: 'image', label: m.title as string, open: () => openEditor('moodboard', id), remove: () => unlink(sc.id, 'moodboard', id) }; }),
   ].filter(Boolean) as { id: string; icon: string; label: string; open: () => void; remove: () => void }[];
-  return (
-    <div data-component="SceneEditor" style={{ display: 'flex', flexDirection: 'column', gap: 18, paddingTop: 14 }}>
+  const { shown } = useFields();
+  const SF: Record<string, React.ReactNode> = {
+    name: <>
       <F title="الاسم"><Input value={sc.name ?? ''} onChange={(e) => set({ name: e.target.value }, 'name')} data-testid="scene-name" /></F>
+      </>,
+    intExt: <>
       <div style={{ display: 'flex', gap: 12 }}>
         {seg([['int', 'داخلي'], ['ext', 'خارجي']], sc.intExt, 'intExt')}
         {seg([['day', 'نهار'], ['night', 'ليل']], sc.dayNight, 'dayNight')}
       </div>
+      </>,
+    location: <>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <span style={label}>الموقع (من المكتبة)</span>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -534,6 +599,13 @@ function SceneEditor({ p, sc, si }: { p: PProject; sc: PScene; si: number }) {
           <button onClick={() => newLocationForScene(sc.id)} style={{ padding: '7px 12px', border: '1px dashed var(--color-border)', borderRadius: 999, background: 'transparent', color: 'var(--color-text)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>+ موقع جديد</button>
         </div>
       </div>
+      </>,
+    summary: <>
+      <F title="الملخص"><Textarea value={(sc.summary as string) ?? ''} onChange={(e) => set({ summary: e.target.value }, 'sum')} rows={3} /></F>
+      </>,
+    // «المخطط» (UPDATE-3 §6) comes with the shot plan
+    plan: scenePlanButton ? scenePlanButton(sc.id) : null,
+    characters: <>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <span style={label}>الشخصيات</span>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
@@ -549,8 +621,11 @@ function SceneEditor({ p, sc, si }: { p: PProject; sc: PScene; si: number }) {
           <button onClick={() => newCharacterForScene(sc.id)} title="شخصية جديدة" style={{ width: 46, height: 46, borderRadius: '50%', border: '1.5px dashed var(--color-border)', background: 'transparent', color: 'var(--color-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={16} /></button>
         </div>
       </div>
-      <F title="الملخص"><Textarea value={(sc.summary as string) ?? ''} onChange={(e) => set({ summary: e.target.value }, 'sum')} rows={3} /></F>
+      </>,
+    goal: <>
       <F title="الهدف الدرامي"><Textarea value={(sc.goal as string) ?? ''} onChange={(e) => set({ goal: e.target.value }, 'goal')} rows={2} /></F>
+      </>,
+    mood: <>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <span style={label}>{`لون المزاج · ${moodName(sc.mood)}`}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -566,6 +641,38 @@ function SceneEditor({ p, sc, si }: { p: PProject; sc: PScene; si: number }) {
           </label>
         </div>
       </div>
+      </>,
+    links: <>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <span style={label}>الملاحظات ولوحات المزاج المرتبطة</span>
+        {attached.map((a) => (
+          <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', border: '1px solid var(--color-border-subtle)', borderRadius: 8 }}>
+            <Icon name={a.icon} size={15} />
+            <button onClick={a.open} style={{ flex: 1, border: 'none', background: 'transparent', textAlign: 'right', cursor: 'pointer', color: 'var(--color-text)', fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.label}</button>
+            <button title="فك الربط" onClick={a.remove} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" size={13} /></button>
+          </div>
+        ))}
+        {!attached.length && <span style={{ fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>تنربط لما تسحبها لصف المشهد.</span>}
+      </div>
+      </>,
+  };
+  const order = FIELD_GROUPS.sceneEditor.fields.map((f) => f.id);
+  const vis = order.filter((k) => shown.sceneEditor.has(k));
+  const hid = order.filter((k) => !shown.sceneEditor.has(k));
+  const locName = L.locations.find((l) => l.id === sc.locationId)?.name as string | undefined;
+  const sum: Record<string, string> = {
+    intExt: `${sc.intExt === 'int' ? 'داخلي' : 'خارجي'} · ${sc.dayNight === 'night' ? 'ليل' : 'نهار'}`,
+    location: locName ?? '',
+    summary: ((sc.summary as string) ?? '').split('\n')[0].slice(0, 30),
+    plan: '',
+    characters: sc.characterIds.map((id) => L.characters.find((c) => c.id === id)?.name as string).filter(Boolean).join('، '),
+    goal: ((sc.goal as string) ?? '').split('\n')[0].slice(0, 30),
+    mood: moodName(sc.mood),
+    links: attached.length ? `${attached.length} روابط` : '',
+  };
+  return (
+    <div data-component="SceneEditor" style={{ display: 'flex', flexDirection: 'column', gap: 18, paddingTop: 14 }}>
+      {vis.map((k) => SF[k] && <div key={k} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{SF[k]}</div>)}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}><span style={label}>اللقطات</span><span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{mmss(sceneDur(sc))}</span></div>
         {sc.shots.map((sh, hi) => (
@@ -583,17 +690,7 @@ function SceneEditor({ p, sc, si }: { p: PProject; sc: PScene; si: number }) {
         {!sc.shots.length && <EmptyState icon="film" title="مشهد بلا لقطات" description="أضف أول لقطة لهذا المشهد." style={{ padding: '20px 12px' }} />}
         <Button variant="outline" size="sm" icon="plus" onClick={() => addShot(sc.id)}>لقطة</Button>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <span style={label}>الملاحظات ولوحات المزاج المرتبطة</span>
-        {attached.map((a) => (
-          <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', border: '1px solid var(--color-border-subtle)', borderRadius: 8 }}>
-            <Icon name={a.icon} size={15} />
-            <button onClick={a.open} style={{ flex: 1, border: 'none', background: 'transparent', textAlign: 'right', cursor: 'pointer', color: 'var(--color-text)', fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.label}</button>
-            <button title="فك الربط" onClick={a.remove} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" size={13} /></button>
-          </div>
-        ))}
-        {!attached.length && <span style={{ fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>تنربط لما تسحبها لصف المشهد.</span>}
-      </div>
+      {hid.length > 0 && <Details key={sc.id} summary={hid.map((k) => sum[k]).filter(Boolean).join(' · ')}>{hid.map((k) => SF[k] && <div key={k} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{SF[k]}</div>)}</Details>}
       <div style={{ borderTop: '1px solid var(--color-border-subtle)', paddingTop: 14, display: 'flex' }}>
         <Button variant="ghost" size="sm" icon="trash" onClick={() => deleteScene(sc.id)}>حذف المشهد</Button>
       </div>

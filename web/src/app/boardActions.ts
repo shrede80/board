@@ -8,6 +8,7 @@ import { pad2, uid } from '../lib/util';
 import { addScene, addShot, centerWorldRef, commit, nextZ, createFromTemplate, deleteScene, deleteShot, deleteSelection, duplicateShot, moveScene, moveShot, openEditor, renumberOps } from './actions';
 import { boardItems, boxOf, fitAll, itemBoxes, itemOf, openItem, posOp, autoArrange, type Item } from './board';
 import { uploadFile } from './images';
+import { kb } from './keyLabels';
 import { askConfirm, engine, getState, openMenu, project, setState, toast, type MenuEntry, type MenuItem } from './state';
 
 /**
@@ -391,10 +392,10 @@ export function imageToMoodboard(cardId: string, mbId: string | null) {
 // ---------- menus (UPDATE-1 أ3) ----------
 
 const ORDER_ITEMS = (ids: string[]): MenuItem[] => [
-  { label: 'للأمام', keys: ']', run: () => reorderSel('forward', ids) },
-  { label: 'للخلف', keys: '[', run: () => reorderSel('backward', ids) },
-  { label: 'للأعلى', keys: 'Ctrl ]', run: () => reorderSel('front', ids) },
-  { label: 'للأسفل', keys: 'Ctrl [', run: () => reorderSel('back', ids) },
+  { label: 'للأمام', keys: kb('forward'), run: () => reorderSel('forward', ids) },
+  { label: 'للخلف', keys: kb('backward'), run: () => reorderSel('backward', ids) },
+  { label: 'للأعلى', keys: kb('front'), run: () => reorderSel('front', ids) },
+  { label: 'للأسفل', keys: kb('back'), run: () => reorderSel('back', ids) },
 ];
 
 function swatchRow(current: string | null, run: (k: string | null) => void, withNone = true): MenuItem {
@@ -420,47 +421,47 @@ export function itemsMenu(ids: string[]): MenuEntry[] {
   if (!p || !ids.length) return [];
   const items = ids.map((id) => itemOf(id)).filter((x): x is Item => !!x);
   const allLocked = items.every((i) => i.locked);
-  const lockItem: MenuItem = { label: allLocked ? 'فك القفل' : 'قفل الموضع والحجم', icon: allLocked ? 'unlock' : 'lock', run: () => setLocked(ids, !allLocked), testid: 'm-lock' };
+  const lockItem: MenuItem = { label: allLocked ? 'فك القفل' : 'قفل الموضع والحجم', icon: allLocked ? 'unlock' : 'lock', keys: kb('lock'), run: () => setLocked(ids, !allLocked), testid: 'm-lock' };
   if (items.length > 1) {
     const n = items.length;
     return [
       { label: 'محاذاة', icon: 'align-h', testid: 'm-align', children: [
-        { label: 'يمين', run: () => alignSel('right'), testid: 'm-align-right' }, { label: 'وسط', run: () => alignSel('hcenter') }, { label: 'يسار', run: () => alignSel('left'), testid: 'm-align-left' },
-        { label: 'أعلى', run: () => alignSel('top'), testid: 'm-align-top' }, { label: 'منتصف', run: () => alignSel('vmiddle') }, { label: 'أسفل', run: () => alignSel('bottom') },
+        { label: 'يمين', keys: kb('alignRight'), run: () => alignSel('right'), testid: 'm-align-right' }, { label: 'وسط', keys: kb('centerH'), run: () => alignSel('hcenter') }, { label: 'يسار', keys: kb('alignLeft'), run: () => alignSel('left'), testid: 'm-align-left' },
+        { label: 'أعلى', keys: kb('alignTop'), run: () => alignSel('top'), testid: 'm-align-top' }, { label: 'منتصف', keys: kb('centerV'), run: () => alignSel('vmiddle') }, { label: 'أسفل', keys: kb('alignBottom'), run: () => alignSel('bottom') },
       ] },
-      { label: 'توزيع أفقي', icon: 'distribute', disabled: n < 3, run: () => distributeSel('h'), testid: 'm-dist-h' },
-      { label: 'توزيع عمودي', icon: 'distribute', disabled: n < 3, run: () => distributeSel('v') },
-      { label: 'توحيد العرض', icon: 'width', run: uniformWidth, testid: 'm-uniform' },
-      { label: 'إطار حول المحدد', icon: 'frame', keys: 'Ctrl G', run: frameSelection, testid: 'm-frame-around' },
-      { label: 'تكرار', icon: 'repeat', keys: 'Ctrl D', run: () => duplicateSelection(ids) },
-      { label: 'نسخ', icon: 'copy', keys: 'Ctrl C', run: () => copySelection() },
+      { label: 'توزيع أفقي', icon: 'distribute', keys: kb('distributeH'), disabled: n < 3, run: () => distributeSel('h'), testid: 'm-dist-h' },
+      { label: 'توزيع عمودي', icon: 'distribute', keys: kb('distributeV'), disabled: n < 3, run: () => distributeSel('v') },
+      { label: 'توحيد العرض', icon: 'width', keys: kb('sameWidth'), run: uniformWidth, testid: 'm-uniform' },
+      { label: 'إطار حول المحدد', icon: 'frame', keys: kb('frameSel'), run: frameSelection, testid: 'm-frame-around' },
+      { label: 'تكرار', icon: 'repeat', keys: kb('duplicate'), run: () => duplicateSelection(ids) },
+      { label: 'نسخ', icon: 'copy', keys: kb('copy'), run: () => copySelection() },
       { label: 'الترتيب (أمام / خلف)', icon: 'layers', children: ORDER_ITEMS(ids) },
       lockItem,
       'sep',
-      { label: `حذف ${n} عناصر`, icon: 'trash', keys: 'Del', danger: true, run: deleteSelection, testid: 'm-delete' },
+      { label: `حذف ${n} عناصر`, icon: 'trash', keys: kb('delete'), danger: true, run: deleteSelection, testid: 'm-delete' },
     ];
   }
   const it = items[0];
   if (it.scene) {
     const sc = it.scene;
     return [
-      { label: 'فتح', icon: 'edit', keys: 'Enter', run: () => openEditor('scene', sc.id), testid: 'm-open' },
-      { label: 'إعادة التسمية', icon: 'edit', keys: 'F2', run: () => startRename(sc.id), testid: 'm-rename' },
-      { label: 'تكرار المشهد', icon: 'repeat', keys: 'Ctrl D', run: () => duplicateSelection([sc.id]), testid: 'm-duplicate' },
-      { label: 'نسخ', icon: 'copy', keys: 'Ctrl C', run: () => copySelection() },
+      { label: 'فتح', icon: 'edit', keys: kb('open'), run: () => openEditor('scene', sc.id), testid: 'm-open' },
+      { label: 'إعادة التسمية', icon: 'edit', keys: kb('rename'), run: () => startRename(sc.id), testid: 'm-rename' },
+      { label: 'تكرار المشهد', icon: 'repeat', keys: kb('duplicate'), run: () => duplicateSelection([sc.id]), testid: 'm-duplicate' },
+      { label: 'نسخ', icon: 'copy', keys: kb('copy'), run: () => copySelection() },
       { ...swatchRow(sc.mood, (k) => k && setMood([sc.id], k), false), label: 'لون المزاج' },
       { label: 'إضافة لقطة', icon: 'plus', run: () => addShot(sc.id), testid: 'm-add-shot' },
       { label: 'الترتيب (أمام / خلف)', icon: 'layers', children: ORDER_ITEMS(ids), testid: 'm-order' },
       lockItem,
       'sep',
-      { label: 'حذف المشهد', icon: 'trash', keys: 'Del', danger: true, run: () => deleteScene(sc.id), testid: 'm-delete' },
+      { label: 'حذف المشهد', icon: 'trash', keys: kb('delete'), danger: true, run: () => deleteScene(sc.id), testid: 'm-delete' },
     ];
   }
   const c = it.card!;
   const out: MenuEntry[] = [
-    { label: c.kind === 'image' ? 'تعديل التعليق' : 'فتح وتعديل', icon: 'edit', keys: 'Enter', run: () => (c.kind === 'heading' || c.kind === 'frame' || c.kind === 'image' ? startRename(c.id) : openItem(c.id)), testid: 'm-open' },
-    { label: 'تكرار', icon: 'repeat', keys: 'Ctrl D', run: () => duplicateSelection([c.id]), testid: 'm-duplicate' },
-    { label: 'نسخ', icon: 'copy', keys: 'Ctrl C', run: () => copySelection(), testid: 'm-copy' },
+    { label: c.kind === 'image' ? 'تعديل التعليق' : 'فتح وتعديل', icon: 'edit', keys: kb('open'), run: () => (c.kind === 'heading' || c.kind === 'frame' || c.kind === 'image' ? startRename(c.id) : openItem(c.id)), testid: 'm-open' },
+    { label: 'تكرار', icon: 'repeat', keys: kb('duplicate'), run: () => duplicateSelection([c.id]), testid: 'm-duplicate' },
+    { label: 'نسخ', icon: 'copy', keys: kb('copy'), run: () => copySelection(), testid: 'm-copy' },
   ];
   if (c.kind === 'note' || c.kind === 'frame' || c.kind === 'heading') out.push({ ...swatchRow(c.color, (k) => setColor([c.id], k)), testid: 'm-color' });
   out.push({ label: 'الترتيب (أمام / خلف)', icon: 'layers', children: ORDER_ITEMS(ids), testid: 'm-order' }, lockItem);
@@ -474,26 +475,26 @@ export function itemsMenu(ids: string[]): MenuEntry[] {
   if (c.kind === 'character' || c.kind === 'location' || c.kind === 'moodboard') {
     const word = { character: 'الشخصية', location: 'الموقع', moodboard: 'لوحة المزاج' }[c.kind];
     out.push(
-      { label: 'إزالة من اللوحة', icon: 'x', keys: 'Del', run: () => removeFromBoard([c.id]), testid: 'm-remove' },
+      { label: 'إزالة من اللوحة', icon: 'x', keys: kb('delete'), run: () => removeFromBoard([c.id]), testid: 'm-remove' },
       { label: `حذف ${word} (للسلة)`, icon: 'trash', danger: true, run: () => deleteLib(c.kind as LibType, c.refId), testid: 'm-delete' },
     );
-  } else out.push({ label: 'حذف', icon: 'trash', keys: 'Del', danger: true, run: () => (setState({ selection: [c.id] }), deleteSelection()), testid: 'm-delete' });
+  } else out.push({ label: 'حذف', icon: 'trash', keys: kb('delete'), danger: true, run: () => (setState({ selection: [c.id] }), deleteSelection()), testid: 'm-delete' });
   return out;
 }
 
 export function boardMenu(world: { x: number; y: number }): MenuEntry[] {
   const at = { x: Math.round(world.x), y: Math.round(world.y) };
   return [
-    { label: 'لصق', icon: 'clipboard', keys: 'Ctrl V', disabled: !hasClipboard(), run: () => paste(at), testid: 'm-paste' },
+    { label: 'لصق', icon: 'clipboard', keys: kb('copy', 2), disabled: !hasClipboard(), run: () => paste(at), testid: 'm-paste' },
     { label: 'إضافة هنا', icon: 'plus', testid: 'm-add-here', children: [
-      { label: 'مشهد', icon: 'film', run: () => addScene({ pos: at }), testid: 'm-add-scene' },
-      { label: 'ملاحظة', icon: 'file', run: () => createFromTemplate('note', { where: 'board', pos: at }), testid: 'm-add-note' },
-      { label: 'عنوان', icon: 'heading', run: () => addCard('heading', at), testid: 'm-add-heading' },
-      { label: 'صورة', icon: 'image', run: () => pickImages(at) },
-      { label: 'إطار', icon: 'frame', run: () => addCard('frame', at), testid: 'm-add-frame' },
+      { label: 'مشهد', icon: 'film', keys: kb('addScene'), run: () => addScene({ pos: at }), testid: 'm-add-scene' },
+      { label: 'ملاحظة', icon: 'file', keys: kb('addNote'), run: () => createFromTemplate('note', { where: 'board', pos: at }), testid: 'm-add-note' },
+      { label: 'عنوان', icon: 'heading', keys: kb('addHeading'), run: () => addCard('heading', at), testid: 'm-add-heading' },
+      { label: 'صورة', icon: 'image', keys: kb('addImage'), run: () => pickImages(at) },
+      { label: 'إطار', icon: 'frame', keys: kb('addFrame'), run: () => addCard('frame', at), testid: 'm-add-frame' },
     ] },
-    { label: 'ترتيب تلقائي', icon: 'grid', run: autoArrange },
-    { label: 'ملاءمة الكل', icon: 'maximize', run: fitAll },
+    { label: 'ترتيب تلقائي', icon: 'grid', keys: kb('arrange'), run: autoArrange },
+    { label: 'ملاءمة الكل', icon: 'maximize', keys: kb('fit'), run: fitAll },
   ];
 }
 

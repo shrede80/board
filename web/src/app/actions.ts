@@ -4,7 +4,8 @@ import { api, ApiError, type AuthStatus, setNewVersionHandler, setUnauthorizedHa
 import { allShots, findShot, type PProject, type PScene } from '../data/project';
 import { MOODS, POLL_MS, TEMPLATES } from '../lib/constants';
 import { pad2, uid } from '../lib/util';
-import { capture, playFlipLater } from './flip';
+import { capture, playFlipLater, settleNext } from './flip';
+import { opsMotion, switchViews } from './motion';
 import { flushQueue, refreshPending } from './queue';
 import { askConfirm, engine, getState, project, setState, toast, type EditorType } from './state';
 
@@ -133,7 +134,7 @@ export async function openProject(id: string) {
     await showHome().catch(() => setState({ loaded: true, projectId: null, screen: 'home' }));
     return;
   }
-  setState({ loaded: true });
+  setState((s) => ({ loaded: true, openSeq: s.openSeq + 1 }));
   api('/api/settings', { method: 'PATCH', json: { lastProjectId: id } }).catch(() => {});
   setTimeout(() => fitAllSoon(), 30);
 }
@@ -193,6 +194,7 @@ export function commit(ops: Op[], opts: { history?: string | false; key?: string
     const rects = capture('storyboard');
     playFlipLater('storyboard', rects);
   }
+  opsMotion(ops as { op: string; entity: string; id: string }[], (noteId) => [...engine.store.boardCards.values()].find((c) => !c.deletedAt && c.kind === 'note' && c.refId === noteId)?.id ?? null);
   engine.commit(ops, opts);
   return true;
 }
@@ -268,7 +270,10 @@ export function addShot(sceneId: string) {
     [{ op: 'create', entity: 'shots', id, fields: { projectId: p.id, sceneId, position: positionAt(sc.shots, sc.shots.length), ...newShotFields(last as unknown as ShotDefaults) } }],
     { history: 'إضافة لقطة', flip: true },
   );
-  if (ok) openEditor('shot', id);
+  if (ok) {
+    setState({ focusDesc: id });
+    openEditor('shot', id);
+  }
 }
 
 export function duplicateShot(id: string) {
@@ -378,6 +383,7 @@ export function deleteSelection() {
 }
 
 export function moveShot(shotId: string, toSceneId: string, toIndex: number | null) {
+  settleNext(`shot-${shotId}`);
   const p = project();
   const f = p && findShot(p, shotId);
   const to = p?.scenes.find((s) => s.id === toSceneId);
@@ -391,6 +397,7 @@ export function moveShot(shotId: string, toSceneId: string, toIndex: number | nu
 }
 
 export function moveScene(sceneId: string, toIndex: number) {
+  settleNext(`scene-${sceneId}`);
   const p = project();
   if (!p) return;
   const i = p.scenes.findIndex((s) => s.id === sceneId);
@@ -515,9 +522,10 @@ export function toggleFilter(kind: 'character' | 'location', id: string) {
 export function setMode(m: 'board' | 'storyboard') {
   const st = getState();
   if (m === st.mode) return;
-  playFlipLater(m, capture(st.mode));
-  setState({ mode: m, flipping: true, selection: st.selection.length ? [] : st.selection, pick: null });
-  setTimeout(() => setState({ flipping: false }), 650);
+  // calm switch (UPDATE-3 §5.2): the new view slides in from its tab's side, the old one fades
+  const from = st.mode;
+  setState({ mode: m, selection: st.selection.length ? [] : st.selection, pick: null });
+  switchViews(from, m);
 }
 
 // ---------- projects ----------

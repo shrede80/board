@@ -1,8 +1,16 @@
 /**
- * FLIP animation between the board and the storyboard (ported from the prototype):
- * capture card rects before a change, then animate each [data-flip] element from its old
- * rect to its new one.
+ * FLIP (ported from the prototype): capture card rects before a change, then animate each
+ * [data-flip] element from its old rect to its new one. Update 3 (§5.2): reordering slides the
+ * cards to their places in 220 ms and the placed card settles with a small pulse; with «حركة
+ * أقل» the cards just appear in place.
  */
+import { reducedMotion, settle } from './motion';
+
+let settleKey: string | null = null;
+/** The card the next FLIP should settle (the one just dropped). */
+export function settleNext(flipKey: string) {
+  settleKey = flipKey;
+}
 type Rects = Record<string, DOMRect>;
 
 export function capture(layer: string): Rects {
@@ -19,9 +27,11 @@ export function capture(layer: string): Rects {
  * `scale`: zoom of the container the elements live in (board world), so offsets stay in screen px.
  * Reads all rects first, then writes all transforms: one layout pass for hundreds of cards.
  */
-export function playFlip(layer: string, rects: Rects, scale = 1) {
+export function playFlip(layer: string, rects: Rects, scale = 1, ms = 220) {
   const el = document.querySelector(`[data-layer="${layer}"]`);
-  if (!el) return;
+  const key = settleKey;
+  settleKey = null;
+  if (!el || reducedMotion()) return;
   const moves: { n: HTMLElement; t: string }[] = [];
   el.querySelectorAll<HTMLElement>('[data-flip]').forEach((n) => {
     const f = rects[n.getAttribute('data-flip')!];
@@ -40,7 +50,7 @@ export function playFlip(layer: string, rects: Rects, scale = 1) {
   }
   void (el as HTMLElement).offsetHeight; // one reflow
   for (const { n } of moves) {
-    n.style.transition = 'transform 600ms var(--ease-standard)';
+    n.style.transition = `transform ${ms}ms var(--ease-standard)`;
     n.style.transform = '';
   }
   setTimeout(() => {
@@ -49,7 +59,8 @@ export function playFlip(layer: string, rects: Rects, scale = 1) {
       n.style.zIndex = '';
       n.style.transformOrigin = '';
     }
-  }, 650);
+    if (key) settle(el.querySelector(`[data-flip="${CSS.escape(key)}"]`));
+  }, ms + 20);
 }
 
 /** Runs the FLIP after React has committed the new layout (next frame, before paint). */

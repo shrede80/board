@@ -134,39 +134,3 @@ export function DuplicateProjectDialog() {
     </div>
   );
 }
-
-const SHORTCUTS: [string, string][] = [
-  ['تراجع / إعادة', 'Ctrl Z · Ctrl Shift Z'],
-  ['نسخ · قص · لصق', 'Ctrl C · Ctrl X · Ctrl V'],
-  ['تكرار', 'Ctrl D'],
-  ['تحديد الكل', 'Ctrl A'],
-  ['إطار حول المحدد', 'Ctrl G'],
-  ['للأمام · للخلف', '] · ['],
-  ['للأعلى · للأسفل', 'Ctrl ] · Ctrl ['],
-  ['تحريك 1px · 24px', 'الأسهم · Shift + الأسهم'],
-  ['فتح المحدد', 'Enter'],
-  ['إعادة التسمية', 'F2'],
-  ['حذف', 'Delete'],
-  ['تحريك اللوحة', 'مسافة + سحب'],
-  ['إيقاف المحاذاة مؤقتاً', 'Alt أثناء السحب'],
-  ['ورقة الاختصارات', '?'],
-];
-
-export function ShortcutsDialog() {
-  return (
-    <div data-component="ShortcutsDialog" data-testid="shortcuts" style={{ ...dialog, width: 520, display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 26 }}>اختصارات لوحة المفاتيح</h2>
-        <button title="إغلاق" onClick={close} style={xBtn}><Icon name="x" size={18} /></button>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        {SHORTCUTS.map(([a, k]) => (
-          <div key={a} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, padding: '9px 2px', borderBottom: '1px solid var(--color-border-subtle)', fontSize: 14 }}>
-            <span style={{ fontWeight: 600 }}>{a}</span>
-            <span style={{ direction: 'ltr', color: 'var(--color-text-muted)', fontSize: 13 }}>{k}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}

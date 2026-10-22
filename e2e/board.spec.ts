@@ -49,7 +49,7 @@ test('alignment: guides + snap, magnet off, Alt pauses, auto-arrange then undo',
   await expect(cards).toHaveCount(5);
   // the magnet is on by default
   await expect(page.getByTestId('snap-toggle')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByTestId('snap-toggle')).toHaveAttribute('title', 'المحاذاة: تعمل');
+  await expect(page.getByTestId('snap-toggle')).toHaveAttribute('title', /^المحاذاة: تعمل/);
 
   // scene 05 sits in the second row; bring it 4px below scene 01's top → guide + snap
   const a = cards.nth(0), c = cards.nth(4);
@@ -96,7 +96,7 @@ test('alignment: guides + snap, magnet off, Alt pauses, auto-arrange then undo',
 
   // magnet off: free movement
   await page.getByTestId('snap-toggle').click();
-  await expect(page.getByTestId('snap-toggle')).toHaveAttribute('title', 'المحاذاة: متوقفة');
+  await expect(page.getByTestId('snap-toggle')).toHaveAttribute('title', /^المحاذاة: متوقفة/);
   guides = await dragNearTop(page, c, a, 5);
   expect(guides).toBe(0);
   await saved(page);

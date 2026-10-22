@@ -276,6 +276,16 @@ export const ENTITIES = {
       createdAt: { col: 'created_at', type: 'int', createOnly: true, server: true },
     },
   },
+  /**
+   * The user's preferences, one row per key, synced between devices (UPDATE-3 §8):
+   * 'fields' (§4), 'motion' (§5), 'keys' (§3.3: only the changed shortcuts).
+   */
+  prefs: {
+    table: 'prefs', scope: 'owner', trashable: false,
+    fields: {
+      value: j('value', null),
+    },
+  },
   equipment: {
     table: 'equipment', scope: 'owner', trashable: false,
     fields: {
@@ -305,7 +315,10 @@ export type EntityName = keyof typeof ENTITIES;
 export const ENTITY_NAMES = Object.keys(ENTITIES) as EntityName[];
 export const PROJECT_ENTITIES = ENTITY_NAMES.filter((n) => ENTITIES[n].scope === 'project');
 /** Owner-wide rows every device keeps in sync, with or without an open project. */
-export const OWNER_SYNC: EntityName[] = ['equipment', 'ideas', 'challengeRuns', 'challengeDays'];
+export const OWNER_SYNC: EntityName[] = ['equipment', 'ideas', 'challengeRuns', 'challengeDays', 'prefs'];
+/** Keys of the prefs rows. */
+export const PREF_KEYS = ['fields', 'motion', 'keys'] as const;
+export type PrefKey = (typeof PREF_KEYS)[number];
 export const MAX_IDEA_IMAGES = 10;
 export const MAX_STILLS = 3;
 export const MAX_BTS_IMAGES = 6;

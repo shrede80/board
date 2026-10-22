@@ -3,6 +3,7 @@ import { cardColors, DEFAULT_SIZE, drawOrder, handlesFor, headingColor, type Han
 import { commit, openEditor, setBoardSnap } from '../app/actions';
 import { autoArrange, boardItems, fitAll, onBoardDown, onHandleDown, onItemDown, photoHeight, registerLongPress, resetSize, setBoardEl, toWorld, zoomBy, type Item } from '../app/board';
 import { boardMenu, openItemsMenu } from '../app/boardActions';
+import { tip } from '../app/keyLabels';
 import { currentDrag, dropOnBoard, dropOnShot, hasFiles } from '../app/dnd';
 import { engine, getState, openMenu, setState, useApp, useProject } from '../app/state';
 import { coverOf, moodHex, sceneCover, sceneDur, type PCard, type PProject, type PScene } from '../data/project';
@@ -10,6 +11,7 @@ import { Badge, EmptyState, Icon } from '../ds/ds';
 import { AR, GRID } from '../lib/constants';
 import { frameBg, imageUrl, mmss, pad2 } from '../lib/util';
 import { avatar } from './Library';
+import { useFields } from './Fields';
 
 const sel = (on: boolean) => (on ? '0 0 0 2px var(--color-accent), var(--shadow-lift)' : 'var(--shadow-card)');
 
@@ -376,6 +378,7 @@ const SceneBody = memo(function SceneBody({ p, sc, si, on, w, ph, renaming }: { 
   const loc = p.library.locations.find((l) => l.id === sc.locationId);
   const n = sc.shots.length;
   const ar = AR[p.aspect] || 16 / 9;
+  const sf = useFields().shown.sceneCard;
   return (
     <div style={{ width: w }}>
       <div data-flip={`scene-${sc.id}`} data-component="SceneCard" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border-subtle)', borderInlineStart: `4px solid ${hex}`, borderRadius: 14, overflow: 'hidden', boxShadow: sel(on), cursor: 'grab' }}>
@@ -386,19 +389,23 @@ const SceneBody = memo(function SceneBody({ p, sc, si, on, w, ph, renaming }: { 
           {renaming
             ? <InlineText value={sc.name} testid="scene-name-input" style={{ fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 18, padding: '2px 6px' }} onDone={endRename((v) => v.trim() && v.trim() !== sc.name && commit([{ op: 'update', entity: 'scenes', id: sc.id, fields: { name: v.trim() } }], { history: 'إعادة التسمية' }))} />
             : <span data-testid="board-scene-name" style={{ fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 19, lineHeight: 1.3 }}>{sc.name}</span>}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <Badge tone="outline">{`${sc.intExt === 'int' ? 'داخلي' : 'خارجي'} · ${sc.dayNight === 'night' ? 'ليل' : 'نهار'}`}</Badge>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: loc ? 'var(--color-text)' : 'var(--color-text-muted)' }}><Icon name="map-pin" size={14} />{loc ? (loc.name as string) : 'بلا موقع'}</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-            <div style={{ display: 'flex', paddingInlineEnd: 6 }}>
-              {sc.characterIds.map((id) => p.library.characters.find((c) => c.id === id)).filter(Boolean).map((c) => {
-                const a = avatar(c!);
-                return <span key={c!.id} data-testid="char-avatar" data-where="scene" style={{ width: 26, height: 26, borderRadius: '50%', background: a.bg, border: '2px solid var(--color-bg)', marginInlineEnd: -7, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#141210' }}>{a.init}</span>;
-              })}
+          {(sf.has('intExt') || sf.has('location')) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              {sf.has('intExt') && <Badge tone="outline">{`${sc.intExt === 'int' ? 'داخلي' : 'خارجي'} · ${sc.dayNight === 'night' ? 'ليل' : 'نهار'}`}</Badge>}
+              {sf.has('location') && <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: loc ? 'var(--color-text)' : 'var(--color-text-muted)' }}><Icon name="map-pin" size={14} />{loc ? (loc.name as string) : 'بلا موقع'}</span>}
             </div>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: 'var(--color-text-muted)' }}><Icon name="film" size={14} />{`${n} ${n === 1 ? 'لقطة' : 'لقطات'} · ${mmss(sceneDur(sc))}`}</span>
-          </div>
+          )}
+          {(sf.has('characters') || sf.has('counts')) && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <div style={{ display: 'flex', paddingInlineEnd: 6 }}>
+                {sf.has('characters') && sc.characterIds.map((id) => p.library.characters.find((c) => c.id === id)).filter(Boolean).map((c) => {
+                  const a = avatar(c!);
+                  return <span key={c!.id} data-testid="char-avatar" data-where="scene" style={{ width: 26, height: 26, borderRadius: '50%', background: a.bg, border: '2px solid var(--color-bg)', marginInlineEnd: -7, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#141210' }}>{a.init}</span>;
+                })}
+              </div>
+              {sf.has('counts') && <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: 'var(--color-text-muted)' }}><Icon name="film" size={14} />{`${n} ${n === 1 ? 'لقطة' : 'لقطات'} · ${mmss(sceneDur(sc))}`}</span>}
+            </div>
+          )}
         </div>
       </div>
       <div style={{ display: 'flex', gap: 4, marginTop: 8, flexWrap: 'wrap', paddingInlineStart: 4 }}>
@@ -423,13 +430,13 @@ export function ZoomControls() {
   const btn: React.CSSProperties = { width: 30, height: 30, border: 'none', background: 'transparent', borderRadius: 4, cursor: 'pointer', color: 'var(--color-text)', display: 'flex', alignItems: 'center', justifyContent: 'center' };
   return (
     <div data-component="ZoomControls" style={{ position: 'absolute', bottom: 22, insetInlineEnd: 18, zIndex: 12, display: 'flex', alignItems: 'center', gap: 2, background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 8, boxShadow: 'var(--shadow-card)', padding: 4 }}>
-      <button title="ملاءمة الكل" className="h-strong" onClick={fitAll} style={{ ...btn, width: 'auto', padding: '0 10px', fontSize: 13, fontWeight: 600 }}>ملاءمة الكل</button>
+      <button title={tip('ملاءمة الكل', 'fit')} className="h-strong" onClick={fitAll} style={{ ...btn, width: 'auto', padding: '0 10px', fontSize: 13, fontWeight: 600 }}>ملاءمة الكل</button>
       <span style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
-      <button title="تكبير" className="h-strong" onClick={() => zoomBy(1.2)} style={btn}><Icon name="plus" size={15} /></button>
+      <button title={tip('تكبير', 'zoomIn')} className="h-strong" onClick={() => zoomBy(1.2)} style={btn}><Icon name="plus" size={15} /></button>
       <span style={{ minWidth: 46, textAlign: 'center', fontSize: 13, fontWeight: 600 }}>{Math.round(z * 100) + '%'}</span>
-      <button title="تصغير" className="h-strong" onClick={() => zoomBy(1 / 1.2)} style={btn}><Icon name="minus" size={15} /></button>
+      <button title={tip('تصغير', 'zoomOut')} className="h-strong" onClick={() => zoomBy(1 / 1.2)} style={btn}><Icon name="minus" size={15} /></button>
       <span style={{ width: 1, height: 18, background: 'var(--color-border)' }} />
-      <button title={snap ? 'المحاذاة: تعمل' : 'المحاذاة: متوقفة'} aria-pressed={snap} data-testid="snap-toggle" className="h-strong" onClick={() => void setBoardSnap(!snap)}
+      <button title={tip(snap ? 'المحاذاة: تعمل' : 'المحاذاة: متوقفة', 'magnet')} aria-pressed={snap} data-testid="snap-toggle" className="h-strong" onClick={() => void setBoardSnap(!snap)}
         style={{ ...btn, color: snap ? 'var(--tan-600)' : 'var(--color-text-muted)', background: snap ? 'var(--color-accent-soft)' : 'transparent' }}>
         <svg viewBox="0 0 24 24" width={16} height={16} aria-hidden="true">
           <path d="M6 4v7a6 6 0 0 0 12 0V4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
@@ -437,7 +444,7 @@ export function ZoomControls() {
           <path d="M6 8h3.5M14.5 8H18" stroke="currentColor" strokeWidth="1.8" />
         </svg>
       </button>
-      <button title="ترتيب تلقائي" data-testid="auto-arrange" className="h-strong" disabled={offline} onClick={autoArrange} style={btn}>
+      <button title={tip('ترتيب تلقائي', 'arrange')} data-testid="auto-arrange" className="h-strong" disabled={offline} onClick={autoArrange} style={btn}>
         <svg viewBox="0 0 24 24" width={16} height={16} aria-hidden="true">
           {[[4, 4], [13.5, 4], [4, 13.5], [13.5, 13.5]].map(([x, y]) => <rect key={`${x}${y}`} x={x} y={y} width="6.5" height="6.5" rx="1.2" fill="none" stroke="currentColor" strokeWidth="1.7" />)}
         </svg>

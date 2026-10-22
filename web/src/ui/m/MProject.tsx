@@ -1,3 +1,4 @@
+import { useFields } from '../Fields';
 import { useEffect, useRef, useState } from 'react';
 import { addScene, addShot, commit, createFromTemplate, deleteScene, moveScene, moveShot, openEditor, openProject, undo } from '../../app/actions';
 import { duplicateSelection, libMenu, shotMenu } from '../../app/boardActions';
@@ -234,6 +235,7 @@ function cycle(id: string, current: Status) {
 /** The shot list from before (status in one tap, by scene/location, status filter) — description on two lines. */
 function ShotList({ p }: { p: PProject }) {
   const eq = useEquipment();
+  const cf = useFields().shown.shotCard;
   const offline = useApp((s) => s.offline);
   const [group, setGroup] = useState<'scene' | 'location'>('scene');
   const [status, setStatus] = useState<'all' | Status>('all');
@@ -272,8 +274,9 @@ function ShotList({ p }: { p: PProject }) {
                     <span style={{ position: 'relative', width: 92, height: 58, borderRadius: 4, background: frameBg(coverOf(x.sh), moodHex(x.sc.mood)), flexShrink: 0 }}><span style={{ position: 'absolute', top: 4, insetInlineEnd: 6, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 16, color: '#fdfcfa', textShadow: '0 1px 5px rgba(0,0,0,.6)' }}>{x.num}</span></span>
                     <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
                       <span data-testid="m-shot-desc" style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{x.sh.description || 'بدون وصف'}</span>
-                      <span style={{ fontSize: 11, color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{[camLine(eq, x.sh), moveLine(eq, x.sh)].filter(Boolean).join(' · ')}</span>
-                      <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>{`${x.sh.size ?? ''} · ${mmss(x.sh.durationS)}`}</span>
+                      {/* the card fields of «الحقول» (UPDATE-3 §4.4) */}
+                      {(cf.has('camera') || cf.has('motion')) && <span style={{ fontSize: 11, color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{[cf.has('camera') && camLine(eq, x.sh), cf.has('motion') && moveLine(eq, x.sh)].filter(Boolean).join(' · ')}</span>}
+                      {(cf.has('size') || cf.has('dur')) && <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>{[cf.has('size') && (x.sh.size ?? ''), cf.has('dur') && mmss(x.sh.durationS)].filter(Boolean).join(' · ')}</span>}
                     </span>
                   </button>
                   <button title="تغيير الحالة" data-testid="m-status" data-status={x.sh.status} disabled={offline} onClick={() => cycle(x.sh.id, x.sh.status)} style={{ width: 84, height: 48, flexShrink: 0, borderRadius: 999, border: `1.5px solid ${sv.sBorder}`, background: sv.sBg, color: sv.sFg, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: offline ? 0.45 : 1 }}>

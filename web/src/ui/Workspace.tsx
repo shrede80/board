@@ -1,7 +1,9 @@
 import { createFromTemplate } from '../app/actions';
+import { tip } from '../app/keyLabels';
 import { addCard, pickImages } from '../app/boardActions';
 import { dragEnd, dragStart } from '../app/dnd';
 import { useEffect, useRef } from 'react';
+import { develop, fillRhythm, firstTime, staggerIn } from '../app/motion';
 import { getState, setState, useApp, useProject } from '../app/state';
 import { EmptyState, Icon } from '../ds/ds';
 import { BOARD_ONLY, TPL, type TplType } from '../lib/constants';
@@ -13,6 +15,18 @@ import { StoryboardView } from './Storyboard';
 export function Workspace() {
   const mode = useApp((s) => s.mode);
   const editor = useApp((s) => s.editor);
+  const openSeq = useApp((s) => s.openSeq);
+  // opening a project (UPDATE-3 §5): the cards rise in, the photos «develop», the rhythm bar fills.
+  // Once per opening: polling and other devices' changes never replay it.
+  useEffect(() => {
+    if (!openSeq) return;
+    const t = setTimeout(() => openingMotion(getState().mode, openSeq), 70);
+    return () => clearTimeout(t);
+  }, [openSeq]);
+  useEffect(() => {
+    if (openSeq && mode === 'storyboard') openingMotion('storyboard', openSeq, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
   return (
     <div style={{ flex: 1, display: 'flex', minHeight: 0, position: 'relative' }}>
       <LibraryPanel />
@@ -27,6 +41,21 @@ export function Workspace() {
     </div>
   );
 }
+
+function openingMotion(layer: 'board' | 'storyboard', seq: number, switched = false) {
+  if (!firstTime(`${layer}:${seq}`)) return;
+  const root = document.querySelector(`[data-layer="${layer}"]`);
+  if (!root) return;
+  if (layer === 'storyboard') {
+    fillRhythm([...root.querySelectorAll('[data-rhythm-seg]')]);
+    if (!switched) staggerIn([...root.querySelectorAll('[data-testid=shot-card]')].filter(inView));
+  } else if (!switched) staggerIn([...root.querySelectorAll('[data-item]')].filter(inView));
+  develop([...root.querySelectorAll('[data-photo], [data-testid=shot-card] > div:first-child')].filter(inView));
+}
+const inView = (el: Element) => {
+  const r = el.getBoundingClientRect();
+  return r.width > 0 && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;
+};
 
 function FilterBanner() {
   const p = useProject();
@@ -50,6 +79,9 @@ function FilterBanner() {
     </>
   );
 }
+
+/** The dock's buttons and their «إضافة» shortcuts. */
+const DOCK_CMD: Record<string, string> = { scene: 'addScene', note: 'addNote', heading: 'addHeading', image: 'addImage', frame: 'addFrame', character: 'addCharacter', location: 'addLocation', moodboard: 'addMoodboard' };
 
 function TemplateDock() {
   const p = useProject();
@@ -84,7 +116,7 @@ function TemplateDock() {
         const boardOnly = BOARD_ONLY.includes(t.type as TplType);
         const off = offline || (boardOnly && mode !== 'board');
         return (
-        <button key={t.type} draggable={!off} title={off && !offline ? 'للوحة الأفكار فقط' : 'اسحب أو اضغط'} data-testid={`dock-${t.type}`} className="h-strong" disabled={off}
+        <button key={t.type} draggable={!off} title={off && !offline ? 'للوحة الأفكار فقط' : tip(t.label, DOCK_CMD[t.type])} data-testid={`dock-${t.type}`} className="h-strong" disabled={off}
           onDragStart={(e) => dragStart(e, { kind: 'tpl', type: t.type })} onDragEnd={dragEnd}
           onClick={() => {
             if (t.type === 'heading' || t.type === 'frame') addCard(t.type);
