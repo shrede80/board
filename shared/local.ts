@@ -68,7 +68,10 @@ export function applyLocal(store: Store, ops: Op[], hidden: Map<string, string[]
             }
           }
         };
-        if (op.entity === 'scenes') cascade('shots', (r) => r.sceneId === op.id);
+        if (op.entity === 'scenes') {
+          cascade('shots', (r) => r.sceneId === op.id);
+          cascade('planItems', (r) => r.sceneId === op.id);
+        }
         if (['notes', 'characters', 'locations', 'moodboards'].includes(op.entity)) cascade('boardCards', (r) => r.refId === op.id);
         hiddenByIndex.set(i, keys);
         break;

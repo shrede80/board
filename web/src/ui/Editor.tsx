@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { FIELD_GROUPS } from '../../../shared/fields';
 import { reducedMotion } from '../app/motion';
 import { FieldsButton, useFields } from './Fields';
+import { openPlan, planOf } from '../app/plan';
 import {
   addShot, closeEditor, deleteScene, deleteShot, editorNav, moveShot, newCharacterForScene, newLocationForScene, openEditor, toggleCharacter, unlink, upd,
 } from '../app/actions';
@@ -562,12 +563,6 @@ export function CountUp({ v, fmt = mmss }: { v: number; fmt?: (n: number) => str
 
 // ---------- scene ----------
 
-/** The shot plan registers its «المخطط» button here (UPDATE-3 §6). */
-let scenePlanButton: ((sceneId: string) => React.ReactNode) | null = null;
-export function registerPlanButton(f: (sceneId: string) => React.ReactNode) {
-  scenePlanButton = f;
-}
-
 function SceneEditor({ p, sc, si }: { p: PProject; sc: PScene; si: number }) {
   const set = (patch: Record<string, unknown>, k?: string) => upd('scene', sc.id, patch, k);
   const L = p.library;
@@ -581,6 +576,7 @@ function SceneEditor({ p, sc, si }: { p: PProject; sc: PScene; si: number }) {
     ...sc.moodboardIds.map((id) => { const m = L.moodboards.find((x) => x.id === id); return m && { id, icon: 'image', label: m.title as string, open: () => openEditor('moodboard', id), remove: () => unlink(sc.id, 'moodboard', id) }; }),
   ].filter(Boolean) as { id: string; icon: string; label: string; open: () => void; remove: () => void }[];
   const { shown } = useFields();
+  const planCount = planOf(sc.id).length;
   const SF: Record<string, React.ReactNode> = {
     name: <>
       <F title="الاسم"><Input value={sc.name ?? ''} onChange={(e) => set({ name: e.target.value }, 'name')} data-testid="scene-name" /></F>
@@ -603,8 +599,16 @@ function SceneEditor({ p, sc, si }: { p: PProject; sc: PScene; si: number }) {
     summary: <>
       <F title="الملخص"><Textarea value={(sc.summary as string) ?? ''} onChange={(e) => set({ summary: e.target.value }, 'sum')} rows={3} /></F>
       </>,
-    // «المخطط» (UPDATE-3 §6) comes with the shot plan
-    plan: scenePlanButton ? scenePlanButton(sc.id) : null,
+    // «المخطط» (UPDATE-3 §6.1)
+    plan: (
+      <button data-testid="open-plan" className="h-strong" onClick={() => openPlan(sc.id)}
+        style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 48, padding: '0 14px', border: '1px solid var(--color-border)', borderRadius: 10, background: 'var(--color-surface)', color: 'var(--color-text)', fontSize: 15, fontWeight: 700, cursor: 'pointer', textAlign: 'right' }}>
+        <Icon name="grid" size={18} />
+        <span style={{ flex: 1 }}>المخطط</span>
+        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)' }}>{planCount ? `${planCount} عناصر` : 'الكاميرات والإضاءة من فوق'}</span>
+        <Icon name="arrow-left" size={15} />
+      </button>
+    ),
     characters: <>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <span style={label}>الشخصيات</span>

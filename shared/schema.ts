@@ -48,6 +48,7 @@ export const STAGES = ['idea', 'prep', 'shoot', 'post', 'done'] as const;
 /** Colour keys for notes, frames and headings (same keys as the scene moods). */
 export const COLOR_KEYS = ['gold', 'amber', 'sand', 'clay', 'night', 'olive', 'wine', 'cool'] as const;
 export const IMAGE_OWNERS = ['shot', 'character', 'location', 'moodboard'] as const;
+export const PLAN_KINDS = ['camera', 'light', 'person', 'furniture', 'zone', 'arrow', 'text'] as const;
 
 export const ENTITIES = {
   projects: {
@@ -274,6 +275,28 @@ export const ENTITIES = {
       commitment: j('commitment', null),
       regretIdeaId: tn('regret_idea_id'),
       createdAt: { col: 'created_at', type: 'int', createOnly: true, server: true },
+    },
+  },
+  /**
+   * Shot plan (UPDATE-3 §6, §8): the cameras, lights, people and set of a scene seen from above,
+   * in metres. Not trashable alone: it hides and comes back with its scene.
+   */
+  planItems: {
+    table: 'plan_items', scope: 'project', trashable: false,
+    fields: {
+      projectId: pid,
+      sceneId: { col: 'scene_id', type: 'text' },
+      kind: e('kind', PLAN_KINDS, 'camera'),
+      refId: tn('ref_id'),
+      x: r('x'),
+      y: r('y'),
+      rot: r('rot'),
+      w: r('w', 1),
+      h: r('h', 1),
+      z: r('z'),
+      label: t('label'),
+      color: tn('color'),
+      props: j('props', {}),
     },
   },
   /**

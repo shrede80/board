@@ -7,6 +7,7 @@ import { Button, Card, Checkbox, Field, Icon, Input, Radio, Table, Toast } from 
 import { TEMPLATES } from '../lib/constants';
 import { frameBg, imageUrl, mmss, pad2 } from '../lib/util';
 import { Overlay } from './Pages';
+import { planSvgFor } from '../app/plan';
 import { AspectPicker, DuplicateProjectDialog, ProjectSettingsDialog, StagePicker } from './ProjectDialogs';
 import { ShortcutsDialog } from './Keys';
 
@@ -78,8 +79,17 @@ function ExportDialog() {
   const [err, setErr] = useState('');
   if (!p) return null;
   const shots = allShots(p).filter((x) => scope === 'all' || sel.includes(x.sc.id));
-  const pages: (typeof shots)[] = [];
-  for (let i = 0; i < shots.length; i += 4) pages.push(shots.slice(i, i + 4));
+  // four shots a page; a scene with a shot plan gets a page for it right after its last shot (UPDATE-3 §6.8)
+  const pages: ((typeof shots) | { plan: string; si: number; name: string; svg: string })[] = [];
+  for (let i = 0; i < shots.length; i += 4) {
+    const pg = shots.slice(i, i + 4);
+    pages.push(pg);
+    for (const x of pg) {
+      const last = shots.filter((y) => y.sc.id === x.sc.id).at(-1);
+      const svg = last === x ? planSvgFor(x.sc.id) : null;
+      if (svg) pages.push({ plan: x.sc.id, si: x.si, name: x.sc.name, svg: svg.replace(/^<svg ([^>]*?)width="\d+" height="\d+"/, '<svg $1width="100%" height="100%" preserveAspectRatio="xMidYMid meet"') });
+    }
+  }
   const nScenes = new Set(shots.map((x) => x.sc.id)).size;
   const allIds = p.scenes.map((s) => s.id);
   const opts = [['pdf', 'ستوري بورد PDF', 'A4 أفقي بأسلوب لوحة القصة المرئية', 'film'], ['table', 'قائمة اللقطات', 'جدول — PDF أو Excel', 'file'], ['project', 'نسخة المشروع كاملة', 'ملف واحد بكل البيانات والصور', 'folder']] as const;
@@ -139,6 +149,12 @@ function ExportDialog() {
                         <div><h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 44, margin: 0, lineHeight: 1.1 }}>لوحة القصة المرئية</h1><p style={{ fontFamily: 'var(--font-serif-text)', color: '#6b6255', fontSize: 17, margin: '8px 0 0' }}>{p.name}</p></div>
                         <div style={{ background: '#d2a06a', borderRadius: 8, padding: '10px 22px', textAlign: 'center', minWidth: 120 }}><div style={{ fontSize: 12, fontWeight: 700 }}>عدد المشاهد</div><div style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 26 }}>{pad2(nScenes)}</div></div>
                       </div>
+                      {!Array.isArray(pg) ? (
+                        <div data-testid="print-plan" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 10, marginTop: 18, paddingBottom: 18 }}>
+                          <span style={{ fontSize: 15, fontWeight: 700, color: '#a97c49' }}>{`مخطط المشهد ${pad2(pg.si + 1)} · ${pg.name}`}</span>
+                          <div style={{ flex: 1, minHeight: 0, borderRadius: 12, overflow: 'hidden', border: '1px solid #d3bf94' }} dangerouslySetInnerHTML={{ __html: pg.svg }} />
+                        </div>
+                      ) : (
                       <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 44, marginTop: 18, alignContent: 'start' }}>
                         {pg.map((x) => {
                           const cov = coverOf(x.sh);
@@ -163,6 +179,7 @@ function ExportDialog() {
                           );
                         })}
                       </div>
+                      )}
                       <div style={{ background: '#d2a06a', margin: '0 -52px', padding: '18px 52px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.5 }}><div>0500710624</div><div>shrede80@gmail.com</div></div>
                         <span style={{ fontSize: 13, fontWeight: 700 }}>{`${pi + 1} / ${pages.length}`}</span>

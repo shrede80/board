@@ -12,6 +12,7 @@ import { AR, GRID } from '../lib/constants';
 import { frameBg, imageUrl, mmss, pad2 } from '../lib/util';
 import { avatar } from './Library';
 import { useFields } from './Fields';
+import { hasPlan } from '../app/plan';
 
 const sel = (on: boolean) => (on ? '0 0 0 2px var(--color-accent), var(--shadow-lift)' : 'var(--shadow-card)');
 
@@ -403,6 +404,7 @@ const SceneBody = memo(function SceneBody({ p, sc, si, on, w, ph, renaming }: { 
                   return <span key={c!.id} data-testid="char-avatar" data-where="scene" style={{ width: 26, height: 26, borderRadius: '50%', background: a.bg, border: '2px solid var(--color-bg)', marginInlineEnd: -7, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#141210' }}>{a.init}</span>;
                 })}
               </div>
+              {hasPlan(sc.id) && <span title="فيه مخطط" data-testid="card-plan-mark" style={{ display: 'flex', color: 'var(--tan-600)', marginInlineStart: 'auto', marginInlineEnd: 6 }}><Icon name="grid" size={14} /></span>}
               {sf.has('counts') && <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: 'var(--color-text-muted)' }}><Icon name="film" size={14} />{`${n} ${n === 1 ? 'لقطة' : 'لقطات'} · ${mmss(sceneDur(sc))}`}</span>}
             </div>
           )}

@@ -11,6 +11,7 @@ import { AR, STATUS } from '../lib/constants';
 import { frameBg, mmss, pad2, textOn } from '../lib/util';
 import type { Row } from '../../../shared/schema';
 import { useFields } from './Fields';
+import { hasPlan, openPlan } from '../app/plan';
 import { CountUp } from './Editor';
 import { avatar } from './Library';
 
@@ -166,6 +167,7 @@ const SceneRow = memo(function SceneRow({ p, sc, si, match }: { p: PProject; sc:
             {sf.has('counts') && <span data-testid="row-counts" style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="clock" size={14} />{`${sc.shots.length} ${sc.shots.length === 1 ? 'لقطة' : 'لقطات'} · ${mmss(sceneDur(sc))}`}</span>}
             {sc.noteIds.length > 0 && <span title="ملاحظات مرتبطة" style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="file" size={14} />{sc.noteIds.length}</span>}
             {sc.moodboardIds.length > 0 && <span title="لوحات مزاج مرتبطة" style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="image" size={14} />{sc.moodboardIds.length}</span>}
+            {hasPlan(sc.id) && <button title="المخطط" data-testid="row-plan-mark" onClick={(e) => (e.stopPropagation(), openPlan(sc.id))} onPointerDown={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', border: 'none', background: 'transparent', color: 'var(--tan-600)', padding: 0, cursor: 'pointer' }}><Icon name="grid" size={14} /></button>}
             {/* always visible, however long the row (UPDATE-3 §2.1) */}
             <button data-testid="row-add-shot" className="h-strong" disabled={offline} draggable={false} title="لقطة جديدة"
               onClick={(e) => (e.stopPropagation(), addShot(sc.id))} onPointerDown={(e) => e.stopPropagation()} onDragStart={(e) => (e.preventDefault(), e.stopPropagation())}

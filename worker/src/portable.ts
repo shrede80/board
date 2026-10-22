@@ -38,9 +38,10 @@ const REFS: Partial<Record<EntityName, Record<string, EntityName | 'image' | 'by
   sceneCharacters: { sceneId: 'scenes', characterId: 'characters' },
   sceneLinks: { sceneId: 'scenes', refId: 'byKind' },
   itemImages: { ownerId: 'byKind', imageId: 'image' },
+  planItems: { sceneId: 'scenes' },
 };
 /** Reference fields without which the row is meaningless (dropped if the target is missing). */
-const REQUIRED = new Set(['shots.sceneId', 'boardCards.refId', 'sceneCharacters.sceneId', 'sceneCharacters.characterId', 'sceneLinks.sceneId', 'sceneLinks.refId', 'itemImages.ownerId', 'itemImages.imageId']);
+const REQUIRED = new Set(['shots.sceneId', 'boardCards.refId', 'sceneCharacters.sceneId', 'sceneCharacters.characterId', 'sceneLinks.sceneId', 'sceneLinks.refId', 'itemImages.ownerId', 'itemImages.imageId', 'planItems.sceneId']);
 const KIND_ENTITY: Record<string, EntityName | 'image'> = { note: 'notes', character: 'characters', location: 'locations', moodboard: 'moodboards', shot: 'shots', image: 'image' };
 /** Card kinds that point at nothing (ref_id = ''). */
 const NO_REF_KINDS = new Set(['heading', 'frame']);
@@ -169,6 +170,11 @@ export async function importProject(db: D1Database, input: unknown, imageMap: Re
     for (const name of Object.keys(ENTITIES[entity].fields)) {
       if (!(name in r) || name === 'createdAt') continue;
       const target = refs[name];
+      if (entity === 'planItems' && name === 'refId') {
+        // a person points at a character of this project (new id); cameras and lights at the owner's equipment
+        out[name] = r.kind === 'person' ? (typeof r.refId === 'string' ? ids.get(r.refId) ?? null : null) : r.refId ?? null;
+        continue;
+      }
       if (target) {
         if (entity === 'boardCards' && NO_REF_KINDS.has(r.kind as string)) {
           out[name] = '';

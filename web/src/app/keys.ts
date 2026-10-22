@@ -45,7 +45,8 @@ export function onKey(e: KeyboardEvent) {
     e.preventDefault();
     if (!st.space) setState({ space: true });
   }
-  // fixed keys (UPDATE-3 §3.3 🔒): Delete, copy/cut/paste, the arrows
+  // fixed keys (UPDATE-3 §3.3 🔒): Delete, copy/cut/paste, the arrows — the shot plan handles its own
+  if (st.plan && (e.key === 'Delete' || e.key === 'Backspace' || e.key.startsWith('Arrow'))) return;
   if (e.key === 'Delete' || e.key === 'Backspace') {
     if (st.screen !== 'app' || blocked) return;
     if (st.mode === 'board' && st.selection.length) deleteSelection();

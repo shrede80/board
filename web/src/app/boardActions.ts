@@ -9,6 +9,7 @@ import { addScene, addShot, centerWorldRef, commit, nextZ, createFromTemplate, d
 import { boardItems, boxOf, fitAll, itemBoxes, itemOf, openItem, posOp, autoArrange, type Item } from './board';
 import { uploadFile } from './images';
 import { kb } from './keyLabels';
+import { openPlan } from './plan';
 import { askConfirm, engine, getState, openMenu, project, setState, toast, type MenuEntry, type MenuItem } from './state';
 
 /**
@@ -50,6 +51,7 @@ function snapScene(id: string): SceneSnap | null {
     chars: live(S.sceneCharacters, (r) => r.sceneId === id).map((r) => r.characterId as string),
     notes: links.filter((l) => l.kind === 'note').map((l) => S.notes.get(l.refId as string)).filter((n): n is Row => !!n && !n.deletedAt).map((n) => ({ ...n })),
     moodboards: links.filter((l) => l.kind === 'moodboard').map((l) => l.refId as string),
+    plan: live(S.planItems, (r) => r.sceneId === id).map((r) => ({ ...r })),
   };
 }
 
@@ -451,6 +453,7 @@ export function itemsMenu(ids: string[]): MenuEntry[] {
       { label: 'نسخ', icon: 'copy', keys: kb('copy'), run: () => copySelection() },
       { ...swatchRow(sc.mood, (k) => k && setMood([sc.id], k), false), label: 'لون المزاج' },
       { label: 'إضافة لقطة', icon: 'plus', run: () => addShot(sc.id), testid: 'm-add-shot' },
+      { label: 'المخطط', icon: 'grid', run: () => openPlan(sc.id), testid: 'm-plan' },
       { label: 'الترتيب (أمام / خلف)', icon: 'layers', children: ORDER_ITEMS(ids), testid: 'm-order' },
       lockItem,
       'sep',
@@ -513,6 +516,7 @@ export function sceneRowMenu(sceneId: string): MenuEntry[] {
     { label: 'إعادة التسمية', icon: 'edit', run: () => setState({ renaming: { kind: 'scene', id: sceneId, where: 'row' } }), testid: 'm-rename' },
     { label: 'تكرار', icon: 'repeat', run: () => duplicateSelection([sceneId]), testid: 'm-duplicate' },
     { label: 'إضافة لقطة', icon: 'plus', run: () => addShot(sceneId) },
+    { label: 'المخطط', icon: 'grid', run: () => openPlan(sceneId), testid: 'm-plan' },
     'sep',
     { label: 'حذف المشهد', icon: 'trash', danger: true, run: () => deleteScene(sceneId), testid: 'm-delete' },
   ];

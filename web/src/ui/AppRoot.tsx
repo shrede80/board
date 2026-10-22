@@ -6,6 +6,7 @@ import { getState, useApp } from '../app/state';
 import { Alert, Skeleton } from '../ds/ds';
 import { LoginScreen, SetupScreen } from './Login';
 import { ConfirmDialog, Modals, Toasts } from './Modals';
+import { PlanScreen } from './Plan';
 import { EqSprite, EquipmentPage, PageBack, SettingsPage, TrashPage } from './Pages';
 import { PresentationMode } from './Present';
 import { TopBar, UpdateBanner } from './TopBar';
@@ -53,6 +54,7 @@ export function AppRoot() {
   const offline = useApp((s) => s.offline);
   const modal = useApp((s) => s.modal);
   const bootOffline = useApp((s) => s.bootOffline);
+  const plan = useApp((s) => s.plan);
   const mobile = useIsMobile();
   const dv = useApp((s) => s.dataVersion);
   // «حركة أقل» follows the synced setting (UPDATE-3 §5.3)
@@ -99,6 +101,8 @@ export function AppRoot() {
           <ChallengeLayer />
         </>
       )}
+      {/* the shot plan, full screen above the project (UPDATE-3 §6.1) */}
+      {auth === 'app' && loaded && plan && <PlanScreen />}
       <ConfirmDialog />
       <Toasts />
       {auth === 'app' && <UpdateBanner />}

@@ -206,6 +206,8 @@ export interface NudgeInput {
   grid?: number;
   /** "on the line" tolerance */
   eps?: number;
+  /** which line of the group lands on the grid: its start edge (board) or its centre (plan, like dragging there) */
+  gridRef?: 'start' | 'center';
 }
 export interface NudgeResult {
   dx: number;
@@ -294,7 +296,7 @@ export function nudgeStep(inp: NudgeInput): NudgeResult {
     return { ...at(sign * best.d), stop: 'guide' };
   }
   // Shift: whichever comes first, the guide or the next grid line of the leading-start edge
-  const p0 = horiz ? g.x : g.y;
+  const p0 = inp.gridRef === 'center' ? (horiz ? g.x + g.w / 2 : g.y + g.h / 2) : horiz ? g.x : g.y;
   const nextGrid = sign > 0 ? Math.floor(p0 / grid + 1e-9) * grid + grid : Math.ceil(p0 / grid - 1e-9) * grid - grid;
   let gd = Math.abs(nextGrid - p0);
   if (gd <= eps) gd += grid;

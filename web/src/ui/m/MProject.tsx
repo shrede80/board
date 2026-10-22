@@ -1,4 +1,5 @@
 import { useFields } from '../Fields';
+import { openPlan } from '../../app/plan';
 import { useEffect, useRef, useState } from 'react';
 import { addScene, addShot, commit, createFromTemplate, deleteScene, moveScene, moveShot, openEditor, openProject, undo } from '../../app/actions';
 import { duplicateSelection, libMenu, shotMenu } from '../../app/boardActions';
@@ -105,6 +106,7 @@ function sceneMenu(p: PProject, sc: PScene, si: number): MenuEntry[] {
   return [
     { label: 'تعديل المشهد', icon: 'edit', run: () => openEditor('scene', sc.id), testid: 'm-open' },
     { label: 'لقطة جديدة', icon: 'plus', run: () => addShot(sc.id), testid: 'm-add-shot' },
+    { label: 'المخطط', icon: 'grid', run: () => openPlan(sc.id), testid: 'm-plan' },
     { label: 'تكرار المشهد', icon: 'repeat', run: () => duplicateSelection([sc.id]), testid: 'm-duplicate' },
     { label: 'نقل لأعلى', icon: 'chevron-up', disabled: si === 0, run: move(si - 1, `انتقل المشهد إلى ${pad2(si)}`), testid: 'm-up' },
     { label: 'نقل لأسفل', icon: 'chevron-down', disabled: si === n - 1, run: move(si + 2, `انتقل المشهد إلى ${pad2(si + 2)}`), testid: 'm-down' },

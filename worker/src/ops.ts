@@ -254,12 +254,15 @@ export async function applyOps(db: D1Database, ops: Op[]): Promise<OpsResult> {
         ).bind(json, OWNER_ID, now),
       );
       if (entity === 'scenes') {
-        stmts.push(
-          db.prepare(
-            `UPDATE shots SET deleted_at = ?2, updated_at = MAX(updated_at + 1, ?2), trash_id = j.value->>'tid'
-             FROM json_each(?1) j WHERE shots.scene_id = j.value->>'id' AND shots.deleted_at IS NULL`,
-          ).bind(json, now),
-        );
+        // a scene takes its shots and its shot plan (UPDATE-3 §6.9) to the trash with it
+        for (const child of ['shots', 'plan_items']) {
+          stmts.push(
+            db.prepare(
+              `UPDATE ${child} SET deleted_at = ?2, updated_at = MAX(updated_at + 1, ?2), trash_id = j.value->>'tid'
+               FROM json_each(?1) j WHERE ${child}.scene_id = j.value->>'id' AND ${child}.deleted_at IS NULL`,
+            ).bind(json, now),
+          );
+        }
       }
       if (entity === 'notes' || entity === 'characters' || entity === 'locations' || entity === 'moodboards') {
         stmts.push(

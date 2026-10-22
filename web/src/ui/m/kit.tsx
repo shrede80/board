@@ -54,7 +54,7 @@ function layers(s: UIState): number {
   return [
     s.screen !== 'home',
     (SUBPAGES as readonly string[]).includes(s.screen),
-    s.present.open, s.editor, s.addSheet, s.ideaSheet, s.modal, s.pick, s.ideaEdit, s.choice, s.popMenu, s.confirm,
+    s.present.open, s.editor, s.plan, s.addSheet, s.ideaSheet, s.modal, s.pick, s.ideaEdit, s.choice, s.popMenu, s.confirm,
     ...s.ch.map(() => true),
   ].filter(Boolean).length;
 }
@@ -70,6 +70,7 @@ function closeTop(goHome: () => void) {
   if (s.ideaSheet) return setState({ ideaSheet: null });
   if (s.addSheet) return setState({ addSheet: null });
   if (s.ch.length) return setState({ ch: s.ch.slice(0, -1) });
+  if (s.plan) return setState({ plan: null });
   if (s.editor) return closeEditor();
   if (s.present.open) return closePresent();
   if ((SUBPAGES as readonly string[]).includes(s.screen)) return setState({ screen: 'more' });

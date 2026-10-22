@@ -23,6 +23,7 @@ const COPIED: { entity: EntityName; prefix: string }[] = [
   { entity: 'notes', prefix: 'note' },
   { entity: 'boardCards', prefix: 'bc' },
   { entity: 'itemImages', prefix: 'ii' },
+  { entity: 'planItems', prefix: 'pl' },
 ];
 const LINKED_KINDS = "('note','character','location','moodboard')";
 
@@ -58,6 +59,8 @@ export async function duplicateProject(db: D1Database, projectId: string, opts: 
     if (entity === 'shots' && col === 'status') return `CASE WHEN ?4 THEN status ELSE 'planned' END`;
     if (entity === 'boardCards' && col === 'ref_id') return `CASE WHEN kind IN ${LINKED_KINDS} THEN ${mapped('ref_id')} ELSE ref_id END`;
     if (entity === 'itemImages' && col === 'owner_id') return mapped('owner_id');
+    if (entity === 'planItems' && col === 'scene_id') return mapped('scene_id');
+    if (entity === 'planItems' && col === 'ref_id') return `CASE WHEN kind = 'person' THEN ${mapped('ref_id')} ELSE ref_id END`;
     return col;
   };
   /** Rows whose required reference wasn't copied (e.g. a shot of a deleted scene) are skipped. */
@@ -65,6 +68,7 @@ export async function duplicateProject(db: D1Database, projectId: string, opts: 
     shots: `${mapped('scene_id')} IS NOT NULL`,
     boardCards: `(kind NOT IN ${LINKED_KINDS} OR ${mapped('ref_id')} IS NOT NULL)`,
     itemImages: `${mapped('owner_id')} IS NOT NULL`,
+    planItems: `${mapped('scene_id')} IS NOT NULL`,
   };
   for (const c of COPIED) {
     const def = ENTITIES[c.entity];
