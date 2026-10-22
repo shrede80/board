@@ -71,6 +71,8 @@ export function PlanScreen() {
   const [snap, setSnap] = useState(true);
   const [ptab, setPtab] = useState<PTab>('كاميرات');
   const [sheet, setSheet] = useState<null | 'palette' | 'props' | 'more'>(null);
+  const sheetRef = useRef(sheet);
+  sheetRef.current = sheet;
   const [copyOpen, setCopyOpen] = useState(false);
   const [marq, setMarq] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
@@ -92,6 +94,17 @@ export function PlanScreen() {
   }, [p, sc]);
 
   const size = () => ({ W: wrap.current?.clientWidth ?? 800, H: wrap.current?.clientHeight ?? 600 });
+  // on the phone the bottom bar (and the sheet under it) cover the plan: fit into what stays visible
+  const visible = () => {
+    const { W, H } = size();
+    const root = wrap.current?.closest('.pl-root') as HTMLElement | null;
+    const bar = root?.querySelector('.pl-mbar') as HTMLElement | null;
+    if (!mobile || !root || !bar || !wrap.current) return { W, H };
+    // where the bar ends up (it slides with the sheet), not where it is mid-slide
+    const rr = root.getBoundingClientRect(), top = wrap.current.getBoundingClientRect().top;
+    const barTop = rr.bottom - (sheetRef.current ? rr.height * 0.55 + 10 : 16) - bar.offsetHeight;
+    return { W, H: Math.max(120, Math.min(H, barTop - top - 8)) };
+  };
   const toM = (cx: number, cy: number) => {
     const r = svgRef.current!.getBoundingClientRect();
     const v = viewRef.current;
@@ -110,7 +123,7 @@ export function PlanScreen() {
   // ---------- fit (300 ms, §6.2) ----------
   const fit = (animate = true) => {
     const list = itemsRef.current;
-    const { W, H } = size();
+    const { W, H } = visible();
     let a = 0, b = 0, c = 6, d = 4;
     if (list.length) {
       a = b = Infinity;
@@ -123,7 +136,9 @@ export function PlanScreen() {
     }
     a -= 0.6; b -= 0.6; c += 0.6; d += 0.6;
     const s1 = Math.max(10, Math.min(160, Math.min(W / (c - a), H / (d - b)) * 0.94));
-    const to: View = { s: s1, ox: (a + c) / 2 - W / 2 / s1, oy: (b + d) / 2 - H / 2 / s1 };
+    glide({ s: s1, ox: (a + c) / 2 - W / 2 / s1, oy: (b + d) / 2 - H / 2 / s1 }, animate);
+  };
+  const glide = (to: View, animate = true) => {
     if (!animate || reducedMotion()) return setView(to);
     const from = viewRef.current, t0 = performance.now();
     const step = (t: number) => {
@@ -133,6 +148,21 @@ export function PlanScreen() {
     };
     requestAnimationFrame(step);
   };
+  // the props sheet opens over the plan: bring the selected item up into the visible part (§6.6)
+  useEffect(() => {
+    if (!mobile || !sheet || selRef.current.length !== 1) return;
+    const id = selRef.current[0];
+    const raf = requestAnimationFrame(() => {
+      const it = itemsRef.current.find((i) => i.id === id);
+      if (!it) return;
+      const v = viewRef.current, { W, H } = visible();
+      const py = (it.y - v.oy) * v.s, px = (it.x - v.ox) * v.s;
+      if (py > 40 && py < H - 40 && px > 20 && px < W - 20) return;
+      glide({ s: v.s, ox: it.x - W / 2 / v.s, oy: it.y - H / 2 / v.s });
+    });
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sheet, sel[0], mobile]);
   useLayoutEffect(() => {
     fit(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -650,7 +680,7 @@ const Item = memo(function Item({ it, on, k }: { it: PlanItem; on: boolean; k: n
     return (
       <g data-pid={it.id} data-kind={it.kind} transform={`translate(${X} ${Y}) rotate(${it.rot})`} style={{ cursor: 'move' }}>
         <rect x={-w / 2} y={-h / 2} width={w} height={h} rx={10 / k} fill={it.kind === 'zone' ? 'var(--color-accent)' : 'transparent'} fillOpacity={0.08} stroke={it.kind === 'zone' || on ? 'var(--color-accent)' : 'transparent'} strokeDasharray="6 5" strokeWidth={on ? 2 : 1.4} vectorEffect="non-scaling-stroke" />
-        <text x={it.kind === 'zone' ? w / 2 - 12 / k : 0} y={it.kind === 'zone' ? -h / 2 + 22 / k : 5 / k} textAnchor={it.kind === 'zone' ? 'end' : 'middle'} fontSize={15 / k} fontWeight={700} fill="var(--color-text-muted)">{it.label}</text>
+        <text x={it.kind === 'zone' ? w / 2 - 12 / k : 0} y={it.kind === 'zone' ? -h / 2 + 22 / k : 5 / k} textAnchor={it.kind === 'zone' ? 'start' : 'middle'} fontSize={15 / k} fontWeight={700} fill="var(--color-text-muted)">{it.label}</text>
       </g>
     );
   }
