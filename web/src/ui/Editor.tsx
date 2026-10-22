@@ -119,7 +119,7 @@ function MobileEditor({ comp, head, body }: { comp: string; head: { kicker: stri
   const navBtn: React.CSSProperties = { minWidth: 88, height: 44, border: 'none', background: 'transparent', color: 'var(--color-text)', fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, padding: '0 6px' };
   return (
     <MobileCtx.Provider value={true}>
-      <div data-component={comp} data-testid="editor" style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'var(--color-bg)', display: 'flex', flexDirection: 'column', paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
+      <div data-component={comp} data-testid="editor" className="m-editor" style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'var(--color-bg)', display: 'flex', flexDirection: 'column', paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 6px 8px', borderBottom: '1px solid var(--color-border-subtle)' }}>
           <button aria-label="إغلاق" data-testid="editor-close" onClick={closeEditor} style={{ ...hdrBtn, width: 44, height: 44 }}><Icon name="x" size={22} /></button>
           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
@@ -554,9 +554,14 @@ function SceneEditor({ p, sc, si }: { p: PProject; sc: PScene; si: number }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <span style={label}>{`لون المزاج · ${moodName(sc.mood)}`}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          {MOODS.map((m) => <button key={m} title={moodName(m)} onClick={() => set({ mood: m })} style={{ width: 30, height: 30, borderRadius: '50%', border: 'none', background: moodHex(m), boxShadow: sc.mood === m ? '0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-text)' : 'none', cursor: 'pointer' }} />)}
-          <label title="لون مخصص" style={{ position: 'relative', width: 30, height: 30, borderRadius: '50%', border: '1.5px dashed var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
-            <Icon name="plus" size={13} />
+          {/* the circle stays 30px; on the phone the tap area around it is 44px (UPDATE-3 §2.3) */}
+          {MOODS.map((m) => (
+            <button key={m} title={moodName(m)} onClick={() => set({ mood: m })} style={{ width: 30, height: 30, padding: 0, border: 'none', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <span style={{ width: 30, height: 30, borderRadius: '50%', background: moodHex(m), boxShadow: sc.mood === m ? '0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-text)' : 'none', flexShrink: 0 }} />
+            </button>
+          ))}
+          <label title="لون مخصص" style={{ position: 'relative', width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
+            <span style={{ width: 30, height: 30, boxSizing: 'border-box', borderRadius: '50%', border: '1.5px dashed var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon name="plus" size={13} /></span>
             <input type="color" value={/^#/.test(sc.mood) ? sc.mood : '#8a7a66'} onChange={(e) => set({ mood: e.target.value }, 'mood')} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
           </label>
         </div>
@@ -584,7 +589,7 @@ function SceneEditor({ p, sc, si }: { p: PProject; sc: PScene; si: number }) {
           <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', border: '1px solid var(--color-border-subtle)', borderRadius: 8 }}>
             <Icon name={a.icon} size={15} />
             <button onClick={a.open} style={{ flex: 1, border: 'none', background: 'transparent', textAlign: 'right', cursor: 'pointer', color: 'var(--color-text)', fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.label}</button>
-            <button title="فك الربط" onClick={a.remove} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'flex' }}><Icon name="x" size={13} /></button>
+            <button title="فك الربط" onClick={a.remove} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" size={13} /></button>
           </div>
         ))}
         {!attached.length && <span style={{ fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>تنربط لما تسحبها لصف المشهد.</span>}

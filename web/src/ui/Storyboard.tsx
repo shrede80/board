@@ -11,8 +11,16 @@ import { AR, STATUS } from '../lib/constants';
 import { frameBg, mmss, pad2, textOn } from '../lib/util';
 import type { Row } from '../../../shared/schema';
 
-/** Space kept free under the last row so the floating template dock never covers it (SPEC §7.4). */
-export const DOCK_SPACE = 150;
+/** Space kept free under the last row: the floating dock's height + its 20px offset + 24px (UPDATE-3 §2.2). */
+const dockSpace = (dockH: number) => 20 + dockH + 24;
+
+/** While the storyboard scrolls the dock shrinks to one «+», and comes back when it stops (UPDATE-3 §2.2). */
+let scrollTimer: ReturnType<typeof setTimeout> | null = null;
+function onSbScroll() {
+  if (!getState().sbScrolling) setState({ sbScrolling: true });
+  if (scrollTimer) clearTimeout(scrollTimer);
+  scrollTimer = setTimeout(() => setState({ sbScrolling: false }), 450);
+}
 
 let sbEl: HTMLDivElement | null = null;
 export function scrollToRow(id: string) {
@@ -26,6 +34,7 @@ export function StoryboardView() {
   const flipping = useApp((s) => s.flipping);
   const filter = useApp((s) => s.filter);
   const dragOver = useApp((s) => s.dragOver);
+  const dockH = useApp((s) => s.dockH);
   const ref = useRef<HTMLDivElement | null>(null);
   if (!p) return null;
   const isBoard = mode === 'board';
@@ -46,6 +55,7 @@ export function StoryboardView() {
       }}
       onDragOver={(e) => { if (currentDrag()) e.preventDefault(); }}
       onDrop={dropOnSbEmpty}
+      onScroll={isBoard ? undefined : onSbScroll}
       data-flipping={flipping ? '1' : undefined}
       style={{ ['--sb-chrome-op' as string]: chromeOp, position: 'absolute', inset: 0, overflowY: 'auto', overflowX: 'hidden', opacity: isBoard ? 0 : 1, pointerEvents: isBoard ? 'none' : 'auto', backgroundColor: isBoard ? 'rgba(0,0,0,0)' : 'var(--color-bg)', transition: 'background-color 400ms var(--ease-standard)' }}
     >
@@ -68,7 +78,7 @@ export function StoryboardView() {
           })}
         </div>
       </div>
-      <div style={{ padding: `6px 24px ${DOCK_SPACE}px`, display: 'flex', flexDirection: 'column' }}>
+      <div data-testid="sb-content" style={{ padding: `6px 24px ${dockSpace(dockH)}px`, display: 'flex', flexDirection: 'column' }}>
         {p.scenes.map((sc, si) => (
           <SceneRow key={sc.id} p={p} sc={sc} si={si} match={matches(sc)} />
         ))}
@@ -144,6 +154,12 @@ const SceneRow = memo(function SceneRow({ p, sc, si, match }: { p: PProject; sc:
             <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="clock" size={14} />{mmss(sceneDur(sc))}</span>
             {sc.noteIds.length > 0 && <span title="ملاحظات مرتبطة" style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="file" size={14} />{sc.noteIds.length}</span>}
             {sc.moodboardIds.length > 0 && <span title="لوحات مزاج مرتبطة" style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="image" size={14} />{sc.moodboardIds.length}</span>}
+            {/* always visible, however long the row (UPDATE-3 §2.1) */}
+            <button data-testid="row-add-shot" className="h-strong" disabled={offline} draggable={false} title="لقطة جديدة"
+              onClick={(e) => (e.stopPropagation(), addShot(sc.id))} onPointerDown={(e) => e.stopPropagation()} onDragStart={(e) => (e.preventDefault(), e.stopPropagation())}
+              style={{ marginInlineStart: 'auto', display: 'flex', alignItems: 'center', gap: 4, height: 30, padding: '0 12px', border: '1px solid var(--color-border)', borderRadius: 8, background: 'var(--color-bg)', color: 'var(--color-text)', fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              <Icon name="plus" size={14} />لقطة
+            </button>
           </div>
         </div>
         <div className="sb-shots" style={{ flex: 1, minWidth: 0, display: 'flex', gap: 14, padding: 16, overflowX: 'auto', alignItems: 'flex-start' }}>
@@ -156,14 +172,12 @@ const SceneRow = memo(function SceneRow({ p, sc, si, match }: { p: PProject; sc:
               <span style={{ fontSize: 13 }}>أضف لقطة أو اسحبها هنا.</span>
             </div>
           )}
-          {/* «+ لقطة» stays fully visible at the row's end even when the shots scroll (SPEC §7.3). */}
-          <div style={{ position: 'sticky', insetInlineEnd: -16, flexShrink: 0, alignSelf: 'stretch', display: 'flex', alignItems: 'flex-start', padding: '16px 16px 16px 8px', margin: '-16px -16px -16px -8px', borderStartEndRadius: 13, borderEndEndRadius: 13, background: 'var(--color-surface)', boxShadow: '10px 0 12px -10px rgba(20,18,16,.25)', zIndex: 1 }}>
-            <button data-testid="add-shot" className="h-accent-text" disabled={offline} onClick={() => addShot(sc.id)}
-              style={{ width: 120, minWidth: 120, height: addH, flexShrink: 0, border: '1.5px dashed var(--color-border)', borderRadius: 8, background: 'var(--color-surface)', color: 'var(--color-text-muted)', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: 'var(--sb-chrome-op)', transition: 'opacity 400ms', whiteSpace: 'nowrap' }}>
-              <Icon name="plus" size={18} />
-              لقطة
-            </button>
-          </div>
+          {/* the last item of the row, scrolling with the shots: it never covers one (UPDATE-3 §2.1) */}
+          <button data-testid="add-shot" className="h-accent-text" disabled={offline} onClick={() => addShot(sc.id)}
+            style={{ width: 120, minWidth: 120, height: addH, flexShrink: 0, border: '1.5px dashed var(--color-border)', borderRadius: 8, background: 'var(--color-surface)', color: 'var(--color-text-muted)', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: 'var(--sb-chrome-op)', transition: 'opacity 400ms', whiteSpace: 'nowrap' }}>
+            <Icon name="plus" size={18} />
+            لقطة
+          </button>
         </div>
       </section>
     </>

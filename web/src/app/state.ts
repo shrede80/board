@@ -130,7 +130,8 @@ export interface UIState {
   projMenu: boolean;
   popMenu: PopMenu | null;
   /** temporary sizes while resizing on the board (id → world size; heading: h = font) */
-  dragSize: Record<string, { w: number; h?: number }> | null;
+  /** w, h (heading: font) and ph = photo height while dragging a handle */
+  dragSize: Record<string, { w: number; h?: number; ph?: number }> | null;
   renaming: Renaming;
   /** a newer version was deployed while this tab is open (UPDATE-1 أ10) */
   newVersion: boolean;
@@ -153,6 +154,14 @@ export interface UIState {
   customVal: string;
   flipping: boolean;
   guides: Guide[];
+  /** guides left by the arrow keys fade out (UPDATE-3 §3.1) */
+  guidesFade: boolean;
+  /** the storyboard is scrolling: the dock shrinks to one «+» (UPDATE-3 §2.2) */
+  sbScrolling: boolean;
+  /** measured height of the floating dock */
+  dockH: number;
+  /** the small bar under the board saying what an arrow key did */
+  nudgeHud: { keys: string[]; msg: string; n: number } | null;
   /** temporary positions while dragging cards on the board (id → world pos) */
   dragPos: Record<string, { x: number; y: number }> | null;
   uploads: Uploads;
@@ -179,7 +188,7 @@ let state: UIState = {
   selection: [], view: { x: 0, y: 0, z: 0.8 }, filter: null, toasts: [], save: 'saved', offline: typeof navigator !== 'undefined' ? !navigator.onLine : false,
   modal: null, dupTarget: null, choice: null, ideaEdit: null, bootOffline: false, pending: [], addSheet: null, ideaSheet: null, mTab: 'scenes', projMenu: false, popMenu: null, dragSize: null, renaming: null, newVersion: false, pickTarget: null, hoverItem: null, exportTab: 'pdf', exportScope: 'all', exportSel: [], confirm: null, dragOver: null,
   present: { open: false, i: 0, playing: false, tech: false, fill: 0 }, hoverShot: null, marquee: null, space: false, menu: false,
-  pick: null, custom: null, customVal: '', flipping: false, guides: [], dragPos: null, uploads: {}, canUndo: false, canRedo: false, ch: [], chVersion: 0,
+  pick: null, custom: null, customVal: '', flipping: false, guides: [], guidesFade: false, nudgeHud: null, sbScrolling: false, dockH: 84, dragPos: null, uploads: {}, canUndo: false, canRedo: false, ch: [], chVersion: 0,
 };
 
 const listeners = new Set<() => void>();

@@ -36,3 +36,15 @@ button:disabled { cursor: not-allowed; }
     background: #fdfcfa !important; color: #141210;
   }
 }
+
+/* Update 3 motion basics (UPDATE-3 §5.1): enter / exit curves */
+:root { --ease-enter: cubic-bezier(.2,0,0,1); --ease-exit: cubic-bezier(.4,0,1,1); --dur-slow: 320ms; }
+@keyframes sb-rise { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
+.anim-rise { animation: sb-rise 200ms var(--ease-enter) both; }
+@media (prefers-reduced-motion: reduce) { .anim-rise { animation-duration: 1ms; } }
+
+/* board handles (UPDATE-3 §3.2): the mark takes the accent colour on hover */
+.board-handle:hover > i { background: var(--color-accent) !important; }
+
+/* phone editors: every tap target is at least 44×44, even when its shape stays small (UPDATE-3 §2.3) */
+.m-editor button, .m-editor [role=button], .m-editor label:has(> input[type=color]), .m-editor label:has(> input[type=file]) { min-width: 44px; min-height: 44px; }

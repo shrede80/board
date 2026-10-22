@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  alignBoxes, arrangeLayout, cardColors, contrast, distribute, drawOrder, frameAround, GRID, headingColor, insideFrame, overlaps, reorder, resize, snapEdge,
+  alignBoxes, arrangeLayout, cardColors, contrast, distribute, drawOrder, exactGuides, frameAround, GRID, handlesFor, headingColor, insideFrame, nudgeStep, overlaps, reorder, resize, snapEdge,
   type ArrangeItem, type Box,
 } from './board';
 
@@ -54,6 +54,100 @@ describe('resize (UPDATE-1 أ4)', () => {
     expect(g.guides).toHaveLength(0);
     expect(snapEdge(397, 'x', [other], 6)).toMatchObject({ v: 400 });
     expect(snapEdge(290, 'x', [other], 6)).toMatchObject({ v: 288, box: null });
+  });
+});
+
+describe('handles by kind (UPDATE-3 §3.2)', () => {
+  it('a side never changes the photo height; the card keeps its height', () => {
+    for (const kind of ['scene', 'location', 'moodboard', 'image'] as const) {
+      const b = box('a', 0, 0, 280, 330);
+      for (const handle of ['e', 'w'] as const) {
+        const r = resize({ kind, start: b, handle, dx: handle === 'e' ? 80 : -80, dy: 40, photoH: 150 });
+        expect(r.box.w, kind).toBe(360);
+        expect(r.photoH, kind).toBe(150);
+        expect(r.box.h, kind).toBe(330);
+      }
+    }
+  });
+  it('a corner keeps the ratio of photo kinds', () => {
+    for (const kind of ['scene', 'location', 'moodboard', 'image'] as const) {
+      const r = resize({ kind, start: box('a', 0, 0, 280, 330), handle: 'se', dx: 140, dy: -500, photoH: 150 });
+      expect(r.box.w).toBe(420);
+      expect(r.photoH! / r.box.w).toBeCloseTo(150 / 280, 2);
+    }
+    // north-west corner keeps the bottom-right corner fixed
+    const nw = resize({ kind: 'image', start: box('a', 100, 100, 200, 140), handle: 'nw', dx: -100, dy: 0, photoH: 100 });
+    expect(nw.box.x + nw.box.w).toBe(300);
+    expect(nw.box.y + nw.box.h).toBe(240);
+  });
+  it('image top/bottom change only the photo height (cropped), the width stays', () => {
+    expect(handlesFor('image')).toContain('n');
+    expect(handlesFor('scene')).not.toContain('n');
+    const r = resize({ kind: 'image', start: box('i', 0, 0, 260, 180), handle: 's', dx: 30, dy: 60, photoH: 146 });
+    expect(r.box).toMatchObject({ w: 260, h: 240 });
+    expect(r.photoH).toBe(206);
+    const n = resize({ kind: 'image', start: box('i', 0, 100, 260, 180), handle: 'n', dx: 0, dy: 40, photoH: 146 });
+    expect(n.photoH).toBe(106);
+    expect(n.box.y + n.box.h).toBe(280);
+  });
+  it('note and frame: a side changes one dimension, a corner both; Shift keeps the ratio', () => {
+    const n = box('n', 0, 0, 200, 100);
+    expect(resize({ kind: 'note', start: n, handle: 'e', dx: 50, dy: 70 }).box).toMatchObject({ w: 250, h: 100 });
+    expect(resize({ kind: 'note', start: n, handle: 's', dx: 50, dy: 70 }).box).toMatchObject({ w: 200, h: 170 });
+    expect(resize({ kind: 'frame', start: box('f', 0, 0, 640, 400), handle: 'se', dx: 160, dy: 0, shift: true }).box).toMatchObject({ w: 800, h: 500 });
+  });
+  it('character: width only, height stays (text wraps)', () => {
+    expect(resize({ kind: 'character', start: box('c', 0, 0, 210, 200), handle: 'se', dx: 50, dy: 90 }).box).toMatchObject({ w: 260, h: 200 });
+  });
+});
+
+describe('arrow keys align like the mouse (UPDATE-3 §3.1)', () => {
+  const other = box('o', 0, 0, 280, 330);
+  it('a plain arrow moves 1px and shows a guide only on an exact match', () => {
+    const r = nudgeStep({ group: box('g', 400, 2, 280, 330), others: [other], dir: 'up', mode: 'step', snap: true });
+    expect(r).toMatchObject({ dx: 0, dy: -1, stop: 'step' });
+    expect(r.guides).toHaveLength(0);
+    const r2 = nudgeStep({ group: box('g', 400, 1, 280, 330), others: [other], dir: 'up', mode: 'step', snap: true });
+    expect(r2.dy).toBe(-1);
+    expect(r2.guides.some((x) => x.dir === 'h' && x.at === 0)).toBe(true);
+  });
+  it('Shift stops at the nearest guide or grid line and never passes an edge', () => {
+    // top at 6, going up: the other's top (0) and the grid line (0) coincide → the guide wins
+    const r = nudgeStep({ group: box('g', 400, 6, 280, 330), others: [other], dir: 'up', mode: 'next', snap: true });
+    expect(r.dy).toBe(-6);
+    expect(r.stop).toBe('guide');
+    // top at 40: grid line 24 comes before the other's top 0
+    expect(nudgeStep({ group: box('g', 400, 40, 280, 330), others: [other], dir: 'up', mode: 'next', snap: true })).toMatchObject({ dy: -16, stop: 'grid' });
+    // bottom 2px above the other's centre (165): stops on it, not on the grid at 24
+    const c = nudgeStep({ group: box('g', 400, -167, 280, 330), others: [other], dir: 'down', mode: 'next', snap: true });
+    expect(c).toMatchObject({ dy: 2, stop: 'guide' });
+  });
+  it('Shift keeps going from an aligned edge (the current line is not a stop)', () => {
+    const r = nudgeStep({ group: box('g', 400, 0, 280, 330), others: [other], dir: 'down', mode: 'next', snap: true });
+    expect(r.dy).toBeGreaterThan(0);
+  });
+  it('Alt jumps to the nearest guide in that direction, or does not move', () => {
+    const r = nudgeStep({ group: box('g', 400, 500, 100, 100), others: [other], dir: 'left', mode: 'jump', snap: true });
+    expect(r).toMatchObject({ dx: -120, stop: 'guide' }); // left edge 400 → other's right edge 280
+    expect(r.box?.id).toBe('o');
+    expect(nudgeStep({ group: box('g', 400, 500, 100, 100), others: [other], dir: 'right', mode: 'jump', snap: true })).toMatchObject({ dx: 0, dy: 0, stop: 'none' });
+  });
+  it('magnet off: no guides, Shift = 24, Alt does nothing', () => {
+    expect(nudgeStep({ group: box('g', 400, 1, 280, 330), others: [other], dir: 'up', mode: 'step', snap: false }).guides).toHaveLength(0);
+    expect(nudgeStep({ group: box('g', 400, 6, 280, 330), others: [other], dir: 'up', mode: 'next', snap: false })).toMatchObject({ dy: -24 });
+    expect(nudgeStep({ group: box('g', 400, 6, 280, 330), others: [other], dir: 'up', mode: 'jump', snap: false })).toMatchObject({ dy: 0, stop: 'off' });
+  });
+  it('a multi-selection moves as one unit (its bounding box aligns)', () => {
+    // two boxes 300..380 and 420..500 → group 300..500; centre 400 aligns with a box centred at 410 → jump right 10
+    const target = box('t', 360, 800, 100, 50);
+    const r = nudgeStep({ group: box('grp', 300, 0, 200, 50), others: [target], dir: 'right', mode: 'jump', snap: true });
+    expect(r.dx).toBe(10);
+    expect(exactGuides(box('grp', 310, 0, 200, 50), [target]).some((x) => x.dir === 'v' && x.at === 410)).toBe(true);
+  });
+  it('works in metres for the plan (5 cm step, 25 cm grid)', () => {
+    const r = nudgeStep({ group: { id: 'c', x: 1.1, y: 0, w: 0.4, h: 0.4 }, others: [], dir: 'right', mode: 'next', snap: true, step: 0.05, grid: 0.25, eps: 0.001 });
+    expect(r.dx).toBeCloseTo(0.15, 6);
+    expect(nudgeStep({ group: { id: 'c', x: 1.1, y: 0, w: 0.4, h: 0.4 }, others: [], dir: 'left', mode: 'step', snap: true, step: 0.05 }).dx).toBeCloseTo(-0.05, 6);
   });
 });
 

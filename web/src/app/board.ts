@@ -1,7 +1,8 @@
-import { arrangeLayout, DEFAULT_SIZE, insideFrame, resize, snapGrid, type ArrangeItem, type Box, type Handle, type ItemKind } from '../../../shared/board';
+import { arrangeLayout, DEFAULT_SIZE, insideFrame, nudgeStep, PHOTO_KINDS, resize, snapGrid, type ArrangeItem, type Box, type Handle, type ItemKind, type NudgeDir, type NudgeMode } from '../../../shared/board';
 import type { Op } from '../../../shared/schema';
 import type { PCard, PProject, PScene } from '../data/project';
 import { GRID, SNAP_PX } from '../lib/constants';
+import { pad2 } from '../lib/util';
 import { commit, isCard, openEditor, registerCenterWorld, registerFitAll } from './actions';
 import { capture, playFlip } from './flip';
 import { engine, getState, project, setState, toast, type Guide } from './state';
@@ -192,7 +193,7 @@ type Ptr =
   | { type: 'marq'; wx: number; wy: number; base: string[]; sx: number; sy: number }
   | { type: 'move'; sx: number; sy: number; orig: Record<string, { x: number; y: number }>; moved: boolean; id: string; shift: boolean; others: Box[]; sizes: Record<string, { w: number; h: number }> }
   | { type: 'click'; sx: number; sy: number; id: string; shift: boolean; moved: boolean }
-  | { type: 'resize'; sx: number; sy: number; id: string; kind: ItemKind; handle: Handle; start: Box; aspect?: number; font?: number; others: Box[]; moved: boolean };
+  | { type: 'resize'; sx: number; sy: number; id: string; kind: ItemKind; handle: Handle; start: Box; photoH?: number; font?: number; others: Box[]; moved: boolean };
 let ptr: Ptr | null = null;
 
 /** Long press on touch screens opens the menu (UPDATE-1 أ3). */
@@ -267,12 +268,7 @@ export function onItemDown(e: React.PointerEvent, id: string) {
   startPress(e, id);
   const boxes = itemBoxes();
   const byId = new Map(boxes.map((b) => [b.id, b]));
-  // locked items stay put; a moving frame carries what sits inside it at this moment
-  const moving = new Set(sel.filter((k) => !byId.get(k)?.locked));
-  for (const k of [...moving]) {
-    const b = byId.get(k);
-    if (b?.kind === 'frame') for (const m of insideFrame(b, boxes)) if (!byId.get(m)?.locked) moving.add(m);
-  }
+  const moving = movingSet(sel, boxes);
   if (!moving.size) {
     ptr = { type: 'click', sx: e.clientX, sy: e.clientY, id, shift: e.shiftKey, moved: false };
     listen();
@@ -289,7 +285,36 @@ export function onItemDown(e: React.PointerEvent, id: string) {
   listen();
 }
 
-/** Resize handle pressed (UPDATE-1 أ4). */
+/** What moves with a selection: locked items stay put; a moving frame carries what sits inside it at this moment. */
+function movingSet(sel: string[], boxes: ReturnType<typeof itemBoxes>): Set<string> {
+  const byId = new Map(boxes.map((b) => [b.id, b]));
+  const moving = new Set(sel.filter((k) => byId.has(k) && !byId.get(k)!.locked));
+  for (const k of [...moving]) {
+    const b = byId.get(k);
+    if (b?.kind === 'frame') for (const m of insideFrame(b, boxes)) if (!byId.get(m)?.locked) moving.add(m);
+  }
+  return moving;
+}
+
+/**
+ * Photo height of a card on the board (UPDATE-3 §3.2): the stored value after a side drag, else
+ * the height that follows the width (as before Update 3). Moodboards: the 2×2 grid's height.
+ */
+export function photoHeight(it: Item, w: number): number {
+  if (it.scene) return it.scene.boardImgH ?? Math.round((150 * w) / 280);
+  const c = it.card!;
+  if (c.kind === 'location') return c.h ?? Math.round((118 * w) / 230);
+  if (c.kind === 'moodboard') return c.h ?? 2 * Math.round((82 * w) / 250) + 4;
+  if (c.kind === 'image') {
+    const m = engine.images.get(c.refId);
+    const ar = m && m.width && m.height ? m.width / m.height : 16 / 9;
+    return c.h ?? Math.round(w / ar);
+  }
+  return 0;
+}
+const storedPhotoH = (it: Item) => (it.scene ? it.scene.boardImgH : it.card!.h) ?? null;
+
+/** Resize handle pressed (UPDATE-1 أ4, UPDATE-3 §3.2). */
 export function onHandleDown(e: React.PointerEvent, id: string, handle: Handle) {
   if (e.button !== 0) return;
   e.stopPropagation();
@@ -297,19 +322,10 @@ export function onHandleDown(e: React.PointerEvent, id: string, handle: Handle) 
   const it = itemOf(id);
   const b = boxOf(id);
   if (!it || !b || it.locked) return;
-  let aspect: number | undefined;
-  if (it.kind === 'image') {
-    const m = engine.images.get(it.card!.refId);
-    aspect = m && m.width && m.height ? m.width / m.height : b.w / Math.max(1, imageHeight(b));
-  }
+  const photoH = PHOTO_KINDS.includes(it.kind) ? photoHeight(it, b.w) : undefined;
   const font = it.kind === 'heading' ? Number(it.card!.h) || DEFAULT_SIZE.heading[1] : undefined;
-  ptr = { type: 'resize', sx: e.clientX, sy: e.clientY, id, kind: it.kind, handle, start: { id, x: b.x, y: b.y, w: b.w, h: b.h }, aspect, font, others: visibleBoxes(itemBoxes().filter((x) => x.id !== id && x.kind !== 'frame')), moved: false };
+  ptr = { type: 'resize', sx: e.clientX, sy: e.clientY, id, kind: it.kind, handle, start: { id, x: b.x, y: b.y, w: b.w, h: b.h }, photoH, font, others: visibleBoxes(itemBoxes().filter((x) => x.id !== id && x.kind !== 'frame')), moved: false };
   listen();
-}
-/** Height of the photo inside an image card (without its caption). */
-function imageHeight(b: Box) {
-  const el = boardEl?.querySelector<HTMLElement>(`[data-item-id="${CSS.escape(b.id)}"] [data-photo]`);
-  return el?.offsetHeight || b.h;
 }
 
 /** Boxes intersecting the visible part of the board (guides only use what's on screen). */
@@ -351,8 +367,8 @@ function onMove(e: PointerEvent) {
   } else if (P.type === 'resize') {
     if (!P.moved && Math.hypot(e.clientX - P.sx, e.clientY - P.sy) < 2) return;
     P.moved = true;
-    const r = resize({ kind: P.kind, start: P.start, handle: P.handle, dx: (e.clientX - P.sx) / z, dy: (e.clientY - P.sy) / z, aspect: P.aspect, font: P.font, snap: snapOn ? { others: P.others, tol: SNAP_PX / z } : null });
-    const size = P.kind === 'heading' ? { w: r.box.w, h: r.font } : { w: r.box.w, h: r.box.h };
+    const r = resize({ kind: P.kind, start: P.start, handle: P.handle, dx: (e.clientX - P.sx) / z, dy: (e.clientY - P.sy) / z, photoH: P.photoH, font: P.font, shift: e.shiftKey, snap: snapOn ? { others: P.others, tol: SNAP_PX / z } : null });
+    const size = P.kind === 'heading' ? { w: r.box.w, h: r.font } : { w: r.box.w, h: r.box.h, ph: r.photoH };
     setState({ dragSize: { [P.id]: size }, dragPos: { [P.id]: { x: r.box.x, y: r.box.y } }, guides: r.guides });
   }
 }
@@ -392,19 +408,25 @@ function onUp() {
     if (!P.moved || !size || !pos) return;
     const it = itemOf(P.id);
     if (!it) return;
-    commit([sizeOp(it, pos, size)], { history: 'تغيير الحجم', inverse: [sizeOp(it, { x: P.start.x, y: P.start.y }, it.kind === 'heading' ? { w: P.start.w, h: P.font } : { w: P.start.w, h: P.start.h }, true)] });
+    // a photo that still follows the width keeps doing so after a corner drag; a side drag pins its height
+    const stored = storedPhotoH(it);
+    const ph = size.ph == null ? null : P.handle.length === 2 && stored == null ? null : size.ph;
+    commit([sizeOp(it, pos, { ...size, ph })], { history: 'تغيير الحجم', inverse: [sizeOp(it, { x: P.start.x, y: P.start.y }, { w: 0 }, true)] });
   }
 }
 
-/** Update for a new size (and position, when the left/top edge moved). */
-function sizeOp(it: Item, pos: { x: number; y: number }, size: { w: number; h?: number }, restore = false): Op {
+/** Update for a new size (and position, when the left/top edge moved). restore = the values stored now. */
+function sizeOp(it: Item, pos: { x: number; y: number }, size: { w: number; h?: number; ph?: number | null }, restore = false): Op {
+  const photo = PHOTO_KINDS.includes(it.kind);
   if (it.scene) {
-    const w = restore ? it.scene.boardW ?? null : size.w;
-    return { op: 'update', entity: 'scenes', id: it.id, fields: { boardW: w, boardX: pos.x, boardY: pos.y } };
+    const fields: Record<string, unknown> = { boardW: restore ? it.scene.boardW ?? null : size.w, boardX: pos.x, boardY: pos.y };
+    fields.boardImgH = restore ? it.scene.boardImgH ?? null : size.ph ?? null;
+    return { op: 'update', entity: 'scenes', id: it.id, fields };
   }
   const c = it.card!;
   const fields: Record<string, unknown> = { x: pos.x, y: pos.y, w: restore ? c.w ?? null : size.w };
   if (it.kind === 'note' || it.kind === 'frame' || it.kind === 'heading') fields.h = restore ? c.h ?? null : size.h ?? null;
+  else if (photo) fields.h = restore ? c.h ?? null : size.ph ?? null;
   return { op: 'update', entity: 'boardCards', id: it.id, fields };
 }
 
@@ -412,13 +434,14 @@ function sizeOp(it: Item, pos: { x: number; y: number }, size: { w: number; h?: 
 export function resetSize(id: string) {
   const it = itemOf(id);
   if (!it || it.locked) return;
+  // also brings a cropped photo back to the height that follows the width (UPDATE-3 §3.2)
   if (it.scene) {
-    if (it.scene.boardW == null) return;
-    commit([{ op: 'update', entity: 'scenes', id, fields: { boardW: null } }], { history: 'الحجم الافتراضي' });
+    if (it.scene.boardW == null && it.scene.boardImgH == null) return;
+    commit([{ op: 'update', entity: 'scenes', id, fields: { boardW: null, boardImgH: null } }], { history: 'الحجم الافتراضي' });
   } else {
     const c = it.card!;
     if (c.w == null && c.h == null) return;
-    commit([{ op: 'update', entity: 'boardCards', id, fields: it.kind === 'note' || it.kind === 'frame' || it.kind === 'heading' ? { w: null, h: null } : { w: null } }], { history: 'الحجم الافتراضي' });
+    commit([{ op: 'update', entity: 'boardCards', id, fields: it.kind === 'character' ? { w: null } : { w: null, h: null } }], { history: 'الحجم الافتراضي' });
   }
 }
 
@@ -485,6 +508,77 @@ export function align(
   if (bestX) guides.push({ dir: 'v', at: bestX.at, from: Math.min(fy1, bestX.box.y), to: Math.max(fy2, bestX.box.y + bestX.box.h) });
   if (bestY) guides.push({ dir: 'h', at: bestY.at, from: Math.min(fx1, bestY.box.x), to: Math.max(fx2, bestY.box.x + bestY.box.w) });
   return { dx, dy, guides };
+}
+
+// ---------- arrow keys (UPDATE-3 §3.1) ----------
+
+const NUDGE_SAVE_MS = 400, GUIDE_HOLD_MS = 900, GUIDE_FADE_MS = 300, HUD_MS = 1600;
+let guideTimer: ReturnType<typeof setTimeout> | null = null;
+let hudTimer: ReturnType<typeof setTimeout> | null = null;
+let hudN = 0;
+
+/** Short name of a board item for the bar under the board («01 الافتتاحية الجوية»). */
+export function itemLabel(id: string): string {
+  const p = project();
+  const it = itemOf(id);
+  if (!p || !it) return '';
+  const cut = (t: unknown) => {
+    const v = String(t ?? '').trim().split('\n')[0];
+    return v.length > 28 ? v.slice(0, 27) + '…' : v;
+  };
+  if (it.scene) return `${pad2(p.scenes.indexOf(it.scene) + 1)} ${it.scene.name}`;
+  const c = it.card!;
+  const L = p.library;
+  if (c.kind === 'note') return cut(p.notes.find((x) => x.id === c.refId)?.text) || 'ملاحظة';
+  if (c.kind === 'character') return cut(L.characters.find((x) => x.id === c.refId)?.name);
+  if (c.kind === 'location') return cut(L.locations.find((x) => x.id === c.refId)?.name);
+  if (c.kind === 'moodboard') return cut(L.moodboards.find((x) => x.id === c.refId)?.title);
+  if (c.kind === 'image') return cut(c.text) || 'صورة';
+  return cut(c.text) || (c.kind === 'frame' ? 'إطار' : 'عنوان');
+}
+
+function hud(keys: string[], msg: string) {
+  if (hudTimer) clearTimeout(hudTimer);
+  setState({ nudgeHud: { keys, msg, n: ++hudN } });
+  hudTimer = setTimeout(() => setState({ nudgeHud: null }), HUD_MS);
+}
+
+const ARROW: Record<NudgeDir, string> = { left: '←', right: '→', up: '↑', down: '↓' };
+
+/**
+ * Arrow key on the board: the selection (with what its frames carry, locked items stay) moves
+ * as one unit, its bounding box aligns like a mouse drag. Presses in a row are one undo step and
+ * one request after the keys stop.
+ */
+export function nudge(dir: NudgeDir, mode: NudgeMode, keyNames: { shift: string; alt: string }) {
+  const st = getState();
+  const boxes = itemBoxes();
+  const moving = movingSet(st.selection, boxes);
+  if (!moving.size) return;
+  const mv = boxes.filter((b) => moving.has(b.id));
+  const x1 = Math.min(...mv.map((b) => b.x)), y1 = Math.min(...mv.map((b) => b.y));
+  const group = { id: 'sel', x: x1, y: y1, w: Math.max(...mv.map((b) => b.x + b.w)) - x1, h: Math.max(...mv.map((b) => b.y + b.h)) - y1 };
+  const snap = st.settings?.boardSnap ?? true;
+  const others = visibleBoxes(boxes.filter((b) => !moving.has(b.id) && b.kind !== 'frame'));
+  const r = nudgeStep({ group, others, dir, mode, snap });
+  const keys = mode === 'next' ? [keyNames.shift, ARROW[dir]] : mode === 'jump' ? [keyNames.alt, ARROW[dir]] : [ARROW[dir]];
+  if (r.stop === 'off') return hud(keys, 'المغناطيس طافي');
+  if (r.stop === 'none') return hud(keys, 'ما فيه شي تتحاذى معه بهالاتجاه');
+  const ops = mv.map((b) => posOp(b.id, { x: Math.round(b.x + r.dx), y: Math.round(b.y + r.dy) }));
+  commit(ops, { history: 'تحريك', key: `nudge:${[...moving].sort().join(',')}`, debounceMs: NUDGE_SAVE_MS });
+  // guides stay while pressing, then fade out
+  if (guideTimer) clearTimeout(guideTimer);
+  setState({ guides: r.guides, guidesFade: false });
+  guideTimer = setTimeout(() => {
+    setState({ guidesFade: true });
+    guideTimer = setTimeout(() => setState({ guides: [], guidesFade: false }), GUIDE_FADE_MS);
+  }, GUIDE_HOLD_MS);
+  if (mode !== 'step' || r.guides.length) {
+    const target = r.box ?? (r.guides.length ? (others.find((o) => r.guides.some((g) => (g.dir === 'v' ? [o.x, o.x + o.w / 2, o.x + o.w] : [o.y, o.y + o.h / 2, o.y + o.h]).some((t) => Math.abs(t - g.at) < 0.5))) ?? null) : null);
+    const name = target ? itemLabel(target.id) : '';
+    if (r.stop === 'grid') hud(keys, 'وقف عند خط الشبكة');
+    else if (name) hud(keys, `${mode === 'jump' ? 'قفز لخط المحاذاة' : mode === 'next' ? 'وقف عند خط المحاذاة' : 'تحاذى'} مع «${name}»`);
+  }
 }
 
 // ---------- auto-arrange (SPEC 7ب.4) ----------

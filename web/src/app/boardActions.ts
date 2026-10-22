@@ -297,14 +297,6 @@ export function frameSelection() {
   }
 }
 
-/** Arrow keys: 1px, Shift: 24px. Left moves left on screen (no RTL flip). */
-export function nudge(dx: number, dy: number) {
-  const sel = selBoxes();
-  if (!sel.length) return;
-  const ops = sel.map((b) => posOp(b.id, { x: b.x + dx, y: b.y + dy }));
-  commit(ops, { history: 'تحريك', key: `nudge:${sel.map((b) => b.id).join(',')}` });
-}
-
 export function selectAll() {
   const p = project();
   if (p) setState({ selection: boardItems(p).map((i) => i.id) });

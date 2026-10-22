@@ -27,6 +27,7 @@ export interface PScene extends Row {
   boardX: number;
   boardY: number;
   boardW: number | null;
+  boardImgH: number | null;
   boardZ: number;
   boardLocked: boolean;
   characterIds: string[];

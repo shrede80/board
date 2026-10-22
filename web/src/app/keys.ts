@@ -3,9 +3,9 @@ import { closeEditor, deleteSelection, deleteShot, redo, undo } from './actions'
 import { addFiles, type OwnerKind } from './images';
 import { closePresent, presGo, presToggle } from './present';
 import { closeMenu, getState, setState, toast } from './state';
-import { openItem } from './board';
+import { nudge, openItem } from './board';
 import { cancelChoice } from './ideas';
-import { addImageCards, copySelection, duplicateSelection, frameSelection, hasClipboard, nudge, paste, reorderSel, selectAll, startRename } from './boardActions';
+import { addImageCards, copySelection, duplicateSelection, frameSelection, hasClipboard, paste, reorderSel, selectAll, startRename } from './boardActions';
 
 export function onKey(e: KeyboardEvent) {
   const st = getState();
@@ -92,13 +92,15 @@ function boardKeys(e: KeyboardEvent) {
   if (e.code === 'BracketRight' && sel.length) return (e.preventDefault(), reorderSel(mod ? 'front' : 'forward'));
   if (e.code === 'BracketLeft' && sel.length) return (e.preventDefault(), reorderSel(mod ? 'back' : 'backward'));
   if (e.key === 'Enter' && sel.length === 1) return (e.preventDefault(), ['heading', 'frame', 'image'].includes(st.renaming ? '' : kindOf(sel[0])) ? startRename(sel[0]) : openItem(sel[0]));
-  const step = e.shiftKey ? 24 : 1;
-  const arrows: Record<string, [number, number]> = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
+  // arrows align like the mouse (UPDATE-3 §3.1): 1px · Shift = next stop · Alt = jump to the guide
+  const arrows: Record<string, 'left' | 'right' | 'up' | 'down'> = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' };
   if (arrows[e.key] && sel.length && !mod) {
     e.preventDefault();
-    nudge(...arrows[e.key]);
+    nudge(arrows[e.key], e.altKey ? 'jump' : e.shiftKey ? 'next' : 'step', isMac() ? { shift: '⇧', alt: '⌥' } : { shift: 'Shift', alt: 'Alt' });
   }
 }
+
+export const isMac = () => /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 
 function kindOf(id: string): string {
   const el = document.querySelector<HTMLElement>(`[data-item-id="${CSS.escape(id)}"]`);

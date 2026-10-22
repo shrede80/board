@@ -152,8 +152,9 @@ export class Engine {
    * Applies `ops` now and queues them for the server.
    * history: label for undo (false = not undoable, e.g. undo itself or remote-only state).
    * key: typing in the same field within 1.5 s is one undo step and one request.
+   * debounceMs: how long a keyed request waits for the next change (default 500 ms).
    */
-  commit(ops: Op[], opts: { history?: string | false; key?: string; inverse?: Op[] } = {}): HistoryEntry | undefined {
+  commit(ops: Op[], opts: { history?: string | false; key?: string; inverse?: Op[]; debounceMs?: number } = {}): HistoryEntry | undefined {
     if (!ops.length) return;
     let entry: HistoryEntry | undefined;
     if (opts.history !== false) {
@@ -171,11 +172,11 @@ export class Engine {
       this.lastHistoryKey = opts.key;
       this.lastHistoryAt = now;
     }
-    this.send(ops, entry, opts.key);
+    this.send(ops, entry, opts.key, undefined, opts.debounceMs);
     return entry;
   }
 
-  private send(ops: Op[], entry?: HistoryEntry, key?: string, onAck?: (res: OpsResult) => void) {
+  private send(ops: Op[], entry?: HistoryEntry, key?: string, onAck?: (res: OpsResult) => void, debounceMs = TYPE_DEBOUNCE) {
     // Trash ids are chosen here so that a request retried after a lost response is idempotent.
     ops = ops.map((op) => (op.op === 'delete' && ENTITIES[op.entity].trashable && !op.trashId ? { ...op, trashId: `tr-${crypto.randomUUID()}` } : op));
     const { store, hiddenByIndex } = applyLocal(this.store, ops, this.trashHidden);
@@ -192,9 +193,9 @@ export class Engine {
     if (key && last && last.key === key && !this.sendingBatch(last) && canMerge(last.ops, ops)) {
       last.ops = mergeForward(last.ops, ops);
       last.writes.push(...writes);
-      last.readyAt = Date.now() + TYPE_DEBOUNCE;
+      last.readyAt = Date.now() + debounceMs;
     } else {
-      this.queue.push({ ops, writes, hiddenByIndex, entry, key, onAck, readyAt: key ? Date.now() + TYPE_DEBOUNCE : 0, attempts: 0 });
+      this.queue.push({ ops, writes, hiddenByIndex, entry, key, onAck, readyAt: key ? Date.now() + debounceMs : 0, attempts: 0 });
     }
     this.ev.change();
     this.setSave('saving');

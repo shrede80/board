@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import { cardColors, DEFAULT_SIZE, drawOrder, handlesFor, headingColor, type Handle } from '../../../shared/board';
 import { commit, openEditor, setBoardSnap } from '../app/actions';
-import { autoArrange, boardItems, fitAll, onBoardDown, onHandleDown, onItemDown, registerLongPress, resetSize, setBoardEl, toWorld, zoomBy, type Item } from '../app/board';
+import { autoArrange, boardItems, fitAll, onBoardDown, onHandleDown, onItemDown, photoHeight, registerLongPress, resetSize, setBoardEl, toWorld, zoomBy, type Item } from '../app/board';
 import { boardMenu, openItemsMenu } from '../app/boardActions';
 import { currentDrag, dropOnBoard, dropOnShot, hasFiles } from '../app/dnd';
 import { engine, getState, openMenu, setState, useApp, useProject } from '../app/state';
@@ -45,6 +45,7 @@ export function BoardCanvas() {
   const space = useApp((s) => s.space);
   const marquee = useApp((s) => s.marquee);
   const guides = useApp((s) => s.guides);
+  const fade = useApp((s) => s.guidesFade);
   if (!p) return null;
   const isBoard = mode === 'board';
   const gs = GRID * view.z;
@@ -75,13 +76,17 @@ export function BoardCanvas() {
       <div data-testid="world" style={{ position: 'absolute', left: 0, top: 0, transformOrigin: '0 0', transform: `translate(${view.x}px, ${view.y}px) scale(${view.z})` }}>
         <Items p={p} isBoard={isBoard} />
         {marquee && <div style={{ position: 'absolute', left: marquee.x, top: marquee.y, width: marquee.w, height: marquee.h, border: '1px solid var(--color-accent)', background: 'var(--color-accent-soft)', opacity: 0.7, pointerEvents: 'none', zIndex: 4000 }} />}
-        {guides.map((g, i) => (
-          <div key={i} data-testid="guide" data-dir={g.dir}
-            style={g.dir === 'v'
-              ? { position: 'absolute', left: g.at, top: g.from, width: 1 / view.z, height: g.to - g.from, background: 'var(--tan-600)', pointerEvents: 'none', zIndex: 4001 }
-              : { position: 'absolute', top: g.at, left: g.from, height: 1 / view.z, width: g.to - g.from, background: 'var(--tan-600)', pointerEvents: 'none', zIndex: 4001 }} />
-        ))}
+        {guides.map((g, i) => {
+          const fx = { opacity: fade ? 0 : 1, transition: fade ? 'opacity 300ms var(--ease-exit)' : 'none' };
+          return (
+            <div key={i} data-testid="guide" data-dir={g.dir} data-fading={fade ? '1' : undefined}
+              style={g.dir === 'v'
+                ? { position: 'absolute', left: g.at, top: g.from, width: 1 / view.z, height: g.to - g.from, background: 'var(--tan-600)', pointerEvents: 'none', zIndex: 4001, ...fx }
+                : { position: 'absolute', top: g.at, left: g.from, height: 1 / view.z, width: g.to - g.from, background: 'var(--tan-600)', pointerEvents: 'none', zIndex: 4001, ...fx }} />
+          );
+        })}
       </div>
+      {isBoard && <NudgeHud />}
       {isBoard && !p.scenes.length && !p.cards.length && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, pointerEvents: 'none' }}>
           <EmptyState icon="film" title="مشروع فارغ" description="اسحب قالب مشهد لتبدأ." />
@@ -133,8 +138,8 @@ const Items = memo(function Items({ p, isBoard }: { p: PProject; isBoard: boolea
             onPointerEnter={() => hoverIn(it.id)}
             onPointerLeave={() => hoverOut(it.id)}
             style={{ position: 'absolute', left: pos.x, top: pos.y, zIndex: idx + 1, opacity: dim, transition: 'opacity 200ms', pointerEvents: isFrame ? 'none' : undefined }}>
-            {it.scene && <SceneBody p={p} sc={it.scene} si={p.scenes.indexOf(it.scene)} on={on} w={size?.w ?? it.scene.boardW ?? DEFAULT_SIZE.scene[0]} renaming={!!rename} />}
-            {it.card && <CardBody p={p} c={it.card} on={on} theme={theme} size={size} renaming={!!rename} />}
+            {it.scene && <SceneBody p={p} sc={it.scene} si={p.scenes.indexOf(it.scene)} on={on} w={size?.w ?? it.scene.boardW ?? DEFAULT_SIZE.scene[0]} ph={size?.ph} renaming={!!rename} />}
+            {it.card && <CardBody p={p} c={it.card} on={on} theme={theme} size={size} renaming={!!rename} z={isFrame ? z : 1} />}
             {it.locked && <span data-testid="lock-badge" title="مقفل" style={{ position: 'absolute', top: isFrame ? 10 : 8, left: 8, width: 24, height: 24, borderRadius: '50%', background: 'rgba(20,18,16,.6)', color: '#fdfcfa', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3, pointerEvents: 'none' }}><Icon name="lock" size={13} /></span>}
             {showDots && <DotsButton id={it.id} z={z} />}
             {showHandles && <Handles it={it} z={z} />}
@@ -145,6 +150,24 @@ const Items = memo(function Items({ p, isBoard }: { p: PProject; isBoard: boolea
     </>
   );
 });
+
+/** What the last arrow key did, under the board for 1.6 s (UPDATE-3 §3.1). */
+function NudgeHud() {
+  const h = useApp((s) => s.nudgeHud);
+  if (!h) return null;
+  return (
+    <div key={h.n} data-testid="nudge-hud" role="status" className="anim-rise"
+      style={{ position: 'absolute', bottom: 118, left: '50%', transform: 'translateX(-50%)', zIndex: 13, display: 'flex', alignItems: 'center', gap: 6, background: 'var(--color-inverse-bg)', color: 'var(--color-inverse-text)', padding: '8px 16px', borderRadius: 999, boxShadow: 'var(--shadow-lift)', fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', pointerEvents: 'none' }}>
+      {h.keys.map((k, i) => (
+        <span key={i} style={{ display: 'contents' }}>
+          {i > 0 && <span style={{ opacity: 0.6 }}>+</span>}
+          <kbd style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: 'rgba(253,252,250,.14)', border: '1px solid rgba(253,252,250,.25)', direction: 'ltr' }}>{k}</kbd>
+        </span>
+      ))}
+      <span style={{ paddingInlineStart: 6 }}>{h.msg}</span>
+    </div>
+  );
+}
 
 /** ⋯ on hover / selection: same menu as the right click, for trackpads and touch (UPDATE-1 أ3). */
 function DotsButton({ id, z }: { id: string; z: number }) {
@@ -164,14 +187,15 @@ function DotsButton({ id, z }: { id: string; z: number }) {
   );
 }
 
-const HANDLE_POS: Record<Handle, React.CSSProperties> = {
-  nw: { top: 0, left: 0, cursor: 'nwse-resize' }, ne: { top: 0, left: '100%', cursor: 'nesw-resize' },
-  sw: { top: '100%', left: 0, cursor: 'nesw-resize' }, se: { top: '100%', left: '100%', cursor: 'nwse-resize' },
-  n: { top: 0, left: '50%', cursor: 'ns-resize' }, s: { top: '100%', left: '50%', cursor: 'ns-resize' },
-  w: { top: '50%', left: 0, cursor: 'ew-resize' }, e: { top: '50%', left: '100%', cursor: 'ew-resize' },
-};
+const CURSOR: Record<Handle, string> = { n: 'ns-resize', s: 'ns-resize', e: 'ew-resize', w: 'ew-resize', ne: 'nesw-resize', sw: 'nesw-resize', nw: 'nwse-resize', se: 'nwse-resize' };
+/** Gap between the item's edge and its handles, in screen px. */
+const HANDLE_GAP = 6;
 
-/** Corner and side handles of the selected item (UPDATE-1 أ4). Double-click: default size. */
+/**
+ * Corner and side handles of the selected item, all outside its edge (UPDATE-3 §3.2), so a press
+ * anywhere inside the item always moves it. Hit area 18×36 (sides) / 22×22 (corners) on screen.
+ * Double-click: default size.
+ */
 function Handles({ it, z }: { it: Item; z: number }) {
   const s = 1 / z;
   return (
@@ -179,10 +203,16 @@ function Handles({ it, z }: { it: Item; z: number }) {
       {handlesFor(it.kind).map((h) => {
         const side = h.length === 1;
         const vertical = h === 'e' || h === 'w';
-        const [w, hh] = side ? (vertical ? [8, 22] : [22, 8]) : [12, 12];
+        const [vw, vh] = side ? (vertical ? [8, 24] : [24, 8]) : [12, 12];
+        const [hw, hh] = side ? (vertical ? [18, 36] : [36, 18]) : [22, 22];
+        // centre of the visible mark, measured from the item's box (screen px scaled to world)
+        const ox = h.includes('e') ? `calc(100% + ${(HANDLE_GAP + vw / 2) * s}px)` : h.includes('w') ? `${-(HANDLE_GAP + vw / 2) * s}px` : '50%';
+        const oy = h.includes('s') ? `calc(100% + ${(HANDLE_GAP + vh / 2) * s}px)` : h.includes('n') ? `${-(HANDLE_GAP + vh / 2) * s}px` : '50%';
         return (
-          <span key={h} data-handle={h} data-testid={`handle-${h}`} onPointerDown={(e) => onHandleDown(e, it.id, h)} onDoubleClick={(e) => (e.stopPropagation(), resetSize(it.id))}
-            style={{ position: 'absolute', ...HANDLE_POS[h], width: w * s, height: hh * s, marginLeft: (-w / 2) * s, marginTop: (-hh / 2) * s, background: 'var(--color-bg)', border: `${2 * s}px solid var(--color-accent)`, borderRadius: 3 * s, pointerEvents: 'auto', touchAction: 'none' }} />
+          <span key={h} data-handle={h} data-testid={`handle-${h}`} className="board-handle" onPointerDown={(e) => onHandleDown(e, it.id, h)} onDoubleClick={(e) => (e.stopPropagation(), resetSize(it.id))}
+            style={{ position: 'absolute', left: ox, top: oy, width: hw * s, height: hh * s, marginLeft: (-hw / 2) * s, marginTop: (-hh / 2) * s, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto', touchAction: 'none', cursor: CURSOR[h] }}>
+            <i style={{ width: vw * s, height: vh * s, boxSizing: 'border-box', background: 'var(--color-bg)', border: `${2 * s}px solid var(--color-accent)`, borderRadius: 3 * s, display: 'block' }} />
+          </span>
         );
       })}
     </div>
@@ -226,11 +256,13 @@ function endRename(apply: (v: string) => void) {
 }
 
 /** Card content; memoised so dragging one card doesn't redraw the others. */
-const CardBody = memo(function CardBody({ p, c, on, theme, size, renaming }: { p: PProject; c: PCard; on: boolean; theme: 'light' | 'dark'; size?: { w: number; h?: number }; renaming: boolean }) {
+const CardBody = memo(function CardBody({ p, c, on, theme, size, renaming, z }: { p: PProject; c: PCard; on: boolean; theme: 'light' | 'dark'; size?: { w: number; h?: number; ph?: number }; renaming: boolean; z: number }) {
   const L = p.library;
   const scenesOf = (test: (s: PScene) => boolean) => p.scenes.filter(test).length;
   const shadow = sel(on);
   const W = size?.w ?? c.w ?? DEFAULT_SIZE[c.kind][0];
+  // photo height: dragged now, else stored, else following the width (UPDATE-3 §3.2)
+  const PH = () => size?.ph ?? photoHeight({ id: c.id, kind: c.kind, z: 0, locked: false, card: c }, W);
   const setText = (field: 'text', v: string) => v !== c.text && commit([{ op: 'update', entity: 'boardCards', id: c.id, fields: { [field]: v } }], { history: 'تعديل النص' });
   if (c.kind === 'note') {
     const n = p.notes.find((x) => x.id === c.refId);
@@ -265,7 +297,7 @@ const CardBody = memo(function CardBody({ p, c, on, theme, size, renaming }: { p
     if (!l) return null;
     return (
       <div data-component="LocationCard" style={{ width: W, background: 'var(--color-bg)', border: '1px solid var(--color-border-subtle)', borderRadius: 14, boxShadow: shadow, overflow: 'hidden', cursor: 'grab', boxSizing: 'border-box' }}>
-        <div style={{ height: Math.round((118 * W) / 230), background: frameBg(coverOf(l), '#d2a06a') }} />
+        <div data-photo="1" style={{ height: PH(), background: frameBg(coverOf(l), '#d2a06a') }} />
         <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 17 }}><Icon name="map-pin" size={15} />{l.name as string}</span>
           <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>{(l.address as string) || 'بلا عنوان'}</span>
@@ -280,10 +312,11 @@ const CardBody = memo(function CardBody({ p, c, on, theme, size, renaming }: { p
     const sw = (m.swatches as string[]) ?? [];
     const imgs = [...m.images.slice(0, 4)];
     while (imgs.length < 4) imgs.push(null as never);
+    const tile = Math.max(1, (PH() - 4) / 2);
     return (
       <div data-component="MoodboardCard" style={{ width: W, background: 'var(--color-bg)', border: '1px solid var(--color-border-subtle)', borderRadius: 14, boxShadow: shadow, padding: 10, display: 'flex', flexDirection: 'column', gap: 10, cursor: 'grab', boxSizing: 'border-box' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
-          {imgs.map((im, i) => <div key={i} style={{ height: Math.round((82 * W) / 250), borderRadius: 4, background: im ? frameBg(im, sw[i % Math.max(1, sw.length)] || '#d2a06a') : 'var(--color-surface-strong)' }} />)}
+        <div data-photo="1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+          {imgs.map((im, i) => <div key={i} style={{ height: tile, borderRadius: 4, background: im ? frameBg(im, sw[i % Math.max(1, sw.length)] || '#d2a06a') : 'var(--color-surface-strong)' }} />)}
         </div>
         <div style={{ display: 'flex', gap: 4 }}>
           {sw.map((s, i) => <span key={i} style={{ flex: 1, height: 16, borderRadius: 3, background: s, border: '1px solid var(--color-border-subtle)' }} />)}
@@ -294,11 +327,10 @@ const CardBody = memo(function CardBody({ p, c, on, theme, size, renaming }: { p
   }
   if (c.kind === 'image') {
     const meta = engine.images.get(c.refId);
-    const ar = meta && meta.width && meta.height ? meta.width / meta.height : 16 / 9;
     const img = { imageId: c.refId, placeholder: meta?.placeholder ?? null };
     return (
       <div data-component="ImageCard" style={{ width: W, background: 'var(--color-bg)', border: '1px solid var(--color-border-subtle)', borderRadius: 10, boxShadow: shadow, overflow: 'hidden', cursor: 'grab', boxSizing: 'border-box' }}>
-        <div data-photo="1" style={{ height: Math.round(W / ar), background: img.placeholder ? frameBg(img, '#c27a32') : `center / cover no-repeat url("${imageUrl(c.refId, W <= 480)}"), #1c1916` }} />
+        <div data-photo="1" style={{ height: PH(), background: img.placeholder ? frameBg(img, '#c27a32') : `center / cover no-repeat url("${imageUrl(c.refId, W <= 480)}"), #1c1916` }} />
         {renaming ? (
           <div style={{ padding: 6 }}><InlineText value={c.text} testid="caption-input" style={{ fontSize: 13, padding: '4px 6px' }} onDone={endRename((v) => setText('text', v))} /></div>
         ) : c.text ? <div style={{ padding: '8px 12px', fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.5 }}>{c.text}</div> : null}
@@ -324,10 +356,11 @@ const CardBody = memo(function CardBody({ p, c, on, theme, size, renaming }: { p
   return (
     <div data-component="FrameCard" style={{ width: W, height: H, position: 'relative', borderRadius: 18, background: col ? `color-mix(in srgb, ${col.accent} 9%, transparent)` : 'rgba(210,160,106,.07)', border: `1.5px solid ${col ? `color-mix(in srgb, ${col.accent} 45%, transparent)` : 'rgba(210,160,106,.35)'}`, boxShadow: on ? '0 0 0 2px var(--color-accent)' : 'none', boxSizing: 'border-box' }}>
       {/* only the title and the rim take the pointer: inside, a drag selects what the frame holds */}
-      <span onPointerDown={grab} data-testid="frame-edge" style={{ ...edge, top: -6, left: 0, right: 0, height: 12 }} />
-      <span onPointerDown={grab} style={{ ...edge, bottom: -6, left: 0, right: 0, height: 12 }} />
-      <span onPointerDown={grab} style={{ ...edge, top: 0, bottom: 0, left: -6, width: 12 }} />
-      <span onPointerDown={grab} style={{ ...edge, top: 0, bottom: 0, right: -6, width: 12 }} />
+      {/* the rim: 14px on screen at any zoom, inside the frame's edge; the handles sit outside it (UPDATE-3 §3.2) */}
+      <span onPointerDown={grab} data-testid="frame-edge" style={{ ...edge, top: 0, left: 0, right: 0, height: 14 / z }} />
+      <span onPointerDown={grab} style={{ ...edge, bottom: 0, left: 0, right: 0, height: 14 / z }} />
+      <span onPointerDown={grab} style={{ ...edge, top: 0, bottom: 0, left: 0, width: 14 / z }} />
+      <span onPointerDown={grab} style={{ ...edge, top: 0, bottom: 0, right: 0, width: 14 / z }} />
       <span data-testid="frame-title" onPointerDown={grab} onDoubleClick={(e) => (e.stopPropagation(), setState({ renaming: { kind: 'card', id: c.id }, selection: [c.id] }))}
         style={{ ...edge, top: -17, right: 18, display: 'flex', alignItems: 'center', gap: 8, background: 'var(--color-bg)', border: `1.5px solid ${col ? `color-mix(in srgb, ${col.accent} 60%, transparent)` : 'rgba(210,160,106,.55)'}`, borderRadius: 999, padding: '4px 14px', fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 15, whiteSpace: 'nowrap', color: 'var(--color-text)' }}>
         <i style={{ width: 9, height: 9, borderRadius: '50%', background: hex, display: 'block' }} />
@@ -338,7 +371,7 @@ const CardBody = memo(function CardBody({ p, c, on, theme, size, renaming }: { p
 });
 
 /** Scene card content; memoised so dragging one card doesn't redraw the others. */
-const SceneBody = memo(function SceneBody({ p, sc, si, on, w, renaming }: { p: PProject; sc: PScene; si: number; on: boolean; w: number; renaming: boolean }) {
+const SceneBody = memo(function SceneBody({ p, sc, si, on, w, ph, renaming }: { p: PProject; sc: PScene; si: number; on: boolean; w: number; ph?: number; renaming: boolean }) {
   const hex = moodHex(sc.mood);
   const loc = p.library.locations.find((l) => l.id === sc.locationId);
   const n = sc.shots.length;
@@ -346,7 +379,7 @@ const SceneBody = memo(function SceneBody({ p, sc, si, on, w, renaming }: { p: P
   return (
     <div style={{ width: w }}>
       <div data-flip={`scene-${sc.id}`} data-component="SceneCard" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border-subtle)', borderInlineStart: `4px solid ${hex}`, borderRadius: 14, overflow: 'hidden', boxShadow: sel(on), cursor: 'grab' }}>
-        <div style={{ position: 'relative', height: Math.round((150 * w) / 280), background: frameBg(sceneCover(sc), hex) }}>
+        <div data-photo="1" style={{ position: 'relative', height: ph ?? photoHeight({ id: sc.id, kind: 'scene', z: 0, locked: false, scene: sc }, w), background: frameBg(sceneCover(sc), hex) }}>
           <span style={{ position: 'absolute', top: 10, insetInlineEnd: 14, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 46, lineHeight: 1, color: '#fdfcfa', textShadow: '0 2px 10px rgba(0,0,0,.55)' }}>{pad2(si + 1)}</span>
         </div>
         <div style={{ padding: '12px 14px 14px', display: 'flex', flexDirection: 'column', gap: 9 }}>

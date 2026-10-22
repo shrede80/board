@@ -132,10 +132,12 @@ test('board: menus for every kind, resize with guides, frame carries its content
   await page.keyboard.press('Escape');
   const hw = await box(s02.getByTestId('handle-w'));
   const edge = (await box(s03)).x + (await box(s03)).width;
+  // the handle sits outside the card (UPDATE-3 §3.2): aim so the card's edge, not the pointer, lands 3px off
+  const grabOff = (await box(s02)).x - (hw.x + hw.width / 2);
   await page.mouse.move(hw.x + hw.width / 2, hw.y + hw.height / 2);
   await page.mouse.down();
   await page.mouse.move(hw.x - 10, hw.y + 5, { steps: 4 });
-  await page.mouse.move(edge + 3, hw.y + 5, { steps: 6 });
+  await page.mouse.move(edge + 3 - grabOff, hw.y + 5, { steps: 6 });
   await expect(page.getByTestId('guide').first()).toBeVisible();
   await page.mouse.up();
   await saved(page);

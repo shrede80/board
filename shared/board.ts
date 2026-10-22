@@ -44,9 +44,14 @@ export const HEADING_FONT: [number, number] = [20, 120];
 
 export type Handle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
-/** Which handles a kind gets: width-only kinds have no top/bottom handles. */
+/** Kinds whose card shows a photo that is cropped (never stretched) when only the width changes (UPDATE-3 §3.2). */
+export const PHOTO_KINDS: ItemKind[] = ['scene', 'location', 'moodboard', 'image'];
+/** Photo height limits for the image card's top/bottom handles. */
+export const PHOTO_H: [number, number] = [70, 900];
+
+/** Which handles a kind gets: width-only kinds have no top/bottom handles; images get them for the photo height. */
 export function handlesFor(kind: ItemKind): Handle[] {
-  return LIMITS[kind].h ? ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] : ['e', 'w', 'ne', 'nw', 'se', 'sw'];
+  return LIMITS[kind].h || kind === 'image' ? ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] : ['e', 'w', 'ne', 'nw', 'se', 'sw'];
 }
 
 const clamp = (v: number, [a, b]: [number, number]) => Math.min(b, Math.max(a, v));
@@ -81,26 +86,35 @@ export interface ResizeInput {
   handle: Handle;
   dx: number;
   dy: number;
-  /** image: width / height of the photo (height follows the width) */
+  /** image: width / height of the photo (used when photoH is not given) */
   aspect?: number;
+  /** photo kinds: height of the photo at the start (world px) */
+  photoH?: number;
   /** heading: font size at the start */
   font?: number;
+  /** note / frame corner: keep the ratio */
+  shift?: boolean;
   snap?: { others: Box[]; tol: number } | null;
 }
 export interface ResizeOutput {
   box: Box;
   font?: number;
+  /** photo kinds: the photo height after the drag */
+  photoH?: number;
   guides: Guide[];
 }
 
 /**
- * New box while dragging a handle (world px). The opposite edge stays put. Width-only kinds
- * ignore the vertical part; images keep their photo's ratio; a heading's corner scales its
- * font with the width, its sides only change the wrap width.
+ * New box while dragging a handle (world px). The opposite edge stays put (UPDATE-3 §3.2):
+ * a side stretches one direction only, a corner scales. A photo is never stretched: on a side
+ * drag its height stays and it is cropped to the new width; the image card's top/bottom change
+ * the photo height; a corner scales the photo with the width. Notes and frames: sides change one
+ * dimension, corners both freely (Shift keeps the ratio). A heading's corner scales its font.
  */
 export function resize(inp: ResizeInput): ResizeOutput {
   const { kind, start, handle } = inp;
   const lim = LIMITS[kind];
+  const corner = handle.length === 2;
   const west = handle.includes('w'), east = handle.includes('e');
   const north = handle.includes('n'), south = handle.includes('s');
   let x1 = start.x, x2 = start.x + start.w, y1 = start.y, y2 = start.y + start.h;
@@ -117,24 +131,47 @@ export function resize(inp: ResizeInput): ResizeOutput {
     if (r.box) guides.push({ dir: 'h', at: r.v, from: Math.min(x1, r.box.x), to: Math.max(x2, r.box.x + r.box.w) });
     return r.v;
   };
+  const isPhoto = PHOTO_KINDS.includes(kind);
+  const photo0 = inp.photoH ?? (inp.aspect ? start.w / inp.aspect : undefined);
+  let photoH: number | undefined = isPhoto ? photo0 : undefined;
+
   if (west) x1 = snapX(start.x + inp.dx);
   if (east) x2 = snapX(start.x + start.w + inp.dx);
-  let w = clamp(x2 - x1, lim.w);
+  let w = west || east ? clamp(x2 - x1, lim.w) : start.w;
   if (west) x1 = x2 - w;
   else x2 = x1 + w;
 
   let h = start.h;
   if (lim.h && (north || south)) {
-    if (north) y1 = snapY(start.y + inp.dy);
-    if (south) y2 = snapY(start.y + start.h + inp.dy);
-    h = clamp(y2 - y1, lim.h);
-    if (north) y1 = y2 - h;
-  } else if (kind === 'image' && inp.aspect) {
-    h = Math.round(w / inp.aspect);
+    if (corner && inp.shift) {
+      h = clamp(Math.round(start.h * (w / start.w)), lim.h);
+      if (north) y1 = y2 - h;
+    } else {
+      if (north) y1 = snapY(start.y + inp.dy);
+      if (south) y2 = snapY(start.y + start.h + inp.dy);
+      h = clamp(y2 - y1, lim.h);
+      if (north) y1 = y2 - h;
+    }
+  } else if (isPhoto && photo0 != null) {
+    if (!corner && (north || south)) {
+      // image card top/bottom: only the photo height changes, the card grows with it
+      const rest = start.h - photo0;
+      let outer = start.h;
+      if (south) outer = snapY(start.y + start.h + inp.dy) - start.y;
+      if (north) outer = start.y + start.h - snapY(start.y + inp.dy);
+      photoH = clamp(outer - rest, PHOTO_H);
+      h = rest + photoH;
+      if (north) y1 = y2 - h;
+    } else if (corner) {
+      photoH = photo0 * (w / start.w);
+      h = start.h - photo0 + photoH;
+      if (north) y1 = y2 - h;
+    }
+    // a side: width only, the photo keeps its height (cropped)
   }
   let font: number | undefined;
   if (kind === 'heading' && inp.font) {
-    if (handle.length === 2) {
+    if (corner) {
       // corner: scale the font with the width
       font = clamp(Math.round(inp.font * (w / start.w)), HEADING_FONT);
       w = Math.round(start.w * (font / inp.font));
@@ -143,9 +180,108 @@ export function resize(inp: ResizeInput): ResizeOutput {
     } else font = inp.font;
   }
   // keep guides only for edges that really ended on the guide after clamping
-  const fx1 = x1, fx2 = x1 + w;
-  const kept = guides.filter((g) => (g.dir === 'v' ? Math.abs(g.at - fx1) < 0.5 || Math.abs(g.at - fx2) < 0.5 : true));
-  return { box: { id: start.id, x: Math.round(x1), y: Math.round(y1), w: Math.round(w), h: Math.round(h) }, font, guides: kept };
+  const fx1 = x1, fx2 = x1 + w, fy1 = y1, fy2 = y1 + h;
+  const kept = guides.filter((g) => (g.dir === 'v' ? Math.abs(g.at - fx1) < 0.5 || Math.abs(g.at - fx2) < 0.5 : Math.abs(g.at - fy1) < 0.5 || Math.abs(g.at - fy2) < 0.5));
+  return { box: { id: start.id, x: Math.round(x1), y: Math.round(y1), w: Math.round(w), h: Math.round(h) }, font, photoH: photoH == null ? undefined : Math.round(photoH), guides: kept };
+}
+
+// ---------- arrow keys align like the mouse (UPDATE-3 §3.1) ----------
+
+export type NudgeDir = 'left' | 'right' | 'up' | 'down';
+/** step: 1 unit · next: Shift, the next stop (guide or grid line) · jump: Alt, straight to the next guide */
+export type NudgeMode = 'step' | 'next' | 'jump';
+
+export interface NudgeInput {
+  /** bounding box of what moves */
+  group: Box;
+  /** boxes that can be aligned with (visible, not moving) */
+  others: Box[];
+  dir: NudgeDir;
+  mode: NudgeMode;
+  /** the magnet: off → no guides, Shift = one grid step, Alt does nothing */
+  snap: boolean;
+  /** plain arrow step (board: 1px; plan: 0.05m) */
+  step?: number;
+  /** grid spacing (board: 24px; plan: 0.25m) */
+  grid?: number;
+  /** "on the line" tolerance */
+  eps?: number;
+}
+export interface NudgeResult {
+  dx: number;
+  dy: number;
+  /** what stopped the move: an alignment guide, a grid line, a plain step, nothing to jump to, or the magnet is off */
+  stop: 'guide' | 'grid' | 'step' | 'none' | 'off';
+  /** the box aligned with, when stop = 'guide' */
+  box: Box | null;
+  /** guides where the moved group now sits exactly on another box's edge or centre */
+  guides: Guide[];
+}
+
+const marks = (a: number, len: number) => [a, a + len / 2, a + len];
+
+/** Guides for every edge/centre of `g` that sits exactly (< eps) on an edge/centre of another box. */
+export function exactGuides(g: Box, others: Box[], eps = 0.5): (Guide & { box: Box })[] {
+  const out: (Guide & { box: Box })[] = [];
+  const seen = new Set<string>();
+  for (const b of others) {
+    for (const t of marks(b.x, b.w)) for (const m of marks(g.x, g.w)) {
+      if (Math.abs(t - m) < eps && !seen.has('v' + t)) {
+        seen.add('v' + t);
+        out.push({ dir: 'v', at: t, from: Math.min(g.y, b.y), to: Math.max(g.y + g.h, b.y + b.h), box: b });
+      }
+    }
+    for (const t of marks(b.y, b.h)) for (const m of marks(g.y, g.h)) {
+      if (Math.abs(t - m) < eps && !seen.has('h' + t)) {
+        seen.add('h' + t);
+        out.push({ dir: 'h', at: t, from: Math.min(g.x, b.x), to: Math.max(g.x + g.w, b.x + b.w), box: b });
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * One arrow key press. Arrows move one step; Shift moves to the next stop in that direction
+ * (the nearest alignment line or grid line, never past an edge); Alt jumps straight to the
+ * nearest alignment line, or stays put when there is none. ← always moves left on screen.
+ */
+export function nudgeStep(inp: NudgeInput): NudgeResult {
+  const step = inp.step ?? 1, grid = inp.grid ?? GRID, eps = inp.eps ?? 0.5;
+  const horiz = inp.dir === 'left' || inp.dir === 'right';
+  const sign = inp.dir === 'right' || inp.dir === 'down' ? 1 : -1;
+  const g = inp.group;
+  const at = (d: number): NudgeResult => {
+    const moved = horiz ? { ...g, x: g.x + d } : { ...g, y: g.y + d };
+    return { dx: horiz ? d : 0, dy: horiz ? 0 : d, stop: 'step', box: null, guides: inp.snap ? exactGuides(moved, inp.others, eps).map(({ box: _b, ...x }) => x) : [] };
+  };
+  if (inp.mode === 'step') return at(sign * step);
+  if (!inp.snap) {
+    if (inp.mode === 'jump') return { dx: 0, dy: 0, stop: 'off', box: null, guides: [] };
+    return { ...at(sign * grid), stop: 'grid' };
+  }
+  // nearest alignment line ahead: any edge/centre of the group onto any edge/centre of another box
+  const own = horiz ? marks(g.x, g.w) : marks(g.y, g.h);
+  let best: { d: number; box: Box } | null = null;
+  for (const b of inp.others) {
+    for (const t of horiz ? marks(b.x, b.w) : marks(b.y, b.h)) {
+      for (const m of own) {
+        const d = (t - m) * sign;
+        if (d > eps && (!best || d < best.d)) best = { d, box: b };
+      }
+    }
+  }
+  if (inp.mode === 'jump') {
+    if (!best) return { dx: 0, dy: 0, stop: 'none', box: null, guides: [] };
+    return { ...at(sign * best.d), stop: 'guide', box: best.box };
+  }
+  // Shift: whichever comes first, the guide or the next grid line of the leading-start edge
+  const p0 = horiz ? g.x : g.y;
+  const nextGrid = sign > 0 ? Math.floor(p0 / grid + 1e-9) * grid + grid : Math.ceil(p0 / grid - 1e-9) * grid - grid;
+  let gd = Math.abs(nextGrid - p0);
+  if (gd <= eps) gd += grid;
+  if (best && best.d <= gd + 1e-9) return { ...at(sign * best.d), stop: 'guide', box: best.box };
+  return { ...at(sign * gd), stop: 'grid' };
 }
 
 // ---------- auto-arrange (SPEC 7ب.4, UPDATE-1 أ4: real sizes, never overlapping) ----------

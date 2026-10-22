@@ -184,7 +184,7 @@ function fitAllSoon() {
 // ---------- commit helpers ----------
 
 /** Refuses writes while offline (SPEC §1.4), like the prototype. */
-export function commit(ops: Op[], opts: { history?: string | false; key?: string; inverse?: Op[]; flip?: boolean } = {}): boolean {
+export function commit(ops: Op[], opts: { history?: string | false; key?: string; inverse?: Op[]; flip?: boolean; debounceMs?: number } = {}): boolean {
   if (getState().offline) {
     toast('ما فيه اتصال، ما انحفظ', { tone: 'danger' });
     return false;

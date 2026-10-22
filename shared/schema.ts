@@ -84,6 +84,8 @@ export const ENTITIES = {
       boardY: r('board_y'),
       /** null = default width 280 */
       boardW: { col: 'board_w', type: 'real', def: null },
+      /** photo height on the board after a side drag (UPDATE-3 §3.2); null = follows the width */
+      boardImgH: { col: 'board_img_h', type: 'real', def: null },
       boardZ: r('board_z'),
       boardLocked: b('board_locked'),
     },

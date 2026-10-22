@@ -1,7 +1,8 @@
 import { createFromTemplate } from '../app/actions';
 import { addCard, pickImages } from '../app/boardActions';
 import { dragEnd, dragStart } from '../app/dnd';
-import { setState, useApp, useProject } from '../app/state';
+import { useEffect, useRef } from 'react';
+import { getState, setState, useApp, useProject } from '../app/state';
 import { EmptyState, Icon } from '../ds/ds';
 import { BOARD_ONLY, TPL, type TplType } from '../lib/constants';
 import { BoardCanvas, ZoomControls } from './Board';
@@ -54,8 +55,31 @@ function TemplateDock() {
   const p = useProject();
   const mode = useApp((s) => s.mode);
   const offline = useApp((s) => s.offline);
+  const scrolling = useApp((s) => s.sbScrolling);
+  const ref = useRef<HTMLDivElement>(null);
+  const mini = mode === 'storyboard' && scrolling;
+  // the storyboard keeps this much free space under its last row (UPDATE-3 §2.2)
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => {
+      const h = el.offsetHeight;
+      if (h > 40 && h !== getState().dockH) setState({ dockH: h });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [mini]);
+  const box: React.CSSProperties = { position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)', zIndex: 14, background: 'var(--color-bg)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-lift)' };
+  if (mini) {
+    return (
+      <button data-component="TemplateDock" data-testid="dock-mini" title="إضافة" className="h-strong anim-rise" onClick={() => setState({ sbScrolling: false })}
+        style={{ ...box, width: 52, height: 52, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--color-text)' }}>
+        <Icon name="plus" size={22} />
+      </button>
+    );
+  }
   return (
-    <div data-component="TemplateDock" data-testid="dock" style={{ position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)', zIndex: 14, display: 'flex', gap: 2, padding: 6, background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 14, boxShadow: 'var(--shadow-lift)' }}>
+    <div ref={ref} data-component="TemplateDock" data-testid="dock" style={{ ...box, display: 'flex', gap: 2, padding: 6, borderRadius: 14 }}>
       {TPL.map((t) => {
         const boardOnly = BOARD_ONLY.includes(t.type as TplType);
         const off = offline || (boardOnly && mode !== 'board');
@@ -67,7 +91,7 @@ function TemplateDock() {
             else if (t.type === 'image') pickImages();
             else createFromTemplate(t.type, { where: mode === 'board' ? 'center' : t.type === 'scene' ? 'gap' : 'library', index: p?.scenes.length ?? 0 });
           }}
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 10px 6px', border: 'none', background: 'transparent', borderRadius: 8, cursor: 'grab', color: 'var(--color-text)', fontSize: 12, fontWeight: 600, minWidth: 64, opacity: off && !offline ? 0.35 : 1 }}>
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 10px 6px', border: 'none', background: 'transparent', borderRadius: 8, cursor: 'grab', color: 'var(--color-text)', fontSize: 12, fontWeight: 600, minWidth: 64, whiteSpace: 'nowrap', opacity: off && !offline ? 0.35 : 1 }}>
           <span style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--color-surface-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-700)' }}><Icon name={t.icon} size={17} /></span>
           {t.label}
         </button>
