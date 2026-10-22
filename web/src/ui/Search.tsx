@@ -5,9 +5,10 @@ import { getState, setState, useApp } from '../app/state';
 import { api } from '../data/api';
 import { Icon } from '../ds/ds';
 import { Overlay } from './Pages';
+import { TemplateBadge } from './Templates';
 
 /** Ctrl+K (UPDATE-1 ب1): projects & clients, scenes, shots, ideas — grouped; Enter opens the hit. */
-interface Hit { kind: 'project' | 'scene' | 'shot' | 'idea'; id: string; projectId: string | null; title: string; sub: string }
+interface Hit { kind: 'project' | 'scene' | 'shot' | 'idea'; id: string; projectId: string | null; title: string; sub: string; template?: boolean }
 const GROUP: Record<Hit['kind'], [string, string]> = { project: ['المشاريع', 'folder'], scene: ['المشاهد', 'film'], shot: ['اللقطات', 'camera'], idea: ['الأفكار', 'sparkles'] };
 
 async function openHit(h: Hit) {
@@ -71,6 +72,7 @@ export function SearchDialog() {
                       style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', border: 'none', borderRadius: 6, background: i === sel ? 'var(--color-surface-strong)' : 'transparent', color: 'var(--color-text)', textAlign: 'right', cursor: 'pointer' }}>
                       <Icon name={GROUP[k][1]} size={16} />
                       <span style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.title || 'بدون وصف'}</span>
+                      {h.template && <TemplateBadge />}
                       {h.sub && <span style={{ fontSize: 12, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>{h.sub}</span>}
                     </button>
                   );

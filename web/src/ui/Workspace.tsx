@@ -1,4 +1,5 @@
-import { createFromTemplate } from '../app/actions';
+import { centerWorldRef, createFromTemplate } from '../app/actions';
+import { sceneAddMenu } from '../app/templates';
 import { tip } from '../app/keyLabels';
 import { addCard, pickImages } from '../app/boardActions';
 import { dragEnd, dragStart } from '../app/dnd';
@@ -118,10 +119,17 @@ function TemplateDock() {
         return (
         <button key={t.type} draggable={!off} title={off && !offline ? 'للوحة الأفكار فقط' : tip(t.label, DOCK_CMD[t.type])} data-testid={`dock-${t.type}`} className="h-strong" disabled={off}
           onDragStart={(e) => dragStart(e, { kind: 'tpl', type: t.type })} onDragEnd={dragEnd}
-          onClick={() => {
+          onClick={(e) => {
+            if (t.type === 'scene') {
+              // «+ مشهد» lists the scene templates when there are any (UPDATE-3 §7.2)
+              const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+              const blank = () => createFromTemplate('scene', { where: mode === 'board' ? 'center' : 'gap', index: p?.scenes.length ?? 0 });
+              void sceneAddMenu(r.right, r.top - 8, blank, mode === 'board' ? { pos: centerWorldRef() } : {});
+              return;
+            }
             if (t.type === 'heading' || t.type === 'frame') addCard(t.type);
             else if (t.type === 'image') pickImages();
-            else createFromTemplate(t.type, { where: mode === 'board' ? 'center' : t.type === 'scene' ? 'gap' : 'library', index: p?.scenes.length ?? 0 });
+            else createFromTemplate(t.type, { where: mode === 'board' ? 'center' : 'library', index: p?.scenes.length ?? 0 });
           }}
           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 10px 6px', border: 'none', background: 'transparent', borderRadius: 8, cursor: 'grab', color: 'var(--color-text)', fontSize: 12, fontWeight: 600, minWidth: 64, whiteSpace: 'nowrap', opacity: off && !offline ? 0.35 : 1 }}>
           <span style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--color-surface-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-700)' }}><Icon name={t.icon} size={17} /></span>

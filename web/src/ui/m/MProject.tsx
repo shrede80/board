@@ -1,5 +1,7 @@
 import { useFields } from '../Fields';
 import { openPlan } from '../../app/plan';
+import { saveProjectEntry, saveSceneEntry, sceneAddMenu } from '../../app/templates';
+import { TemplateBadge } from '../Templates';
 import { useEffect, useRef, useState } from 'react';
 import { addScene, addShot, commit, createFromTemplate, deleteScene, moveScene, moveShot, openEditor, openProject, undo } from '../../app/actions';
 import { duplicateSelection, libMenu, shotMenu } from '../../app/boardActions';
@@ -49,6 +51,7 @@ export function MProject() {
     { label: 'إعادة التسمية', icon: 'edit', run: () => setRenaming(true), testid: 'pm-rename' },
     { label: 'إعدادات المشروع…', icon: 'settings', run: () => setState({ modal: 'projectSettings' }), testid: 'pm-settings' },
     { label: 'تكرار المشروع', icon: 'repeat', run: () => askDuplicate(p.id, p.name), testid: 'pm-duplicate' },
+    ...saveProjectEntry(p.id, p.name, p.templateKind),
     { label: 'عرض المشروع', icon: 'play', run: () => openPresent(0), testid: 'pm-present' },
     { label: p.archived ? 'إلغاء الأرشفة' : 'أرشفة', icon: 'folder', run: () => archiveProject(!p.archived), testid: 'pm-archive' },
     'sep',
@@ -68,6 +71,7 @@ export function MProject() {
         ) : (
           <button data-testid="project-menu" onClick={(e) => openMenu(at(e).x, at(e).y, switchMenu, 'project-menu-list')} style={{ flex: 1, minWidth: 0, minHeight: 44, display: 'flex', alignItems: 'center', gap: 6, border: 'none', background: 'transparent', color: 'var(--color-text)', padding: '0 6px', textAlign: 'right' }}>
             <span data-testid="project-name" style={{ fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 20, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
+            {p.templateKind && <TemplateBadge />}
             <Icon name="chevron-down" size={16} />
           </button>
         )}
@@ -84,7 +88,7 @@ export function MProject() {
             <span>{`${done} تصوّرت`}</span>
           </div>
           {p.scenes.map((sc, si) => <SceneBlock key={sc.id} p={p} sc={sc} si={si} />)}
-          <button data-testid="m-add-scene" disabled={offline} onClick={() => addScene({ open: true })} style={{ width: '100%', height: 52, marginTop: 14, border: '1.5px dashed var(--color-border)', borderRadius: 10, background: 'transparent', color: 'var(--color-text)', fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <button data-testid="m-add-scene" disabled={offline} onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); void sceneAddMenu(r.right - 12, r.top, () => addScene({ open: true })); }} style={{ width: '100%', height: 52, marginTop: 14, border: '1.5px dashed var(--color-border)', borderRadius: 10, background: 'transparent', color: 'var(--color-text)', fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             <Icon name="plus" size={17} />مشهد جديد
           </button>
         </div>
@@ -108,6 +112,7 @@ function sceneMenu(p: PProject, sc: PScene, si: number): MenuEntry[] {
     { label: 'لقطة جديدة', icon: 'plus', run: () => addShot(sc.id), testid: 'm-add-shot' },
     { label: 'المخطط', icon: 'grid', run: () => openPlan(sc.id), testid: 'm-plan' },
     { label: 'تكرار المشهد', icon: 'repeat', run: () => duplicateSelection([sc.id]), testid: 'm-duplicate' },
+    ...saveSceneEntry(sc.id),
     { label: 'نقل لأعلى', icon: 'chevron-up', disabled: si === 0, run: move(si - 1, `انتقل المشهد إلى ${pad2(si)}`), testid: 'm-up' },
     { label: 'نقل لأسفل', icon: 'chevron-down', disabled: si === n - 1, run: move(si + 2, `انتقل المشهد إلى ${pad2(si + 2)}`), testid: 'm-down' },
     'sep',

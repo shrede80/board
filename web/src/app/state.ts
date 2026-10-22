@@ -46,6 +46,8 @@ export interface MenuItem {
   children?: MenuItem[];
   /** a row of colour dots instead of a line */
   swatches?: { key: string | null; hex: string; on: boolean; run: () => void; label: string }[];
+  /** a small muted line (a group title or a hint), not a command */
+  note?: boolean;
   testid?: string;
 }
 export type MenuEntry = MenuItem | 'sep';
@@ -110,9 +112,13 @@ export interface UIState {
   toasts: Toast[];
   save: SaveState;
   offline: boolean;
-  modal: null | 'newProject' | 'export' | 'projectSettings' | 'duplicateProject' | 'shortcuts' | 'search' | 'import';
+  modal: null | 'newProject' | 'export' | 'projectSettings' | 'duplicateProject' | 'saveTemplate' | 'shortcuts' | 'search' | 'import';
   /** project for «تكرار المشروع» (Home can duplicate a project that isn't open) */
   dupTarget: { id: string; name: string } | null;
+  /** «احفظ كقالب» (UPDATE-3 §7): a project, or one of its scenes */
+  tplSave: { projectId: string; sceneId: string | null; name: string } | null;
+  /** «مشروع جديد» opened from a template's ⋯: that template is chosen */
+  npTemplate: string | null;
   /** generic «اختر…» list (project, scene, shot for idea conversions) */
   choice: Choice | null;
   /** idea being edited (UPDATE-1 ب2) */
@@ -193,7 +199,7 @@ let state: UIState = {
   settings: null, libOpen: true, libTab: 'characters', editor: null,
   sections: { refs: true, basics: true, comp: true, cam: true, move: true, light: false, audio: false },
   selection: [], view: { x: 0, y: 0, z: 0.8 }, filter: null, toasts: [], save: 'saved', offline: typeof navigator !== 'undefined' ? !navigator.onLine : false,
-  modal: null, dupTarget: null, choice: null, ideaEdit: null, bootOffline: false, pending: [], addSheet: null, ideaSheet: null, mTab: 'scenes', projMenu: false, popMenu: null, dragSize: null, renaming: null, newVersion: false, pickTarget: null, hoverItem: null, exportTab: 'pdf', exportScope: 'all', exportSel: [], confirm: null, dragOver: null,
+  modal: null, dupTarget: null, tplSave: null, npTemplate: null, choice: null, ideaEdit: null, bootOffline: false, pending: [], addSheet: null, ideaSheet: null, mTab: 'scenes', projMenu: false, popMenu: null, dragSize: null, renaming: null, newVersion: false, pickTarget: null, hoverItem: null, exportTab: 'pdf', exportScope: 'all', exportSel: [], confirm: null, dragOver: null,
   present: { open: false, i: 0, playing: false, tech: false, fill: 0 }, hoverShot: null, marquee: null, space: false, menu: false,
   pick: null, custom: null, customVal: '', flipping: false, guides: [], guidesFade: false, openSeq: 0, focusDesc: null, plan: null, nudgeHud: null, sbScrolling: false, dockH: 84, dragPos: null, uploads: {}, canUndo: false, canRedo: false, ch: [], chVersion: 0,
 };

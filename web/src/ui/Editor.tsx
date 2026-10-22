@@ -3,6 +3,7 @@ import { FIELD_GROUPS } from '../../../shared/fields';
 import { reducedMotion } from '../app/motion';
 import { FieldsButton, useFields } from './Fields';
 import { openPlan, planOf } from '../app/plan';
+import { saveSceneEntry } from '../app/templates';
 import {
   addShot, closeEditor, deleteScene, deleteShot, editorNav, moveShot, newCharacterForScene, newLocationForScene, openEditor, toggleCharacter, unlink, upd,
 } from '../app/actions';
@@ -106,6 +107,7 @@ function editorMenu(type: string, id: string): MenuEntry[] {
     return [
       { label: 'لقطة جديدة', icon: 'plus', run: () => addShot(id), testid: 'm-add-shot' },
       { label: 'تكرار المشهد', icon: 'repeat', run: () => duplicateSelection([id]), testid: 'm-duplicate' },
+      ...saveSceneEntry(id),
       'sep',
       { label: 'حذف المشهد', icon: 'trash', danger: true, run: () => deleteScene(id), testid: 'm-delete' },
     ];

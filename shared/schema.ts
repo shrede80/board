@@ -48,6 +48,7 @@ export const STAGES = ['idea', 'prep', 'shoot', 'post', 'done'] as const;
 /** Colour keys for notes, frames and headings (same keys as the scene moods). */
 export const COLOR_KEYS = ['gold', 'amber', 'sand', 'clay', 'night', 'olive', 'wine', 'cool'] as const;
 export const IMAGE_OWNERS = ['shot', 'character', 'location', 'moodboard'] as const;
+export const TEMPLATE_KINDS = ['project', 'scene'] as const;
 export const PLAN_KINDS = ['camera', 'light', 'person', 'furniture', 'zone', 'arrow', 'text'] as const;
 
 export const ENTITIES = {
@@ -66,6 +67,8 @@ export const ENTITIES = {
       shootTime: tn('shoot_time'),
       stage: e('stage', STAGES, 'prep'),
       archived: b('archived'),
+      /** null = a normal project; 'project' / 'scene' = a saved template (UPDATE-3 §7), set by the server's copy only */
+      templateKind: { col: 'template_kind', type: 'text', values: TEMPLATE_KINDS, def: null, server: true },
     },
   },
   scenes: {

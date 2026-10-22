@@ -156,3 +156,102 @@ describe('planItems (UPDATE-3 §6, §8)', () => {
     expect((await call('/api/import', { method: 'POST', cookie, json: { project: old, imageMap: {} } })).status).toBe(200);
   });
 });
+
+/** Saved templates (UPDATE-3 §7, §9). */
+describe('templates', () => {
+  const content = async (cookie: string, id: string) => {
+    const s = await getJson(`/api/projects/${id}`, cookie);
+    const live = (l: { deletedAt: number | null }[]) => l.filter((r) => !r.deletedAt);
+    return {
+      project: s.project,
+      scenes: live(s.rows.scenes).map((r: Record<string, unknown>) => [r.name, r.position, r.mood]).sort(),
+      shots: live(s.rows.shots).map((r: Record<string, unknown>) => [r.description, r.status]).sort(),
+      characters: live(s.rows.characters).map((r: Record<string, unknown>) => r.name).sort(),
+      locations: live(s.rows.locations).map((r: Record<string, unknown>) => r.name).sort(),
+      moodboards: live(s.rows.moodboards).length,
+      notes: live(s.rows.notes).length,
+      cards: live(s.rows.boardCards).length,
+      plan: live(s.rows.planItems).map((r: Record<string, unknown>) => [r.kind, r.x, r.y]).sort(),
+      images: live(s.rows.itemImages).map((r: Record<string, unknown>) => r.imageId).sort(),
+      links: live(s.rows.sceneCharacters).length,
+    };
+  };
+  const seed = async (cookie: string) => {
+    const img = await upload(cookie);
+    await ops(cookie, [
+      { op: 'create', entity: 'projects', id: 'pr-a', fields: { name: 'إعلان عقار', client: 'شركة', shootDate: '2026-11-02', stage: 'shoot' } },
+      { op: 'create', entity: 'locations', id: 'loc-1', fields: { projectId: 'pr-a', name: 'الفيلا' } },
+      { op: 'create', entity: 'characters', id: 'ch-1', fields: { projectId: 'pr-a', name: 'المقدّم' } },
+      { op: 'create', entity: 'characters', id: 'ch-2', fields: { projectId: 'pr-a', name: 'الضيف' } },
+      { op: 'create', entity: 'moodboards', id: 'mb-1', fields: { projectId: 'pr-a', title: 'دافئ' } },
+      { op: 'create', entity: 'notes', id: 'note-1', fields: { projectId: 'pr-a', text: 'ملاحظة' } },
+      { op: 'create', entity: 'scenes', id: 'sc-1', fields: { projectId: 'pr-a', position: 1, name: 'الوصول', locationId: 'loc-1', mood: 'gold' } },
+      { op: 'create', entity: 'scenes', id: 'sc-2', fields: { projectId: 'pr-a', position: 2, name: 'المقابلة', mood: 'night' } },
+      { op: 'create', entity: 'shots', id: 'sh-1', fields: { projectId: 'pr-a', sceneId: 'sc-1', position: 1, description: 'واسعة', status: 'shot' } },
+      { op: 'create', entity: 'shots', id: 'sh-2', fields: { projectId: 'pr-a', sceneId: 'sc-2', position: 1, description: 'قريبة', status: 'approved' } },
+      { op: 'create', entity: 'itemImages', id: 'ii-1', fields: { projectId: 'pr-a', ownerKind: 'shot', ownerId: 'sh-2', imageId: img, position: 1 } },
+      { op: 'create', entity: 'sceneCharacters', id: 'sc-2:ch-2', fields: { projectId: 'pr-a', sceneId: 'sc-2', characterId: 'ch-2' } },
+      { op: 'create', entity: 'boardCards', id: 'bc-1', fields: { projectId: 'pr-a', kind: 'note', refId: 'note-1', x: 0, y: 0 } },
+      { op: 'create', entity: 'planItems', id: 'pl-1', fields: { projectId: 'pr-a', sceneId: 'sc-2', kind: 'camera', refId: 'cam-zve10', x: 1, y: 2 } },
+      { op: 'create', entity: 'planItems', id: 'pl-2', fields: { projectId: 'pr-a', sceneId: 'sc-2', kind: 'person', refId: 'ch-2', x: 2, y: 1 } },
+    ]);
+    return img;
+  };
+
+  it('saving a project keeps the original as it was; the template has everything but the client, the day and the statuses', async () => {
+    const cookie = await setupAndLogin();
+    await seed(cookie);
+    const before = await content(cookie, 'pr-a');
+    const res = await call('/api/projects/pr-a/template', { method: 'POST', cookie, json: { name: 'قالب: إعلان عقار' } });
+    expect(res.status).toBe(200);
+    const { projectId: tpl } = (await res.json()) as { projectId: string };
+    expect(await content(cookie, 'pr-a')).toEqual(before);
+    const t = await content(cookie, tpl);
+    expect(t.project).toMatchObject({ name: 'قالب: إعلان عقار', templateKind: 'project', client: '', shootDate: null, stage: 'prep' });
+    expect(t.shots).toEqual([['قريبة', 'planned'], ['واسعة', 'planned']]);
+    for (const k of ['scenes', 'characters', 'locations', 'moodboards', 'notes', 'cards', 'plan', 'images', 'links'] as const) expect(t[k]).toEqual(before[k]);
+
+    // «مشروع جديد من القالب»: a normal project with the same content
+    const res2 = await call(`/api/projects/${tpl}/from-template`, { method: 'POST', cookie, json: { name: 'عقار — الملقا' } });
+    const { projectId: np } = (await res2.json()) as { projectId: string };
+    const n = await content(cookie, np);
+    expect(n.project).toMatchObject({ name: 'عقار — الملقا', templateKind: null });
+    for (const k of ['scenes', 'shots', 'characters', 'locations', 'moodboards', 'notes', 'cards', 'plan', 'images', 'links'] as const) expect(n[k]).toEqual(t[k]);
+
+    // the list marks templates (Home keeps them out of «مشاريعي» and the counts); the search badges them
+    const list = (await getJson('/api/projects', cookie)) as { id: string; templateKind: string | null; plans: number }[];
+    expect(list.find((p) => p.id === tpl)).toMatchObject({ templateKind: 'project', plans: 1 });
+    expect(list.find((p) => p.id === np)?.templateKind).toBeNull();
+    expect(list.find((p) => p.id === 'pr-a')?.templateKind).toBeNull();
+    const hits = (await getJson(`/api/search?q=${encodeURIComponent('قالب')}`, cookie)) as { id: string; template?: boolean }[];
+    expect(hits.find((h) => h.id === tpl)?.template).toBe(true);
+    // a client can't turn a project into a template (or back) by an edit
+    const bad = await call('/api/ops', { method: 'POST', cookie, json: { ops: [{ op: 'update', entity: 'projects', id: 'pr-a', fields: { templateKind: 'project' } }] } });
+    expect(bad.status).toBe(400);
+  });
+
+  it('a scene template holds that scene, its shots, plan, photos, characters and location only', async () => {
+    const cookie = await setupAndLogin();
+    const img = await seed(cookie);
+    const res = await call('/api/projects/pr-a/template', { method: 'POST', cookie, json: { name: 'مقابلة بكاميرتين', sceneId: 'sc-2' } });
+    const { projectId: tpl } = (await res.json()) as { projectId: string };
+    const t = await content(cookie, tpl);
+    expect(t.project).toMatchObject({ templateKind: 'scene', name: 'مقابلة بكاميرتين' });
+    expect(t.scenes).toEqual([['المقابلة', 2, 'night']]);
+    expect(t.shots).toEqual([['قريبة', 'planned']]);
+    expect(t.characters).toEqual(['الضيف']);
+    expect(t.locations).toEqual([]);
+    expect(t).toMatchObject({ moodboards: 0, notes: 0, cards: 0, images: [img], links: 1 });
+    expect(t.plan).toEqual([['camera', 1, 2], ['person', 2, 1]]);
+    const s = await getJson(`/api/projects/${tpl}`, cookie);
+    const ch = s.rows.characters[0].id;
+    expect(s.rows.planItems.find((r: { kind: string }) => r.kind === 'person').refId).toBe(ch);
+    // the first scene carries its location
+    const r1 = await call('/api/projects/pr-a/template', { method: 'POST', cookie, json: { name: 'الوصول', sceneId: 'sc-1' } });
+    const t1 = await content(cookie, ((await r1.json()) as { projectId: string }).projectId);
+    expect(t1.locations).toEqual(['الفيلا']);
+    // bad requests
+    expect((await call('/api/projects/pr-a/template', { method: 'POST', cookie, json: { name: ' ' } })).status).toBe(400);
+    expect((await call('/api/projects/pr-a/template', { method: 'POST', cookie, json: { name: 'x', sceneId: 'sc-nope' } })).status).toBe(400);
+  });
+});

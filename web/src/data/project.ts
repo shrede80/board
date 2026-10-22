@@ -73,6 +73,8 @@ export interface PProject {
   shootTime: string | null;
   stage: string;
   archived: boolean;
+  /** a saved template (UPDATE-3 §7) */
+  templateKind: 'project' | 'scene' | null;
   coverImageId: string | null;
   scenes: PScene[];
   library: { characters: PLib[]; locations: PLib[]; moodboards: PLib[]; inbox: PInbox[] };
@@ -157,6 +159,7 @@ export function deriveProject(store: Store, images: Map<string, ImageMeta>, pid:
     shootTime: (p.shootTime as string) ?? null,
     stage: (p.stage as string) ?? 'prep',
     archived: !!p.archived,
+    templateKind: (p.templateKind as 'project' | 'scene' | null) ?? null,
     coverImageId: (p.coverImageId as string) ?? null,
     scenes,
     library: { characters, locations: lib(store.locations, 'location'), moodboards, inbox },

@@ -108,6 +108,13 @@ test('laptop: add a camera, rotate, change the lens, arrows, duplicate, delete, 
   await page.keyboard.press('KeyP');
   await expect(page.getByTestId('plan-props-person')).toBeVisible();
   await page.keyboard.press('Escape');
+  // added at the same spot one after the other: the second steps 50 cm aside (user's note after B)
+  await page.keyboard.press('KeyP');
+  await page.keyboard.press('Escape');
+  await saved(page);
+  const ps = (await planRows(page)).filter((r) => r.kind === 'person');
+  expect(ps).toHaveLength(2);
+  expect(Math.hypot(ps[0].x - ps[1].x, ps[0].y - ps[1].y)).toBeGreaterThanOrEqual(0.49);
   await page.getByTestId('plan-fit').click();
   await page.waitForTimeout(400);
   await shot(page, 'plan-laptop');
@@ -135,7 +142,7 @@ test('laptop: add a camera, rotate, change the lens, arrows, duplicate, delete, 
   await page.getByTestId('m-plan').click();
   await page.getByTestId('plan-copy').click();
   await page.getByTestId('plan-copy-add').first().click();
-  await expect(page.locator('[data-pid]')).toHaveCount(4);
+  await expect(page.locator('[data-pid]')).toHaveCount(5);
 });
 
 test('phone: add from the sheet, drag with a finger, turn with the handle, pinch to zoom', async ({ page, viewport }) => {

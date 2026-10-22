@@ -50,13 +50,14 @@ function convertMenu(id: string): MenuEntry[] {
   return (['shot', 'scene', 'refs', 'note', 'moodboard'] as ConvertKind[]).map((k) => ({ label: CONVERT_LABEL[k], icon: CONVERT_ICON[k], run: () => void convertIdea(id, k), testid: `convert-${k}` }));
 }
 
-interface Summary { id: string; name: string; archived?: boolean }
+// templates (UPDATE-3 §7) aren't places for ideas
+interface Summary { id: string; name: string; archived?: boolean; templateKind?: string | null }
 export async function moveMenu(id: string, x: number, y: number) {
   const list = await api<Summary[]>('/api/projects').catch(() => [] as Summary[]);
   openMenu(x, y, [
     { label: 'بدون مشروع', icon: 'x', run: () => moveIdea(id, null), testid: 'move-none' },
     'sep',
-    ...list.filter((p) => !p.archived).map((p) => ({ label: p.name, icon: 'folder', run: () => moveIdea(id, p.id), testid: 'move-project' })),
+    ...list.filter((p) => !p.archived && !p.templateKind).map((p) => ({ label: p.name, icon: 'folder', run: () => moveIdea(id, p.id), testid: 'move-project' })),
   ], 'move-menu');
 }
 
@@ -191,7 +192,7 @@ export function IdeaEditDialog() {
     setImages((idea.imageIds as string[]) ?? []);
     setPid(ideaProject(idea) ?? '');
     setSid((idea.sceneId as string) ?? '');
-    api<Summary[]>('/api/projects').then(setProjects).catch(() => {});
+    api<Summary[]>('/api/projects').then((l) => setProjects(l.filter((p) => !p.templateKind))).catch(() => {});
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!pid) return setScenes([]);

@@ -201,6 +201,21 @@ app.post('/api/projects/:id/duplicate', async (c) => {
   return c.json(await duplicateProject(c.env.DB, c.req.param('id'), { keepStatus: keepStatus === true }));
 });
 
+/** «احفظ كقالب» (UPDATE-3 §7): the whole project, or one scene (sceneId), as a template. */
+app.post('/api/projects/:id/template', async (c) => {
+  const { name, sceneId } = await body<{ name?: unknown; sceneId?: unknown }>(c);
+  if (typeof name !== 'string' || !name.trim()) throw new BadRequest('name');
+  if (sceneId !== undefined && typeof sceneId !== 'string') throw new BadRequest('sceneId');
+  return c.json(await duplicateProject(c.env.DB, c.req.param('id'), { name, templateKind: sceneId ? 'scene' : 'project', sceneId: sceneId || undefined }));
+});
+
+/** «مشروع جديد من القالب»: an ordinary copy with the name given. */
+app.post('/api/projects/:id/from-template', async (c) => {
+  const { name } = await body<{ name?: unknown }>(c);
+  if (typeof name !== 'string' || !name.trim()) throw new BadRequest('name');
+  return c.json(await duplicateProject(c.env.DB, c.req.param('id'), { name, templateKind: null }));
+});
+
 app.get('/api/projects/:id/export', async (c) => {
   const p = await exportProject(c.env.DB, c.req.param('id'));
   return p ? c.json(p) : c.json({ error: 'not_found' }, 404);

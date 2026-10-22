@@ -370,3 +370,15 @@ export function arrowSvg(it: PlanItem, px: (x: number) => number, py: (y: number
 }
 
 const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/**
+ * Where a new item goes (user's note after phase B): if another item already sits on that spot,
+ * it steps 50 cm (right and down) until the spot is free, so two items added one after the other
+ * never hide each other or their labels.
+ */
+export function freeSpot(items: { x: number; y: number; kind?: string }[], at: { x: number; y: number }, step = 0.5): { x: number; y: number } {
+  const taken = (p: { x: number; y: number }) => items.some((i) => i.kind !== 'zone' && Math.abs(i.x - p.x) < 0.3 && Math.abs(i.y - p.y) < 0.3);
+  let p = { ...at };
+  for (let n = 0; n < 40 && taken(p); n++) p = { x: Math.round((p.x + step) * 100) / 100, y: Math.round((p.y + step) * 100) / 100 };
+  return p;
+}

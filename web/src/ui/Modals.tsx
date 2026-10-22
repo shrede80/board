@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createProject, undo } from '../app/actions';
 import { exportProjectZip, exportXlsx, importProjectZip, printPdf, readProjectZip, shotCols, shotRows, type ImportPreview } from '../app/exporters';
-import { dismissToast, setState, useApp, useEquipment, useProject } from '../app/state';
+import { dismissToast, getState, setState, useApp, useEquipment, useProject } from '../app/state';
 import { allShots, camLine, coverOf, eqName, moodHex, moveLine, sceneDur } from '../data/project';
 import { Button, Card, Checkbox, Field, Icon, Input, Radio, Table, Toast } from '../ds/ds';
 import { TEMPLATES } from '../lib/constants';
@@ -10,6 +10,9 @@ import { Overlay } from './Pages';
 import { planSvgFor } from '../app/plan';
 import { AspectPicker, DuplicateProjectDialog, ProjectSettingsDialog, StagePicker } from './ProjectDialogs';
 import { ShortcutsDialog } from './Keys';
+import { SaveTemplateDialog } from './Templates';
+import { listTemplates, newFromTemplate, templateCounts, type TemplateSummary } from '../app/templates';
+import { templateBaseName } from '../../../shared/templates';
 
 const close = () => setState({ modal: null });
 const dialog: React.CSSProperties = { maxWidth: '100%', maxHeight: '100%', overflowY: 'auto', background: 'var(--color-bg)', borderRadius: 14, boxShadow: 'var(--shadow-lift)', padding: 28 };
@@ -24,6 +27,7 @@ export function Modals() {
       {modal === 'export' && <ExportDialog />}
       {modal === 'projectSettings' && <ProjectSettingsDialog />}
       {modal === 'duplicateProject' && <DuplicateProjectDialog />}
+      {modal === 'saveTemplate' && <SaveTemplateDialog />}
       {modal === 'shortcuts' && <ShortcutsDialog />}
       {modal === 'import' && <ImportDialog />}
     </Overlay>
@@ -32,6 +36,22 @@ export function Modals() {
 
 function NewProjectDialog() {
   const [np, setNp] = useState({ name: '', aspect: '16:9', template: 'ad', client: '', shootDate: '', shootTime: '', stage: 'prep' });
+  // «قوالبي» next to the app's templates (UPDATE-3 §7.1); one of them chosen = a copy of it
+  const [mine, setMine] = useState<TemplateSummary[]>([]);
+  const [pick, setPick] = useState<string | null>(() => getState().npTemplate);
+  useEffect(() => {
+    void listTemplates('project').then(setMine);
+    return () => setState({ npTemplate: null });
+  }, []);
+  const chosen = mine.find((t) => t.id === pick) ?? null;
+  const create = () => {
+    if (!chosen) return createProject(np);
+    const f: Record<string, unknown> = { stage: np.stage };
+    if (np.client.trim()) f.client = np.client.trim();
+    if (np.shootDate) f.shootDate = np.shootDate;
+    if (np.shootDate && np.shootTime) f.shootTime = np.shootTime;
+    void newFromTemplate(chosen.id, np.name.trim() || templateBaseName(chosen.name), f);
+  };
   return (
     <div data-component="NewProjectDialog" style={{ ...dialog, width: 640, display: 'flex', flexDirection: 'column', gap: 20 }}>
       <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30 }}>مشروع جديد</h2>
@@ -45,24 +65,42 @@ function NewProjectDialog() {
         <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-muted)' }}>المرحلة</span>
         <StagePicker value={np.stage} onChange={(v) => setNp({ ...np, stage: v })} />
       </div>
+      {!chosen && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-muted)' }}>نسبة الإطار</span>
+          <AspectPicker value={np.aspect} onChange={(a) => setNp({ ...np, aspect: a })} />
+        </div>
+      )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-muted)' }}>نسبة الإطار</span>
-        <AspectPicker value={np.aspect} onChange={(a) => setNp({ ...np, aspect: a })} />
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-muted)' }}>قالب البداية</span>
+        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-muted)' }}>{mine.length ? 'قوالب البرنامج' : 'قالب البداية'}</span>
         {TEMPLATES.map((t) => {
-          const on = np.template === t.id;
+          const on = !chosen && np.template === t.id;
           return (
-            <button key={t.id} data-testid={`tpl-${t.id}`} onClick={() => setNp({ ...np, template: t.id })} style={{ display: 'flex', flexDirection: 'column', gap: 4, textAlign: 'right', padding: '12px 14px', border: `1px solid ${on ? 'var(--color-accent)' : 'var(--color-border)'}`, background: on ? 'var(--color-accent-soft)' : 'transparent', borderRadius: 8, cursor: 'pointer', color: 'var(--color-text)' }}>
+            <button key={t.id} data-testid={`tpl-${t.id}`} onClick={() => (setNp({ ...np, template: t.id }), setPick(null))} style={{ display: 'flex', flexDirection: 'column', gap: 4, textAlign: 'right', padding: '12px 14px', border: `1px solid ${on ? 'var(--color-accent)' : 'var(--color-border)'}`, background: on ? 'var(--color-accent-soft)' : 'transparent', borderRadius: 8, cursor: 'pointer', color: 'var(--color-text)' }}>
               <span style={{ fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 16 }}>{t.label}</span>
               <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>{t.scenes.length ? t.scenes.join(' · ') : 'بدون مشاهد'}</span>
             </button>
           );
         })}
       </div>
+      {mine.length > 0 && (
+        <div data-testid="np-mine" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-muted)' }}>قوالبي</span>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 8 }}>
+            {mine.map((t) => {
+              const on = pick === t.id;
+              return (
+                <button key={t.id} data-testid="np-my-template" aria-pressed={on} onClick={() => setPick(t.id)} style={{ display: 'flex', flexDirection: 'column', gap: 3, textAlign: 'right', padding: '12px 14px', border: `1px solid ${on ? 'var(--color-accent)' : 'var(--color-border)'}`, background: on ? 'var(--color-accent-soft)' : 'transparent', borderRadius: 10, cursor: 'pointer', color: 'var(--color-text)' }}>
+                  <b style={{ fontSize: 15 }}>{templateBaseName(t.name)}</b>
+                  <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{templateCounts(t)}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 10 }}>
-        <Button variant="primary" onClick={() => createProject(np)} data-testid="np-create">إنشاء المشروع</Button>
+        <Button variant="primary" onClick={create} data-testid="np-create">إنشاء المشروع</Button>
         <Button variant="ghost" onClick={close}>إلغاء</Button>
       </div>
     </div>

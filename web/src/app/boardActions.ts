@@ -10,6 +10,7 @@ import { boardItems, boxOf, fitAll, itemBoxes, itemOf, openItem, posOp, autoArra
 import { uploadFile } from './images';
 import { kb } from './keyLabels';
 import { openPlan } from './plan';
+import { saveSceneEntry } from './templates';
 import { askConfirm, engine, getState, openMenu, project, setState, toast, type MenuEntry, type MenuItem } from './state';
 
 /**
@@ -454,6 +455,7 @@ export function itemsMenu(ids: string[]): MenuEntry[] {
       { ...swatchRow(sc.mood, (k) => k && setMood([sc.id], k), false), label: 'لون المزاج' },
       { label: 'إضافة لقطة', icon: 'plus', run: () => addShot(sc.id), testid: 'm-add-shot' },
       { label: 'المخطط', icon: 'grid', run: () => openPlan(sc.id), testid: 'm-plan' },
+      ...saveSceneEntry(sc.id),
       { label: 'الترتيب (أمام / خلف)', icon: 'layers', children: ORDER_ITEMS(ids), testid: 'm-order' },
       lockItem,
       'sep',
@@ -517,6 +519,7 @@ export function sceneRowMenu(sceneId: string): MenuEntry[] {
     { label: 'تكرار', icon: 'repeat', run: () => duplicateSelection([sceneId]), testid: 'm-duplicate' },
     { label: 'إضافة لقطة', icon: 'plus', run: () => addShot(sceneId) },
     { label: 'المخطط', icon: 'grid', run: () => openPlan(sceneId), testid: 'm-plan' },
+    ...saveSceneEntry(sceneId),
     'sep',
     { label: 'حذف المشهد', icon: 'trash', danger: true, run: () => deleteScene(sceneId), testid: 'm-delete' },
   ];

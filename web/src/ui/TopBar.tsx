@@ -8,6 +8,8 @@ import { sceneDur } from '../data/project';
 import { Button, Icon, Tabs } from '../ds/ds';
 import { tip } from '../app/keyLabels';
 import { CountUp } from './Editor';
+import { TemplateBadge } from './Templates';
+import { askSaveTemplate } from '../app/templates';
 
 const iconBtn: React.CSSProperties = {
   width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent',
@@ -167,6 +169,7 @@ function Breadcrumb() {
     { label: 'إعادة التسمية', icon: 'edit', key: 'F2', run: () => setState({ renaming: { kind: 'project', id: p.id } }), testid: 'pm-rename' },
     { label: 'إعدادات المشروع…', icon: 'settings', run: () => setState({ modal: 'projectSettings' }), testid: 'pm-settings' },
     { label: 'تكرار المشروع', icon: 'repeat', run: () => askDuplicate(p.id, p.name), testid: 'pm-duplicate' },
+    ...(p.templateKind ? [] : [{ label: 'احفظ كقالب', icon: 'bookmark', run: () => askSaveTemplate(p.id, null, `قالب: ${p.name}`), testid: 'pm-save-tpl' }]),
     { label: 'تصدير…', icon: 'download', run: () => setState({ modal: 'export' }), testid: 'pm-export' },
     { label: p.archived ? 'إلغاء الأرشفة' : 'أرشفة', icon: 'folder', run: () => archiveProject(!p.archived), testid: 'pm-archive' },
   ];
@@ -182,6 +185,7 @@ function Breadcrumb() {
             style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-text)', padding: '6px 10px', borderRadius: 8, fontFamily: 'var(--font-serif-text)', fontSize: 16, fontWeight: 700, maxWidth: 330 }}>
             <span data-testid="project-name" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
             {p.archived && <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, color: 'var(--color-text-muted)', border: '1px solid var(--color-border)', borderRadius: 999, padding: '1px 8px' }}>مؤرشف</span>}
+            {p.templateKind && <TemplateBadge />}
             <Icon name="chevron-down" size={16} />
           </button>
           {open && (

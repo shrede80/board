@@ -3,6 +3,7 @@ import { nudgeStep, type NudgeDir, type NudgeMode } from '../../../shared/board'
 import {
   arrowSvg, beamOf, camSpec, cctColor, focalOf, footprint, frameWidth, FURNITURE, hfov, itemBody, lightColor, lightSpec, PERSON_COLORS, rotFromPoint, snapM, wedge,
   type PlanItem, type PlanProps,
+  freeSpot,
 } from '../../../shared/plan';
 import { redo, undo } from '../app/actions';
 import { registerCommand } from '../app/commands';
@@ -171,7 +172,8 @@ export function PlanScreen() {
   // ---------- adding ----------
   const add = (make: NewItem, at = center()) => {
     if (!sc) return;
-    const id = addItem(sc.id, make, { x: snapM(at.x, snap), y: snapM(at.y, snap) });
+    // a spot that's taken: the new item steps 50 cm aside (never on top of another)
+    const id = addItem(sc.id, make, freeSpot(itemsRef.current, { x: snapM(at.x, snap), y: snapM(at.y, snap) }));
     if (!id) return;
     setSel([id]);
     if (mobile) setSheet('props');

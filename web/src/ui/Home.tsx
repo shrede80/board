@@ -11,6 +11,8 @@ import { Button, Icon } from '../ds/ds';
 import { STAGE_LABEL, STAGE_ORDER } from '../lib/constants';
 import { frameBg, mmss, type Img } from '../lib/util';
 import { IdeaCard, IdeaQuickAdd } from './Ideas';
+import { MyTemplates } from './Templates';
+import { saveProjectEntry } from '../app/templates';
 
 /**
  * «الرئيسية» on the laptop (UPDATE-1 ب1, home.html): greeting, «كمّل من حيث وقفت», «التصوير
@@ -21,10 +23,15 @@ export interface Summary {
   id: string; name: string; aspect: string; updatedAt: number; scenes: number; shots: number; durationS: number;
   coverImageId: string | null; coverPlaceholder: Img['placeholder']; coverMood: string | null; locations: number;
   client: string; shootDate: string | null; shootTime: string | null; stage: string; archived: boolean; shotsShot: number; shotsApproved: number;
+  /** a saved template (UPDATE-3 §7): only in «قوالبي», never in «مشاريعي» or the counts */
+  templateKind: 'project' | 'scene' | null; plans: number;
 }
 
-/** Project summaries (counts from the server) with the latest local edits of each project row on top. */
-export function useSummaries(): Summary[] | null {
+/**
+ * Project summaries (counts from the server) with the latest local edits of each project row on top.
+ * Templates are left out unless asked for (`withTemplates`).
+ */
+export function useSummaries(withTemplates = false): Summary[] | null {
   const dv = useApp((s) => s.dataVersion);
   const [list, setList] = useState<Summary[] | null>(null);
   useEffect(() => {
@@ -39,7 +46,7 @@ export function useSummaries(): Summary[] | null {
       if (r.deletedAt) return null;
       return { ...s, name: r.name as string, client: (r.client as string) ?? '', stage: (r.stage as string) ?? 'prep', archived: !!r.archived, shootDate: (r.shootDate as string) ?? null, shootTime: (r.shootTime as string) ?? null, aspect: r.aspect as string, updatedAt: Math.max(s.updatedAt, r.updatedAt) };
     })
-    .filter((s): s is Summary => !!s);
+    .filter((s): s is Summary => !!s && (withTemplates || !s.templateKind));
 }
 
 export const cover = (s: Summary) => frameBg(s.coverImageId ? { imageId: s.coverImageId, placeholder: s.coverPlaceholder } : null, moodHex(s.coverMood));
@@ -66,6 +73,7 @@ export function projectMenu(s: Summary, startRename: () => void): MenuEntry[] {
     { label: 'إعادة التسمية', icon: 'edit', keys: 'F2', run: startRename, testid: 'hm-rename' },
     { label: 'إعدادات المشروع…', icon: 'settings', run: () => void openWith(s.id, 'projectSettings'), testid: 'hm-settings' },
     { label: 'تكرار المشروع', icon: 'repeat', run: () => askDuplicate(s.id, s.name), testid: 'hm-duplicate' },
+    ...saveProjectEntry(s.id, s.name, s.templateKind, 'hm-save-tpl'),
     { label: 'تصدير نسخة ‎.zip', icon: 'download', run: () => void openWith(s.id, 'export'), testid: 'hm-export' },
     { label: s.archived ? 'إلغاء الأرشفة' : 'أرشفة', icon: 'folder', run: () => archiveProject(!s.archived, s.id), testid: 'hm-archive' },
     'sep',
@@ -74,7 +82,9 @@ export function projectMenu(s: Summary, startRename: () => void): MenuEntry[] {
 }
 
 export function HomeScreen() {
-  const list = useSummaries();
+  const all = useSummaries(true);
+  const list = all?.filter((s) => !s.templateKind) ?? null;
+  const templates = all?.filter((s) => s.templateKind) ?? [];
   const settings = useApp((s) => s.settings);
   useApp((s) => s.dataVersion);
   const [now, setNow] = useState(() => new Date());
@@ -129,7 +139,10 @@ export function HomeScreen() {
         )}
 
         <section style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 380px', gap: 28, alignItems: 'start' }}>
-          {!first ? <MyProjects list={list} now={now} /> : <div />}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 28, minWidth: 0 }}>
+            {!first && <MyProjects list={list} now={now} />}
+            <MyTemplates list={templates} />
+          </div>
           <aside data-component="IdeasBox" data-testid="ideas-box" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border-subtle)', borderRadius: 14, padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <h3 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 24 }}>صندوق الأفكار</h3>

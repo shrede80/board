@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { beamOf, camDefaults, cctColor, focalOf, footprint, frameWidth, hfov, nextLetter, planSvg, rotFromPoint, snapM, type PlanItem } from './plan';
+import { beamOf, camDefaults, cctColor, focalOf, footprint, frameWidth, freeSpot, hfov, nextLetter, planSvg, rotFromPoint, snapM, type PlanItem } from './plan';
 
 const item = (o: Partial<PlanItem>): PlanItem => ({ id: 'p', sceneId: 's', kind: 'camera', refId: 'cam-zve10', x: 0, y: 0, rot: 0, w: 1, h: 1, z: 0, label: 'A', color: null, props: {}, ...o });
 
@@ -57,5 +57,14 @@ describe('lights, items, helpers', () => {
     expect(svg).toContain('ZV-E10');
     expect(svg).toContain('radialGradient');
     expect(height).toBeGreaterThan(100);
+  });
+});
+
+describe('a new item never lands on another (user note after phase B)', () => {
+  it('a free spot stays; a taken one steps 50 cm until free; zones don’t count', () => {
+    expect(freeSpot([], { x: 1, y: 1 })).toEqual({ x: 1, y: 1 });
+    expect(freeSpot([{ x: 1, y: 1 }], { x: 1, y: 1 })).toEqual({ x: 1.5, y: 1.5 });
+    expect(freeSpot([{ x: 1, y: 1 }, { x: 1.5, y: 1.5 }], { x: 1, y: 1 })).toEqual({ x: 2, y: 2 });
+    expect(freeSpot([{ x: 1, y: 1, kind: 'zone' }], { x: 1, y: 1 })).toEqual({ x: 1, y: 1 });
   });
 });

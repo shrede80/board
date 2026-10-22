@@ -52,6 +52,13 @@ export function MenuLayer() {
         style={{ position: 'fixed', left: pos?.x ?? -9999, top: pos?.y ?? -9999, zIndex: 89, minWidth: 240, maxWidth: 320, maxHeight: 'calc(100vh - 16px)', overflowY: 'auto', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 8, boxShadow: 'var(--shadow-lift)', padding: 6 }}>
         {m.items.map((it: MenuEntry, i) => {
           if (it === 'sep') return <div key={`s${i}`} style={{ height: 1, background: 'var(--color-border-subtle)', margin: '5px 4px' }} />;
+          if (it.note) {
+            return (
+              <div key={it.label} data-testid={it.testid} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', fontSize: 12, fontWeight: it.icon ? 400 : 700, color: 'var(--color-text-muted)' }}>
+                {it.icon && <Icon name={it.icon} size={14} />}{it.label}
+              </div>
+            );
+          }
           if (it.swatches) {
             return (
               <div key={it.label} data-testid={it.testid ?? 'm-swatches'} style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '6px 10px 8px' }}>

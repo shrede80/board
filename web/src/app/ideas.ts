@@ -73,10 +73,10 @@ export function markRead(id: string) {
 
 // ---------- choosing (project / scene / shot) ----------
 
-interface Summary { id: string; name: string; archived?: boolean; coverImageId: string | null; coverPlaceholder: Img['placeholder']; coverMood: string | null }
+interface Summary { id: string; name: string; archived?: boolean; templateKind?: string | null; coverImageId: string | null; coverPlaceholder: Img['placeholder']; coverMood: string | null }
 
 async function chooseProject(title: string): Promise<string | null> {
-  const list = await api<Summary[]>('/api/projects').catch(() => [] as Summary[]);
+  const list = (await api<Summary[]>('/api/projects').catch(() => [] as Summary[])).filter((p) => !p.templateKind);
   return new Promise((resolve) => {
     setState({
       choice: {

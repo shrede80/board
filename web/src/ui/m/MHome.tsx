@@ -8,10 +8,13 @@ import { STAGE_LABEL, STAGE_ORDER } from '../../lib/constants';
 import { cover, Progress, projectMenu, upcoming, useSummaries, type Summary } from '../Home';
 import { Chips, iconBtn } from './kit';
 import { ChallengeHomeCard } from '../Challenge';
+import { MyTemplates } from '../Templates';
 
 /** Phone Home (UPDATE-1 ج2, mobile.html screen 1). */
 export function MHome() {
-  const list = useSummaries();
+  const all = useSummaries(true);
+  const list = all?.filter((s) => !s.templateKind) ?? null;
+  const templates = all?.filter((s) => s.templateKind) ?? [];
   const settings = useApp((s) => s.settings);
   const theme = useApp((s) => s.theme);
   const bootOffline = useApp((s) => s.bootOffline);
@@ -72,6 +75,7 @@ export function MHome() {
           </div>
         </section>
       )}
+      <MyTemplates list={templates} mobile />
     </div>
   );
 }

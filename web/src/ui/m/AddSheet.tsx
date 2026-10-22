@@ -1,4 +1,5 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { addSceneFromTemplate, listTemplates, type TemplateSummary } from '../../app/templates';
 import { positionAt } from '../../../../shared/model';
 import { addScene, commit, newShotFields, openEditor, openProject, upd } from '../../app/actions';
 import { addFiles } from '../../app/images';
@@ -161,6 +162,11 @@ function SceneForm({ close }: { close: () => void }) {
   const offline = useApp((s) => s.offline);
   const [name, setName] = useState('');
   const [summary, setSummary] = useState('');
+  // or one of the scene templates (UPDATE-3 §7.3)
+  const [tpls, setTpls] = useState<TemplateSummary[]>([]);
+  useEffect(() => {
+    void listTemplates('scene').then(setTpls);
+  }, []);
   if (!p) return <span style={{ fontSize: 14, color: 'var(--color-text-muted)', padding: 12 }}>افتح مشروعاً أولاً من الرئيسية.</span>;
   const save = () => {
     const id = addScene({ name: name.trim() || undefined, open: false });
@@ -176,6 +182,17 @@ function SceneForm({ close }: { close: () => void }) {
       <Field label="اسم المشهد"><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="مثلاً: الوصول" data-testid="m-add-scene-name" /></Field>
       <Field label="ملخص (اختياري)"><Textarea rows={3} value={summary} onChange={(e) => setSummary(e.target.value)} data-testid="m-add-scene-summary" /></Field>
       <Button variant="primary" size="lg" icon="plus" disabled={offline} onClick={save} data-testid="m-add-save" style={{ width: '100%' }}>أضف المشهد</Button>
+      {tpls.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-muted)' }}>أو من قوالب المشاهد</span>
+          {tpls.map((t) => (
+            <button key={t.id} data-testid="m-add-scene-tpl" disabled={offline} onClick={() => void addSceneFromTemplate(t.id, { open: false }).then((id) => id && close())}
+              style={{ minHeight: 48, display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', border: '1px solid var(--color-border-subtle)', borderRadius: 12, background: 'var(--color-surface)', color: 'var(--color-text)', fontSize: 15, fontWeight: 700, textAlign: 'right' }}>
+              <Icon name="film" size={16} />{t.name}
+            </button>
+          ))}
+        </div>
+      )}
       {offline && <span style={{ fontSize: 13, color: 'var(--color-danger)' }}>تحتاج اتصال.</span>}
     </div>
   );

@@ -31,6 +31,10 @@ export interface ProjectSummary {
   /** shots by status (for the progress bar) */
   shotsShot: number;
   shotsApproved: number;
+  /** null = a normal project; 'project' / 'scene' = a saved template (UPDATE-3 §7) */
+  templateKind: 'project' | 'scene' | null;
+  /** scenes that have a shot plan (for the template cards) */
+  plans: number;
 }
 
 export async function getSettings(db: D1Database): Promise<Settings> {
@@ -162,6 +166,8 @@ export async function ownerChanges(db: D1Database, since: number): Promise<Chang
 
 export interface SearchHit {
   kind: 'project' | 'scene' | 'shot' | 'idea';
+  /** inside a saved template */
+  template?: boolean;
   id: string;
   projectId: string | null;
   title: string;
@@ -175,21 +181,23 @@ export async function search(db: D1Database, q: string): Promise<SearchHit[]> {
   const like = `%${term.replace(/[\\%_]/g, (c) => '\\' + c)}%`;
   const E = "ESCAPE '\\'";
   const [p, sc, sh, id] = await db.batch<Record<string, unknown>>([
-    db.prepare(`SELECT id, name, client FROM projects WHERE owner_id = ?2 AND deleted_at IS NULL AND (name LIKE ?1 ${E} OR client LIKE ?1 ${E}) ORDER BY updated_at DESC LIMIT 10`).bind(like, OWNER_ID),
+    db.prepare(`SELECT id, name, client, template_kind FROM projects WHERE owner_id = ?2 AND deleted_at IS NULL AND (name LIKE ?1 ${E} OR client LIKE ?1 ${E}) ORDER BY updated_at DESC LIMIT 10`).bind(like, OWNER_ID),
     db.prepare(
-      `SELECT s.id, s.name, s.project_id, p.name AS pname FROM scenes s JOIN projects p ON p.id = s.project_id
+      `SELECT s.id, s.name, s.project_id, p.name AS pname, p.template_kind FROM scenes s JOIN projects p ON p.id = s.project_id
        WHERE p.owner_id = ?2 AND p.deleted_at IS NULL AND s.deleted_at IS NULL AND s.name LIKE ?1 ${E} ORDER BY s.updated_at DESC LIMIT 10`,
     ).bind(like, OWNER_ID),
     db.prepare(
-      `SELECT h.id, h.description, h.project_id, p.name AS pname FROM shots h JOIN projects p ON p.id = h.project_id JOIN scenes s ON s.id = h.scene_id
+      `SELECT h.id, h.description, h.project_id, p.name AS pname, p.template_kind FROM shots h JOIN projects p ON p.id = h.project_id JOIN scenes s ON s.id = h.scene_id
        WHERE p.owner_id = ?2 AND p.deleted_at IS NULL AND h.deleted_at IS NULL AND s.deleted_at IS NULL AND h.description LIKE ?1 ${E} ORDER BY h.updated_at DESC LIMIT 10`,
     ).bind(like, OWNER_ID),
     db.prepare(`SELECT id, text, project_id FROM ideas WHERE owner_id = ?2 AND deleted_at IS NULL AND text LIKE ?1 ${E} ORDER BY created_at DESC LIMIT 10`).bind(like, OWNER_ID),
   ]);
+  // templates show in the search with a «قالب» badge (UPDATE-3 §7.1)
+  const tpl = (r: Record<string, unknown>) => (r.template_kind ? { template: true } : {});
   const hits: SearchHit[] = [
-    ...p.results.map((r) => ({ kind: 'project' as const, id: r.id as string, projectId: r.id as string, title: r.name as string, sub: (r.client as string) || '' })),
-    ...sc.results.map((r) => ({ kind: 'scene' as const, id: r.id as string, projectId: r.project_id as string, title: r.name as string, sub: r.pname as string })),
-    ...sh.results.map((r) => ({ kind: 'shot' as const, id: r.id as string, projectId: r.project_id as string, title: r.description as string, sub: r.pname as string })),
+    ...p.results.map((r) => ({ kind: 'project' as const, id: r.id as string, projectId: r.id as string, title: r.name as string, sub: (r.client as string) || '', ...tpl(r) })),
+    ...sc.results.map((r) => ({ kind: 'scene' as const, id: r.id as string, projectId: r.project_id as string, title: r.name as string, sub: r.pname as string, ...tpl(r) })),
+    ...sh.results.map((r) => ({ kind: 'shot' as const, id: r.id as string, projectId: r.project_id as string, title: r.description as string, sub: r.pname as string, ...tpl(r) })),
     ...id.results.map((r) => ({ kind: 'idea' as const, id: r.id as string, projectId: (r.project_id as string) ?? null, title: r.text as string, sub: '' })),
   ];
   return hits.slice(0, 30);
@@ -216,7 +224,10 @@ export async function listProjects(db: D1Database): Promise<ProjectSummary[]> {
              AND EXISTS (SELECT 1 FROM item_images ii WHERE ii.owner_id = h.id AND ii.deleted_at IS NULL)
            ORDER BY s.position, h.position LIMIT 1)) AS cover_image_id,
          (SELECT s.mood FROM scenes s WHERE s.project_id = p.id AND s.deleted_at IS NULL ORDER BY s.position LIMIT 1) AS cover_mood,
-         (SELECT COUNT(*) FROM locations l WHERE l.project_id = p.id AND l.deleted_at IS NULL) AS locations
+         (SELECT COUNT(*) FROM locations l WHERE l.project_id = p.id AND l.deleted_at IS NULL) AS locations,
+         (SELECT COUNT(DISTINCT pl.scene_id) FROM plan_items pl JOIN scenes s ON s.id = pl.scene_id
+            WHERE pl.project_id = p.id AND pl.deleted_at IS NULL AND s.deleted_at IS NULL) AS plans,
+         p.template_kind
        FROM projects p WHERE p.owner_id = ? AND p.deleted_at IS NULL ORDER BY p.updated_at DESC`,
     )
     .bind(OWNER_ID)
@@ -248,6 +259,8 @@ export async function listProjects(db: D1Database): Promise<ProjectSummary[]> {
     archived: r.archived === 1,
     shotsShot: r.shots_shot as number,
     shotsApproved: r.shots_approved as number,
+    templateKind: (r.template_kind as 'project' | 'scene' | null) ?? null,
+    plans: (r.plans as number) ?? 0,
   }));
 }
 

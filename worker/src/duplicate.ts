@@ -31,24 +31,59 @@ const rid = (prefix: string) => `${prefix}-${crypto.randomUUID().replace(/-/g, '
 /** Value of the id map for a column (NULL when the target wasn't copied). */
 const mapped = (col: string) => `json_extract(?1, '$."' || ${col} || '"')`;
 
-export async function duplicateProject(db: D1Database, projectId: string, opts: { keepStatus?: boolean } = {}): Promise<{ projectId: string }> {
-  const proj = await db.prepare('SELECT name FROM projects WHERE id = ? AND owner_id = ? AND deleted_at IS NULL').bind(projectId, OWNER_ID).first<{ name: string }>();
+export interface CopyOpts {
+  keepStatus?: boolean;
+  /** name of the copy (default «… (نسخة)») */
+  name?: string;
+  /** what the copy is: a normal project (null, default), or a saved template (UPDATE-3 §7) */
+  templateKind?: 'project' | 'scene' | null;
+  /** copy only this scene with its shots, plan, images, characters and location(s) (scene template) */
+  sceneId?: string;
+}
+
+/**
+ * Also the saved templates (UPDATE-3 §7): «احفظ كقالب» is the same copy marked as a template,
+ * without the client and shoot day, shot statuses back to «مخططة»; «مشروع جديد من القالب» is a
+ * copy back to a normal project; a scene template copies one scene and what it links to.
+ */
+export async function duplicateProject(db: D1Database, projectId: string, opts: CopyOpts = {}): Promise<{ projectId: string }> {
+  const proj = await db.prepare('SELECT name, template_kind FROM projects WHERE id = ? AND owner_id = ? AND deleted_at IS NULL').bind(projectId, OWNER_ID).first<{ name: string; template_kind: string | null }>();
   if (!proj) throw new BadRequest('unknown project');
+  const kind = opts.templateKind ?? null;
+  const keepStatus = !!opts.keepStatus && !kind;
 
   // One query for every id to copy (live rows only).
   const live = (t: string) => `(SELECT json_group_array(id) FROM ${t} WHERE project_id = ?1 AND deleted_at IS NULL) AS ${t}`;
-  const ids = await db.prepare(`SELECT ${COPIED.map((c) => live(ENTITIES[c.entity].table)).join(', ')}`).bind(projectId).first<Record<string, string>>();
+  // a scene template: the scene, its shots and plan, its characters and location, and their photos
+  const one: Partial<Record<EntityName, string>> = {
+    scenes: 'id = ?2',
+    shots: 'scene_id = ?2',
+    planItems: 'scene_id = ?2',
+    characters: `id IN (SELECT character_id FROM scene_characters WHERE scene_id = ?2 AND deleted_at IS NULL)`,
+    locations: 'id = (SELECT location_id FROM scenes WHERE id = ?2)',
+    // photos follow their owner: rows whose owner isn't copied are skipped by the insert below
+    itemImages: '1',
+  };
+  const pick = (c: { entity: EntityName }) => {
+    const t = ENTITIES[c.entity].table;
+    if (!opts.sceneId) return live(t);
+    const w = one[c.entity];
+    return w ? `(SELECT json_group_array(id) FROM ${t} WHERE project_id = ?1 AND deleted_at IS NULL AND ${w}) AS ${t}` : `'[]' AS ${t}`;
+  };
+  const ids = await db.prepare(`SELECT ${COPIED.map(pick).join(', ')}`).bind(...(opts.sceneId ? [projectId, opts.sceneId] : [projectId])).first<Record<string, string>>();
   const map: Record<string, string> = {};
   for (const c of COPIED) for (const id of JSON.parse(ids?.[ENTITIES[c.entity].table] ?? '[]') as string[]) map[id] = rid(c.prefix);
+  if (opts.sceneId && !(JSON.parse(ids?.scenes ?? '[]') as string[]).length) throw new BadRequest('unknown scene');
   const newId = rid('pr');
   const now = Date.now();
   const json = JSON.stringify(map);
+  const name = opts.name?.trim().slice(0, 200) || `${proj.name} (نسخة)`;
 
   const stmts: D1PreparedStatement[] = [
     db.prepare(
-      `INSERT INTO projects (id, owner_id, name, template, aspect, cover_image_id, created_at, client, shoot_date, shoot_time, stage, archived, updated_at)
-       SELECT ?1, owner_id, name || ' (نسخة)', template, aspect, cover_image_id, ?3, client, NULL, NULL, 'prep', 0, ?3 FROM projects WHERE id = ?2`,
-    ).bind(newId, projectId, now),
+      `INSERT INTO projects (id, owner_id, name, template, aspect, cover_image_id, created_at, client, shoot_date, shoot_time, stage, archived, template_kind, updated_at)
+       SELECT ?1, owner_id, ?4, template, aspect, ${opts.sceneId ? 'NULL' : 'cover_image_id'}, ?3, CASE WHEN ?5 IS NULL THEN client ELSE '' END, NULL, NULL, 'prep', 0, ?5, ?3 FROM projects WHERE id = ?2`,
+    ).bind(newId, projectId, now, name, kind),
   ];
 
   /** Column expression for the copy (references remapped). */
@@ -77,8 +112,8 @@ export async function duplicateProject(db: D1Database, projectId: string, opts: 
       db.prepare(
         `INSERT INTO ${def.table} (id, ${cols.join(', ')}, updated_at)
          SELECT ${mapped('id')}, ${cols.map((col) => expr(c.entity, col)).join(', ')}, ?3
-         FROM ${def.table} WHERE project_id = ?5 AND deleted_at IS NULL${where[c.entity] ? ` AND ${where[c.entity]}` : ''}`,
-      ).bind(json, newId, now, opts.keepStatus ? 1 : 0, projectId),
+         FROM ${def.table} WHERE project_id = ?5 AND deleted_at IS NULL AND ${mapped('id')} IS NOT NULL${where[c.entity] ? ` AND ${where[c.entity]}` : ''}`,
+      ).bind(json, newId, now, keepStatus ? 1 : 0, projectId),
     );
   }
   // Link rows: ids follow the client's composite convention.
