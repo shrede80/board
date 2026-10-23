@@ -41,7 +41,14 @@ function audit(page: Page, mobile: boolean) {
         if (!clipped) out.push(`overflow ${name(el)} ${Math.round(r.left)}..${Math.round(r.right)}`);
       }
     }
-    const targets = [...document.querySelectorAll<HTMLElement>(sel)].filter((el) => vis(el) && !(el as HTMLButtonElement).disabled && !el.closest('[aria-hidden=true]'));
+    // reachable = what a tap at its middle actually hits (not hidden under a window, a sheet or the plan)
+    const reach = (el: Element) => {
+      const r = el.getBoundingClientRect();
+      const x = Math.min(innerWidth - 1, Math.max(0, r.left + r.width / 2)), y = Math.min(innerHeight - 1, Math.max(0, r.top + r.height / 2));
+      const top = document.elementFromPoint(x, y);
+      return !!top && (el === top || el.contains(top) || top.contains(el));
+    };
+    const targets = [...document.querySelectorAll<HTMLElement>(sel)].filter((el) => vis(el) && !(el as HTMLButtonElement).disabled && !el.closest('[aria-hidden=true]') && reach(el));
     if (mobile) {
       for (const el of targets) {
         const r = el.getBoundingClientRect();
@@ -55,12 +62,8 @@ function audit(page: Page, mobile: boolean) {
         if (a.contains(b) || b.contains(a)) continue;
         const r = a.getBoundingClientRect(), q = b.getBoundingClientRect();
         const w = Math.min(r.right, q.right) - Math.max(r.left, q.left), h = Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top);
-        if (w > 4 && h > 4) {
-          // only when the one underneath can still be reached: the top element at its middle is the other one
-          const cx = (Math.max(r.left, q.left) + Math.min(r.right, q.right)) / 2, cy = (Math.max(r.top, q.top) + Math.min(r.bottom, q.bottom)) / 2;
-          const top = document.elementFromPoint(cx, cy);
-          if (top && (a.contains(top) || b.contains(top))) out.push(`overlap ${name(a)} × ${name(b)}`);
-        }
+        // both can be tapped (each one's middle reaches it) and their boxes cross
+        if (w > 4 && h > 4) out.push(`overlap ${name(a)} × ${name(b)}`);
       }
     }
     return out;
