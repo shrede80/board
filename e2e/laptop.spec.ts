@@ -12,6 +12,10 @@ test('main flow: project → scene → shot → photo → fields → storyboard 
 
   // add a scene from the dock (click = centre of the board)
   await page.getByTestId('dock-scene').click();
+  // with saved scene templates (another test may have made one) «مشهد» opens a menu first
+  const blank = page.getByTestId('add-scene-blank');
+  await expect(page.getByTestId('scene-card').nth(5).or(blank)).toBeVisible();
+  if (await blank.isVisible()) await blank.click();
   await expect(page.getByTestId('scene-card')).toHaveCount(6);
   await page.getByTestId('scene-name').fill('مشهد المسبح');
   await page.getByTestId('editor-close').click();
