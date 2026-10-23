@@ -93,7 +93,7 @@ export function ChallengeHomeCard({ laptop }: { laptop?: boolean }) {
   const openJourney = () => v.run && setState({ ch: [{ v: 'journey' }] });
   const button = (
     <button data-testid="ch-home-btn" disabled={b.disabled || offline} onClick={(e) => (e.stopPropagation(), b.run?.())}
-      style={{ background: b.disabled ? '#2b2722' : '#d2a06a', color: b.disabled ? '#b9b9c2' : DARK, border: 'none', borderRadius: 8, padding: '0 16px', height: 40, fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap', cursor: b.disabled ? 'default' : 'pointer', flexShrink: 0 }}>
+      style={{ background: b.disabled ? '#2b2722' : '#d2a06a', color: b.disabled ? '#b9b9c2' : DARK, border: 'none', borderRadius: 8, padding: '0 16px', height: laptop ? 40 : 44, fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap', cursor: b.disabled ? 'default' : 'pointer', flexShrink: 0 }}>
       {b.text}
     </button>
   );
