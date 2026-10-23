@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { test, type Page } from '@playwright/test';
 import { seedProjects } from '../shared/seed';
-import { login } from './helpers';
+import { login, shot } from './helpers';
 
 /**
  * The automatic sweep of UPDATE-3 §2.7 (final check): laptop and phone, light and dark, every main
@@ -100,6 +100,7 @@ async function seed(page: Page) {
 test('sweep', async ({ page, viewport }) => {
   const mobile = (viewport?.width ?? 0) < 500;
   const device = mobile ? 'phone' : 'laptop';
+  page.setDefaultTimeout(15_000); // a screen that won't open is reported, not waited on
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(`pageerror ${e.message.slice(0, 140)}`));
   page.on('console', (m) => m.type() === 'error' && errors.push(`console ${m.text().slice(0, 140)}`));
@@ -108,6 +109,7 @@ test('sweep', async ({ page, viewport }) => {
   await seed(page);
   const report = async (screen: string, theme: string) => {
     await page.waitForTimeout(500);
+    await shot(page, `sweep-${device}-${theme}-${screen}`); // for the visual comparison, only with SHOTS=/abs/dir
     for (const f of [...errors.splice(0), ...(await audit(page, mobile))]) console.log(`SWEEP ${device} ${theme} ${screen} :: ${f}`);
   };
   const step = async (screen: string, theme: string, go: () => Promise<unknown>) => {
@@ -161,7 +163,7 @@ test('sweep', async ({ page, viewport }) => {
       }
       await step('ideas', theme, async () => { await page.getByTestId('ideas-all').click(); await page.waitForTimeout(500); });
     } else {
-      await step('project', theme, async () => { await page.getByTestId('my-projects').getByRole('button').first().click(); await page.getByTestId('m-scenes').waitFor(); await keepTheme(); });
+      await step('project', theme, async () => { await page.getByTestId('my-projects').getByTestId('project-card').first().click(); await page.getByTestId('m-scenes').waitFor(); await keepTheme(); });
       await step('scene-menu', theme, async () => { await page.getByTestId('m-scene-dots').first().click(); await page.getByTestId('m-plan').waitFor(); });
       await esc();
       await step('scene-add-menu', theme, async () => { await page.getByTestId('m-add-scene').scrollIntoViewIfNeeded(); await page.getByTestId('m-add-scene').click(); await page.getByTestId('scene-add-menu').waitFor(); });
@@ -170,12 +172,14 @@ test('sweep', async ({ page, viewport }) => {
       await page.goBack();
       await step('plan', theme, async () => { await page.getByTestId('m-scene-dots').first().click(); await page.getByTestId('m-plan').click(); await page.getByTestId('plan').waitFor(); });
       await step('plan-sheet', theme, async () => { await page.getByTestId('plan-m-add').click(); await page.getByTestId('plan-sheet').waitFor(); });
-      await page.goBack();
-      await page.goBack();
+      await page.goto('/');
+      await keepTheme();
+      await page.getByTestId('my-projects').getByTestId('project-card').first().click();
       await step('shots-tab', theme, async () => { await page.getByText('اللقطات', { exact: true }).first().click(); await page.waitForTimeout(400); });
       await step('library-tab', theme, async () => { await page.getByText('المكتبة', { exact: true }).first().click(); await page.waitForTimeout(400); });
       await step('add-sheet', theme, async () => { await page.getByTestId('m-add').click(); await page.waitForTimeout(400); });
-      await page.goBack();
+      await page.goto('/');
+      await keepTheme();
       await step('ideas', theme, async () => { await page.getByTestId('m-tab-ideas').click(); await page.waitForTimeout(400); });
       await step('more', theme, async () => { await page.getByTestId('m-tab-more').click(); await page.waitForTimeout(400); });
       await step('home-templates', theme, async () => { await page.getByTestId('m-tab-home').click(); await page.getByTestId('my-templates').scrollIntoViewIfNeeded(); });

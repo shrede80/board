@@ -82,7 +82,7 @@ export function MProject() {
         <button aria-label="تراجع" data-testid="m-undo" disabled={!canUndo || offline} onClick={() => void undo()} style={{ ...iconBtn, opacity: canUndo ? 1 : 0.35 }}><UndoIcon /></button>
         <button aria-label="خيارات المشروع" data-testid="m-project-more" disabled={offline} onClick={(e) => openMenu(at(e).x, at(e).y, moreMenu, 'project-more')} style={iconBtn}><Icon name="more" size={20} /></button>
       </header>
-      <div style={{ padding: '0 14px 8px' }}>
+      <div className="m-tabs" style={{ padding: '0 14px 8px' }}>
         <Tabs items={[{ value: 'scenes', label: 'المشاهد' }, { value: 'shots', label: 'اللقطات' }, { value: 'library', label: 'المكتبة' }]} value={tab} onChange={(v) => setState({ mTab: v as 'scenes' | 'shots' | 'library' })} style={{ width: '100%' }} />
       </div>
       {tab === 'scenes' && (

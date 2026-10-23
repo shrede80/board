@@ -12,7 +12,7 @@ export const SUBPAGES = ['equipment', 'trash', 'settings'] as const;
 export const iconBtn: React.CSSProperties = { width: 44, height: 44, flexShrink: 0, border: 'none', borderRadius: 10, background: 'transparent', color: 'var(--color-text)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 };
 
 export function chipStyle(on: boolean): React.CSSProperties {
-  return { height: 38, padding: '0 16px', flexShrink: 0, borderRadius: 999, border: `1px solid ${on ? 'transparent' : 'var(--color-border)'}`, background: on ? 'var(--color-inverse-bg)' : 'transparent', color: on ? 'var(--color-inverse-text)' : 'var(--color-text)', fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap' };
+  return { height: 44, padding: '0 16px', flexShrink: 0, borderRadius: 999, border: `1px solid ${on ? 'transparent' : 'var(--color-border)'}`, background: on ? 'var(--color-inverse-bg)' : 'transparent', color: on ? 'var(--color-inverse-text)' : 'var(--color-text)', fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap' };
 }
 
 export function Chips<T extends string>({ items, value, onChange, testid }: { items: [T, string][]; value: T; onChange: (v: T) => void; testid?: string }) {

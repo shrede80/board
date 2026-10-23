@@ -153,7 +153,12 @@ export function PlanScreen() {
   };
   // the props sheet opens over the plan: bring the selected item up into the visible part (§6.6)
   useEffect(() => {
-    if (!mobile || !sheet || selRef.current.length !== 1) return;
+    if (!mobile || !sheet) return;
+    // nothing selected (the «+ عنصر» sheet): the whole plan fits above the sheet
+    if (selRef.current.length !== 1) {
+      const raf = requestAnimationFrame(() => fit());
+      return () => cancelAnimationFrame(raf);
+    }
     const id = selRef.current[0];
     const raf = requestAnimationFrame(() => {
       const it = itemsRef.current.find((i) => i.id === id);

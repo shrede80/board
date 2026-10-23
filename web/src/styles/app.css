@@ -48,6 +48,7 @@ button:disabled { cursor: not-allowed; }
 
 /* phone editors: every tap target is at least 44×44, even when its shape stays small (UPDATE-3 §2.3) */
 .m-editor button, .m-editor [role=button], .m-editor label:has(> input[type=color]), .m-editor label:has(> input[type=file]) { min-width: 44px; min-height: 44px; }
+.m-tabs button { min-height: 44px; } /* the phone's project tabs: 44px to tap (UPDATE-3 §2.7) */
 
 /* «اختصاراتك» (UPDATE-3 §3.3, mockups/keys.html) */
 .kd-dlg { width: 900px; height: 760px; max-width: 100%; max-height: 100%; background: var(--color-bg); border-radius: 16px; box-shadow: var(--shadow-lift); display: flex; flex-direction: column; overflow: hidden; }

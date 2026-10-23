@@ -5,6 +5,7 @@ import { coverOf, moodHex, type PProject } from '../data/project';
 import { Button, Checkbox, Field, Icon, Input } from '../ds/ds';
 import { AR, ASPECTS, STAGE_LABEL, STAGE_ORDER } from '../lib/constants';
 import { frameBg, type Img } from '../lib/util';
+import { useIsMobile } from '../lib/device';
 
 const close = () => setState({ modal: null });
 const dialog: React.CSSProperties = { maxWidth: '100%', maxHeight: '100%', overflowY: 'auto', background: 'var(--color-bg)', borderRadius: 14, boxShadow: 'var(--shadow-lift)', padding: 28 };
@@ -13,13 +14,14 @@ const lbl: React.CSSProperties = { fontSize: 14, fontWeight: 600, color: 'var(--
 
 /** Stage chips (فكرة، تحضير، تصوير، مونتاج، منتهي). */
 export function StagePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const mobile = useIsMobile(); // 44px to tap on the phone (UPDATE-3 §2.3, §2.7)
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
       {STAGE_ORDER.map((s) => {
         const on = value === s;
         return (
           <button key={s} type="button" data-testid={`stage-${s}`} aria-pressed={on} onClick={() => onChange(s)}
-            style={{ height: 34, padding: '0 14px', borderRadius: 999, border: `1px solid ${on ? 'transparent' : 'var(--color-border)'}`, background: on ? 'var(--color-inverse-bg)' : 'transparent', color: on ? 'var(--color-inverse-text)' : 'var(--color-text)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+            style={{ height: mobile ? 44 : 34, padding: '0 14px', borderRadius: 999, border: `1px solid ${on ? 'transparent' : 'var(--color-border)'}`, background: on ? 'var(--color-inverse-bg)' : 'transparent', color: on ? 'var(--color-inverse-text)' : 'var(--color-text)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
             {STAGE_LABEL[s]}
           </button>
         );

@@ -24,7 +24,9 @@ export function AddSheet() {
   const close = () => setState({ addSheet: null });
   return (
     <Sheet onClose={close} testid="add-sheet">
-      <Tabs items={[{ value: 'idea', label: 'فكرة' }, { value: 'shot', label: 'لقطة' }, { value: 'scene', label: 'مشهد' }]} value={mode} onChange={(v) => setState({ addSheet: v as Mode })} style={{ width: '100%' }} />
+      <div className="m-tabs">
+        <Tabs items={[{ value: 'idea', label: 'فكرة' }, { value: 'shot', label: 'لقطة' }, { value: 'scene', label: 'مشهد' }]} value={mode} onChange={(v) => setState({ addSheet: v as Mode })} style={{ width: '100%' }} />
+      </div>
       {mode === 'idea' && <IdeaForm close={close} />}
       {mode === 'shot' && <ShotForm close={close} />}
       {mode === 'scene' && <SceneForm close={close} />}
