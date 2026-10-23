@@ -10,19 +10,20 @@ describe('a scene template added to a project (UPDATE-3 §7.2)', () => {
     shots: [row('sh-2', { projectId: 'pr-t', sceneId: 'sc-t', position: 2, description: 'ب' }), row('sh-1', { projectId: 'pr-t', sceneId: 'sc-t', position: 1, description: 'أ' })],
     itemImages: [row('ii-1', { projectId: 'pr-t', ownerKind: 'shot', ownerId: 'sh-1', imageId: 'img-1', position: 1 }), row('ii-c', { projectId: 'pr-t', ownerKind: 'character', ownerId: 'ch-b', imageId: 'img-2', position: 1 })],
     planItems: [row('pl-1', { projectId: 'pr-t', sceneId: 'sc-t', kind: 'person', refId: 'ch-a', x: 1, y: 1 }), row('pl-2', { projectId: 'pr-t', sceneId: 'sc-t', kind: 'camera', refId: 'cam-zve10', x: 0, y: 2 })],
-    characters: [row('ch-a', { projectId: 'pr-t', name: 'المقدّم' }), row('ch-b', { projectId: 'pr-t', name: 'الضيف' })],
-    locations: [row('loc-t', { projectId: 'pr-t', name: 'الاستوديو' })],
+    characters: [row('ch-a', { projectId: 'pr-t', name: 'المقدّم' }), row('ch-b', { projectId: 'pr-t', name: 'الضيف' }), row('ch-x', { projectId: 'pr-t', name: 'ليس في المشهد' })],
+    locations: [row('loc-t', { projectId: 'pr-t', name: 'الاستوديو' }), row('loc-x', { projectId: 'pr-t', name: 'موقع ثاني' })],
     sceneCharacters: [row('sc-t:ch-a', { sceneId: 'sc-t', characterId: 'ch-a' }), row('sc-t:ch-b', { sceneId: 'sc-t', characterId: 'ch-b' })],
   };
   let n = 0;
   const res = sceneTemplateOps(t, {
     projectId: 'pr-x', position: 9, boardX: 100, boardY: 50, z: 7, newId: (p) => `${p}-n${++n}`,
-    characters: [row('ch-mine', { projectId: 'pr-x', name: ' المقدّم ' })], locations: [],
+    characters: [row('ch-mine', { projectId: 'pr-x', name: ' المقدّم ', position: 4 })], locations: [],
   })!;
   const of = (e: string) => res.ops.filter((o) => o.op === 'create' && o.entity === e) as { id: string; fields: Record<string, unknown> }[];
 
   it('characters with the same name link to the project’s own; the others (and the location) are added with their photos', () => {
-    expect(of('characters').map((o) => o.fields.name)).toEqual(['الضيف']);
+    // only the scene's own cast and location, placed at the end of the library
+    expect(of('characters').map((o) => [o.fields.name, o.fields.position])).toEqual([['الضيف', 5]]);
     const guest = of('characters')[0].id;
     expect(of('sceneCharacters').map((o) => o.fields.characterId).sort()).toEqual(['ch-mine', guest].sort());
     expect(of('locations').map((o) => o.fields.name)).toEqual(['الاستوديو']);

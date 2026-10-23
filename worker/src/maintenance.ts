@@ -7,6 +7,12 @@ export const BACKUP_KEEP = 30;
 const DATA_TABLES: string[] = [...new Set(Object.values(ENTITIES).map((e) => e.table))];
 const BACKUP_TABLES = ['settings', 'images', 'trash', ...DATA_TABLES];
 const PROJECT_TABLES: string[] = Object.values(ENTITIES).filter((e) => e.scope === 'project').map((e) => e.table);
+/**
+ * The free plan allows 50 D1 queries per invocation (each statement of a batch counts). The nightly
+ * job spends 1 per table on the backup, so the purge deletes from at most this many tables a night;
+ * the rest waits for the next night (UPDATE-3 review: 18 tables put the old job at 51).
+ */
+export const NIGHTLY_TABLE_DELETES = 10;
 
 /** Daily backup: every table → R2 `backups/YYYY-MM-DD.json`; keep the newest 30. */
 export async function backup(db: D1Database, bucket: R2Bucket, now = Date.now()): Promise<string> {
@@ -34,7 +40,7 @@ export async function backup(db: D1Database, bucket: R2Bucket, now = Date.now())
  * Permanently deletes trash entries (with everything they hid), expired tombstones and orphans.
  * Images are removed from R2 only once nothing references them any more.
  */
-export async function purge(db: D1Database, bucket: R2Bucket, trashIds: string[], opts: { now?: number; sweepImages?: boolean } = {}) {
+export async function purge(db: D1Database, bucket: R2Bucket, trashIds: string[], opts: { now?: number; sweepImages?: boolean; maxTables?: number } = {}): Promise<{ done: boolean }> {
   const now = opts.now ?? Date.now();
   const tids = JSON.stringify(trashIds);
   const projects = await db
@@ -44,15 +50,23 @@ export async function purge(db: D1Database, bucket: R2Bucket, trashIds: string[]
   const pids = JSON.stringify(projects.results.map((r) => r.ref_id));
   const cutoff = now - TRASH_DAYS * DAY;
 
-  const stmts: D1PreparedStatement[] = DATA_TABLES.map((t) =>
-    db
-      .prepare(
-        `DELETE FROM ${t} WHERE trash_id IN (SELECT value FROM json_each(?1))
-           OR (deleted_at < ?2 AND trash_id IS NULL)` +
-          (PROJECT_TABLES.includes(t) ? ' OR project_id IN (SELECT value FROM json_each(?3))' : ''),
-      )
-      .bind(tids, cutoff, ...(PROJECT_TABLES.includes(t) ? [pids] : [])),
-  );
+  const cond = (t: string) =>
+    `trash_id IN (SELECT value FROM json_each(?1)) OR (deleted_at < ?2 AND trash_id IS NULL)` +
+    (PROJECT_TABLES.includes(t) ? ' OR project_id IN (SELECT value FROM json_each(?3))' : '');
+  // one query tells which tables have anything to delete; only those get a DELETE
+  const has = await db
+    .prepare(`SELECT ${DATA_TABLES.map((t) => `EXISTS (SELECT 1 FROM ${t} WHERE ${cond(t)}) AS "${t}"`).join(', ')}`)
+    .bind(tids, cutoff, pids)
+    .first<Record<string, number>>();
+  const todo = DATA_TABLES.filter((t) => has?.[t]);
+  const tonight = todo.slice(0, opts.maxTables ?? todo.length);
+  const done = tonight.length === todo.length;
+  const stmts: D1PreparedStatement[] = tonight.map((t) => db.prepare(`DELETE FROM ${t} WHERE ${cond(t)}`).bind(tids, cutoff, ...(PROJECT_TABLES.includes(t) ? [pids] : [])));
+  if (!done) {
+    // the rest of the tables tomorrow; the trash entries (and the orphan sweep) wait until then
+    if (stmts.length) await db.batch(stmts);
+    return { done };
+  }
   stmts.push(db.prepare('DELETE FROM trash WHERE id IN (SELECT value FROM json_each(?))').bind(tids));
   // Orphans: rows pointing at rows that no longer exist at all (deleted rows still count as existing).
   stmts.push(
@@ -72,6 +86,8 @@ export async function purge(db: D1Database, bucket: R2Bucket, trashIds: string[]
     ),
     // shots whose scene no longer exists at all (never shown, never purged otherwise)
     db.prepare(`DELETE FROM shots WHERE scene_id NOT IN (SELECT id FROM scenes)`),
+    // plan items too (one deleted, its scene trashed, then the item's delete undone)
+    db.prepare(`DELETE FROM plan_items WHERE scene_id NOT IN (SELECT id FROM scenes)`),
     db.prepare(`DELETE FROM scene_characters WHERE scene_id NOT IN (SELECT id FROM scenes) OR character_id NOT IN (SELECT id FROM characters)`),
     db.prepare(
       `DELETE FROM scene_links WHERE scene_id NOT IN (SELECT id FROM scenes) OR
@@ -81,6 +97,7 @@ export async function purge(db: D1Database, bucket: R2Bucket, trashIds: string[]
   );
   await db.batch(stmts);
   if (opts.sweepImages !== false) await sweepImages(db, bucket, now);
+  return { done };
 }
 
 /**
@@ -119,5 +136,5 @@ export async function daily(db: D1Database, bucket: R2Bucket, now = Date.now()) 
     .prepare('SELECT id FROM trash WHERE deleted_at < ?')
     .bind(now - TRASH_DAYS * DAY)
     .all<{ id: string }>();
-  await purge(db, bucket, expired.results.map((r) => r.id), { now });
+  await purge(db, bucket, expired.results.map((r) => r.id), { now, maxTables: NIGHTLY_TABLE_DELETES });
 }

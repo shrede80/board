@@ -83,7 +83,7 @@ node scripts/check-offline.mjs          # offline start + idea queue against `vi
 
 ## Server notes
 - All writes go through `applyOps` (worker/src/ops.ts): ops grouped into few `json_each` statements, one D1 batch (= transaction).
-- Free plan: ≤ 50 D1 queries per invocation — keep handlers within that (snapshot ≈ 17, daily cron ≈ 40).
+- Free plan: ≤ 50 D1 queries per invocation — keep handlers within that (snapshot ≈ 20, daily cron ≤ 46: the purge deletes from at most `NIGHTLY_TABLE_DELETES` tables a night, tested in `maintenance.test.ts`; each new table adds one backup query).
 - D1 rejects compound SELECTs with many UNION terms — use NOT EXISTS.
 - Tests: `worker/test/setup.ts` wipes D1 + R2 before each test. E2E uses its own state dir `.wrangler/e2e` (wiped per run).
 - Trashable entities: projects, scenes, shots, notes, characters, locations, moodboards. Others tombstone (deleted_at) and are hard-deleted after 30 days.

@@ -39,8 +39,10 @@ export function sceneTemplateOps(
 
   // characters and locations: same name → the project's own, else a new one with its photos
   const ids = new Map<string, string>();
-  const link = (list: Row[] | undefined, mine: Row[], entity: 'characters' | 'locations', prefix: string) => {
-    for (const r of live(list)) {
+  // only the scene's own (the template project may hold others added later); new ones go at the end of the library
+  const link = (list: Row[], mine: Row[], entity: 'characters' | 'locations', prefix: string) => {
+    let pos = Math.max(0, ...mine.filter((m) => !m.deletedAt).map((m) => Number(m.position) || 0));
+    for (const r of list) {
       const hit = mine.find((m) => !m.deletedAt && same(m.name, r.name));
       if (hit) {
         ids.set(r.id, hit.id);
@@ -48,12 +50,13 @@ export function sceneTemplateOps(
       }
       const id = o.newId(prefix);
       ids.set(r.id, id);
-      ops.push({ op: 'create', entity, id, fields: { ...stripRow(r), projectId: pid } });
+      ops.push({ op: 'create', entity, id, fields: { ...stripRow(r), projectId: pid, position: ++pos } });
       copyImages(r.id, id);
     }
   };
-  link(t.characters, o.characters, 'characters', 'ch');
-  link(t.locations, o.locations, 'locations', 'loc');
+  const castIds = new Set(live(t.sceneCharacters).filter((r) => r.sceneId === scene.id).map((r) => r.characterId as string));
+  link(live(t.characters).filter((r) => castIds.has(r.id)), o.characters, 'characters', 'ch');
+  link(live(t.locations).filter((r) => r.id === scene.locationId), o.locations, 'locations', 'loc');
 
   const sid = o.newId('sc');
   ops.push({

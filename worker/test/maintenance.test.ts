@@ -86,6 +86,53 @@ describe('trash cleanup', () => {
     expect(await env.BUCKET.head(`img/${img}`)).not.toBeNull();
   });
 
+  it('the nightly job stays under the free plan’s 50 queries even when a full project expires; the rest goes the next night', async () => {
+    const cookie = await setupAndLogin();
+    const img = await withProject(cookie);
+    await ops(cookie, [
+      { op: 'create', entity: 'characters', id: 'ch-1', fields: { projectId: 'pr-1', name: 'م' } },
+      { op: 'create', entity: 'locations', id: 'loc-1', fields: { projectId: 'pr-1', name: 'م' } },
+      { op: 'create', entity: 'moodboards', id: 'mb-1', fields: { projectId: 'pr-1', title: 'م' } },
+      { op: 'create', entity: 'notes', id: 'note-1', fields: { projectId: 'pr-1', text: 'م' } },
+      { op: 'create', entity: 'boardCards', id: 'bc-1', fields: { projectId: 'pr-1', kind: 'note', refId: 'note-1', x: 0, y: 0 } },
+      { op: 'create', entity: 'sceneCharacters', id: 'sc-1:ch-1', fields: { projectId: 'pr-1', sceneId: 'sc-1', characterId: 'ch-1' } },
+      { op: 'create', entity: 'sceneLinks', id: 'sc-1:note:note-1', fields: { projectId: 'pr-1', sceneId: 'sc-1', kind: 'note', refId: 'note-1' } },
+      { op: 'create', entity: 'planItems', id: 'pl-1', fields: { projectId: 'pr-1', sceneId: 'sc-1', kind: 'camera', x: 1, y: 1 } },
+      { op: 'create', entity: 'inboxItems', id: 'in-1', fields: { projectId: 'pr-1', text: 'م' } },
+      { op: 'create', entity: 'ideas', id: 'id-1', fields: { text: 'م' } },
+      { op: 'create', entity: 'prefs', id: 'motion', fields: { value: { reduced: true } } },
+    ]);
+    await ops(cookie, [{ op: 'delete', entity: 'ideas', id: 'id-1' }, { op: 'delete', entity: 'prefs', id: 'motion' }]);
+    await ops(cookie, [{ op: 'delete', entity: 'projects', id: 'pr-1' }]);
+    let n = 0;
+    const db = new Proxy(env.DB, {
+      get(t, k) {
+        if (k === 'prepare') return (q: string) => (n++, t.prepare(q));
+        const v = (t as unknown as Record<string | symbol, unknown>)[k];
+        return typeof v === 'function' ? (v as (...a: unknown[]) => unknown).bind(t) : v;
+      },
+    });
+    await daily(db, env.BUCKET, Date.now() + 31 * DAY);
+    // the scheduled handler adds one (bootstrap): room is kept under 50
+    expect(n).toBeLessThanOrEqual(45);
+    n = 0;
+    await daily(db, env.BUCKET, Date.now() + 32 * DAY);
+    expect(n).toBeLessThanOrEqual(45);
+    expect(await getJson('/api/trash', cookie)).toHaveLength(0);
+    for (const t of ['projects', 'scenes', 'shots', 'item_images', 'characters', 'locations', 'moodboards', 'notes', 'board_cards', 'scene_characters', 'scene_links', 'plan_items', 'inbox_items']) {
+      expect(await env.DB.prepare(`SELECT COUNT(*) AS n FROM ${t}`).first('n'), t).toBe(0);
+    }
+    expect(await env.BUCKET.head(`img/${img}`)).toBeNull();
+  });
+
+  it('a plan item left without its scene is cleaned up', async () => {
+    const cookie = await setupAndLogin();
+    await withProject(cookie);
+    await ops(cookie, [{ op: 'create', entity: 'planItems', id: 'pl-o', fields: { projectId: 'pr-1', sceneId: 'sc-gone', kind: 'text', x: 0, y: 0 } }]);
+    await daily(env.DB, env.BUCKET, Date.now() + DAY);
+    expect(await env.DB.prepare(`SELECT COUNT(*) AS n FROM plan_items`).first('n')).toBe(0);
+  });
+
   it('purging from the trash page deletes now; deleting a project removes its contents', async () => {
     const cookie = await setupAndLogin();
     await withProject(cookie);
