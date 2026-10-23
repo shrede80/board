@@ -1,6 +1,6 @@
 import { useFields } from '../Fields';
 import { openPlan } from '../../app/plan';
-import { saveProjectEntry, saveSceneEntry, sceneAddMenu } from '../../app/templates';
+import { refreshSceneTemplates, saveProjectEntry, saveSceneEntry, sceneAddMenu } from '../../app/templates';
 import { TemplateBadge } from '../Templates';
 import { useEffect, useRef, useState } from 'react';
 import { addScene, addShot, commit, createFromTemplate, deleteScene, moveScene, moveShot, openEditor, openProject, undo } from '../../app/actions';
@@ -36,6 +36,10 @@ export function MProject() {
   useEffect(() => {
     if (renaming) setTimeout(() => (ref.current?.focus(), ref.current?.select()), 0);
   }, [renaming]);
+  const pid = p?.id;
+  useEffect(() => {
+    if (pid) void refreshSceneTemplates(); // «+ مشهد جديد» lists them without waiting
+  }, [pid]);
   if (bootOffline || !p) {
     return <EmptyState icon="x-circle" title={bootOffline ? 'المشروع يحتاج اتصال' : 'لا مشروع مفتوح'} description={bootOffline ? 'يفتح مع الاتصال. الأفكار من ＋.' : 'افتح مشروعاً من الرئيسية.'} />;
   }

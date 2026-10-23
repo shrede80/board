@@ -35,6 +35,7 @@ export async function saveTemplate(name: string) {
   try {
     await api('/api/projects/' + encodeURIComponent(t.projectId) + '/template', { method: 'POST', json: { name: n, ...(t.sceneId ? { sceneId: t.sceneId } : {}) } });
     if (!getState().projectId) void pollNow(); // Home: it shows up in «قوالبي»
+    if (t.sceneId) void refreshSceneTemplates();
     toast(t.sceneId ? `انحفظ قالب المشهد «${n}»` : `انحفظ القالب «${n}»`);
   } catch {
     toast('ما قدرنا نحفظ القالب', { tone: 'danger' });
@@ -96,8 +97,20 @@ export function saveProjectEntry(id: string, name: string, kind: 'project' | 'sc
 }
 
 /** «+ مشهد» with scene templates: a menu («مشهد فاضي» + the templates); without any, a blank scene right away. */
+/**
+ * The scene templates, kept ready so «+ مشهد» answers at once (no wait for the network): loaded
+ * when a project opens and after saving a template, refreshed quietly on every use.
+ */
+let sceneTpls: TemplateSummary[] | null = null;
+export async function refreshSceneTemplates() {
+  sceneTpls = await listTemplates('scene');
+  return sceneTpls;
+}
+
 export async function sceneAddMenu(x: number, y: number, blank: () => void, o: { pos?: { x: number; y: number }; open?: boolean } = {}) {
-  const list = await listTemplates('scene');
+  const ready = sceneTpls;
+  const fresh = refreshSceneTemplates();
+  const list = ready ?? (await fresh);
   if (!list.length) return blank();
   const entries: MenuEntry[] = [
     { label: 'مشهد فاضي', icon: 'plus', run: blank, testid: 'add-scene-blank' },

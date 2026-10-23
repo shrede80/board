@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { login, newProject, pasteImage, saved, shotNums } from './helpers';
+import { login, newProject, pasteImage, saved } from './helpers';
 
 test.describe.configure({ mode: 'serial' });
 test.skip(({ viewport }) => (viewport?.width ?? 0) < 1000, 'laptop flows');
@@ -49,13 +49,16 @@ test('main flow: project → scene → shot → photo → fields → storyboard 
   await rows.nth(1).getByTestId('add-shot').click();
   await page.getByTestId('editor-close').click();
   await saved(page);
-  expect(await shotNums(page)).toEqual(['1.1', '1.2', '1.3', '2.1']);
+  await expect(page.getByTestId('shot-num')).toHaveText(['1.1', '1.2', '1.3', '2.1']);
 
   // drag shot 1.1 onto scene 02's shot → it moves there and everything renumbers
+  // (once the editor has closed and the rows stopped moving: a drag that starts mid-layout is lost)
+  await expect(page.getByTestId('editor')).toHaveCount(0);
+  await page.waitForTimeout(400);
   await rows.nth(0).getByTestId('shot-card').first().dragTo(rows.nth(1).getByTestId('shot-card').first());
   await saved(page);
-  expect(await rows.nth(0).getByTestId('shot-num').allTextContents()).toEqual(['1.1', '1.2']);
-  expect(await rows.nth(1).getByTestId('shot-num').allTextContents()).toEqual(['2.1', '2.2']);
+  await expect(rows.nth(0).getByTestId('shot-num')).toHaveText(['1.1', '1.2']);
+  await expect(rows.nth(1).getByTestId('shot-num')).toHaveText(['2.1', '2.2']);
   await expect(rows.nth(1).getByTestId('shot-card').first()).toContainText('لقطة افتتاحية للمسبح');
 
   // delete then undo (toast button)
@@ -81,7 +84,7 @@ test('main flow: project → scene → shot → photo → fields → storyboard 
   await page.getByTestId('back-to-app').click();
   await page.getByText('الستوري بورد').click();
   await expect(rows.nth(1).getByTestId('shot-card')).toHaveCount(2);
-  expect(await rows.nth(1).getByTestId('shot-num').allTextContents()).toEqual(['2.1', '2.2']);
+  await expect(rows.nth(1).getByTestId('shot-num')).toHaveText(['2.1', '2.2']);
   await expect(rows.nth(1).getByTestId('shot-card').first()).toContainText('لقطة افتتاحية للمسبح');
 
   // undo/redo buttons work with the keyboard too

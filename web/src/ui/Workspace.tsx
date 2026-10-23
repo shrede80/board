@@ -1,5 +1,5 @@
 import { centerWorldRef, createFromTemplate } from '../app/actions';
-import { sceneAddMenu } from '../app/templates';
+import { refreshSceneTemplates, sceneAddMenu } from '../app/templates';
 import { tip } from '../app/keyLabels';
 import { addCard, pickImages } from '../app/boardActions';
 import { dragEnd, dragStart } from '../app/dnd';
@@ -86,6 +86,11 @@ const DOCK_CMD: Record<string, string> = { scene: 'addScene', note: 'addNote', h
 
 function TemplateDock() {
   const p = useProject();
+  const pid = p?.id;
+  // «+ مشهد» lists the scene templates without waiting
+  useEffect(() => {
+    if (pid) void refreshSceneTemplates();
+  }, [pid]);
   const mode = useApp((s) => s.mode);
   const offline = useApp((s) => s.offline);
   const scrolling = useApp((s) => s.sbScrolling);
