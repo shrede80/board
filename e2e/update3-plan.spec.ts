@@ -224,3 +224,156 @@ test('phone: add from the sheet, drag with a finger, turn with the handle, pinch
   await expect(page.getByTestId('plan')).toHaveCount(0);
   await expect(page.getByTestId('m-scenes')).toBeVisible();
 });
+
+/** An arrow's shape (user's request before the final check). */
+const arrowRow = (page: Page, pid = 'pj-arr', id = 'pl-arr') => page.evaluate(async ([pj, pl]) => {
+  const s = (await fetch(`/api/projects/${pj}`).then((x) => x.json())) as { rows: { planItems: { id: string; x: number; y: number; props: { points: [number, number][]; curve?: boolean } }[] } };
+  const r = s.rows.planItems.find((i) => i.id === pl)!;
+  return { abs: r.props.points.map(([a, b]) => [Math.round((r.x + a) * 100) / 100, Math.round((r.y + b) * 100) / 100]), curve: !!r.props.curve };
+}, [pid, id]);
+/** A spot on the arrow's line (0 = start, 1 = end) in screen pixels. */
+const onArrow = (page: Page, f: number, id = 'pl-arr') => page.evaluate(([t, pl]) => {
+  const el = document.querySelector(`[data-pid="${pl}"] > path`) as SVGPathElement;
+  const p = el.getPointAtLength(el.getTotalLength() * t).matrixTransform(el.getScreenCTM()!);
+  return { x: p.x, y: p.y };
+}, [f, id] as const);
+const seedArrow = (page: Page, name: string) => page.evaluate(async (n) => {
+  const ops = [
+    { op: 'create', entity: 'projects', id: 'pj-arr', fields: { name: n } },
+    { op: 'create', entity: 'scenes', id: 'sc-arr', fields: { projectId: 'pj-arr', position: 1, name: 'المدار' } },
+    { op: 'create', entity: 'planItems', id: 'pl-arr', fields: { projectId: 'pj-arr', sceneId: 'sc-arr', kind: 'arrow', x: 1, y: 2, label: 'حركة الكاميرا', color: '#3b6fd8', props: { points: [[0, 0], [1.5, -0.75], [2.5, -0.75]], dashed: true } } },
+    { op: 'create', entity: 'planItems', id: 'pl-cam', fields: { projectId: 'pj-arr', sceneId: 'sc-arr', kind: 'camera', refId: 'cam-zve10', x: 6, y: 4, label: 'A', props: { focalMm: 24, range: 2 } } },
+  ];
+  const r = await fetch('/api/ops', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ops }) });
+  if (!r.ok) throw new Error(await r.text());
+}, name);
+
+test('laptop: an arrow’s shape — drag its end, pull a new bend, delete a point, curved, reverse; it stays after a reload', async ({ page, viewport }) => {
+  test.skip((viewport?.width ?? 0) < 1000, 'laptop');
+  await login(page);
+  await seedArrow(page, 'سهم اللابتوب');
+  const openIt = async () => {
+    await page.goto('/');
+    await page.locator('[data-testid=project-card][data-project-id=pj-arr]').click();
+    await page.getByText('الستوري بورد').click();
+    await page.getByTestId('sb-row').first().getByTestId('row-dots').click();
+    await page.getByTestId('m-plan').click();
+    await expect(page.getByTestId('plan')).toBeVisible();
+    // select the arrow: a click on its line
+    const at = await onArrow(page, 0.3);
+    await page.mouse.click(at.x, at.y);
+    await expect(page.getByTestId('plan-props-arrow')).toBeVisible();
+  };
+  await openIt();
+  await expect(page.getByTestId('plan-pt')).toHaveCount(3);
+  await expect(page.getByTestId('plan-mid')).toHaveCount(2);
+  const before = (await arrowRow(page)).abs;
+
+  // drag the end: only that point moves, on the 25 cm grid
+  const end = await center(page, '[data-testid=plan-pt] >> nth=2');
+  await page.mouse.move(end.x, end.y);
+  await page.mouse.down();
+  await page.mouse.move(end.x + 90, end.y + 70, { steps: 8 });
+  await page.mouse.up();
+  await saved(page);
+  let r = await arrowRow(page);
+  expect(r.abs[0]).toEqual(before[0]);
+  expect(r.abs[1]).toEqual(before[1]);
+  expect(r.abs[2]).not.toEqual(before[2]);
+  for (const v of r.abs[2]) expect(Math.round(v * 100) % 25).toBe(0);
+  const moved = r.abs;
+
+  // it stays after a reload
+  await openIt();
+  expect((await arrowRow(page)).abs).toEqual(moved);
+  await expect(page.getByTestId('plan-pt')).toHaveCount(3);
+
+  // pull the faint middle of the first part: a new bend
+  const mid = await center(page, '[data-testid=plan-mid] >> nth=0');
+  await page.mouse.move(mid.x, mid.y);
+  await page.mouse.down();
+  await page.mouse.move(mid.x, mid.y - 70, { steps: 6 });
+  await page.mouse.up();
+  await saved(page);
+  r = await arrowRow(page);
+  expect(r.abs).toHaveLength(4);
+  await expect(page.getByTestId('plan-pt')).toHaveCount(4);
+
+  // one undo step takes the bend back, redo brings it
+  await page.getByTestId('plan-undo').click();
+  await saved(page);
+  expect((await arrowRow(page)).abs).toHaveLength(3);
+  await page.getByTestId('plan-redo').click();
+  await saved(page);
+  expect((await arrowRow(page)).abs).toHaveLength(4);
+
+  // double click a point: it goes
+  const p1 = await center(page, '[data-testid=plan-pt] >> nth=1');
+  await page.mouse.dblclick(p1.x, p1.y);
+  await saved(page);
+  expect((await arrowRow(page)).abs).toHaveLength(3);
+
+  // curved: the line passes through the points smoothly
+  await page.getByTestId('plan-curve').click();
+  await saved(page);
+  expect((await arrowRow(page)).curve).toBe(true);
+  await expect(page.locator('[data-pid="pl-arr"] path').first()).toHaveAttribute('d', /C/);
+  // reverse the direction
+  const fwd = (await arrowRow(page)).abs;
+  await page.getByTestId('plan-reverse').click();
+  await saved(page);
+  expect((await arrowRow(page)).abs).toEqual([...fwd].reverse());
+  // the picture for the team carries the new shape
+  const dl = page.waitForEvent('download');
+  await page.getByTestId('plan-export').click();
+  expect((await dl).suggestedFilename()).toBe('مخطط-المشهد-01.png');
+  await shot(page, 'plan-arrow-laptop');
+});
+
+test('phone: an arrow’s points by finger (44 px), a long press deletes a point', async ({ page, viewport }) => {
+  test.skip((viewport?.width ?? 9999) > 500, 'phone');
+  await login(page);
+  await page.evaluate(async () => {
+    const ops = [
+      { op: 'create', entity: 'projects', id: 'pj-arrm', fields: { name: 'سهم الجوال' } },
+      { op: 'create', entity: 'scenes', id: 'sc-arrm', fields: { projectId: 'pj-arrm', position: 1, name: 'المدار' } },
+      { op: 'create', entity: 'planItems', id: 'pl-arrm', fields: { projectId: 'pj-arrm', sceneId: 'sc-arrm', kind: 'arrow', x: 1, y: 2, label: 'حركة', color: '#3b6fd8', props: { points: [[0, 0], [1.5, -0.75], [2.5, -0.75]], dashed: true } } },
+    ];
+    await fetch('/api/ops', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ops }) });
+  });
+  await page.reload();
+  await page.getByText('سهم الجوال').first().click();
+  await page.getByTestId('m-scene-dots').first().click();
+  await page.getByTestId('m-plan').click();
+  await expect(page.getByTestId('plan')).toBeVisible();
+  const cdp = await page.context().newCDPSession(page);
+  const touch = async (type: 'touchStart' | 'touchMove' | 'touchEnd', x: number, y: number) =>
+    cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 1 }] });
+  // tap the arrow's line to select it
+  const at = await onArrow(page, 0.3, 'pl-arrm');
+  await touch('touchStart', at.x, at.y);
+  await touch('touchEnd', 0, 0);
+  await expect(page.getByTestId('plan-pt')).toHaveCount(3);
+  // the props sheet opens; close it so every point is free
+  await expect(page.getByTestId('plan-sheet')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('plan-sheet')).toHaveCount(0);
+  await page.waitForTimeout(400);
+  const hit = (await page.getByTestId('plan-pt').nth(2).locator('circle').first().boundingBox())!;
+  expect(hit.width).toBeGreaterThanOrEqual(44);
+  const before = (await arrowRow(page, 'pj-arrm', 'pl-arrm')).abs;
+  // drag the end with a finger
+  const e = { x: hit.x + hit.width / 2, y: hit.y + hit.height / 2 };
+  await touch('touchStart', e.x, e.y);
+  for (let i = 1; i <= 6; i++) await touch('touchMove', e.x - i * 8, e.y + i * 10);
+  await touch('touchEnd', 0, 0);
+  await expect.poll(async () => JSON.stringify((await arrowRow(page, 'pj-arrm', 'pl-arrm')).abs[2]), { timeout: 8000 }).not.toBe(JSON.stringify(before[2]));
+  // a long press on the middle point: «احذف النقطة»
+  const m = await center(page, '[data-testid=plan-pt] >> nth=1');
+  await touch('touchStart', m.x, m.y);
+  await page.waitForTimeout(700);
+  await touch('touchEnd', 0, 0);
+  await page.getByTestId('pm-delete-point').click();
+  await expect.poll(async () => (await arrowRow(page, 'pj-arrm', 'pl-arrm')).abs.length, { timeout: 8000 }).toBe(2);
+  await shot(page, 'plan-arrow-mobile');
+});

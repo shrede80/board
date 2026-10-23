@@ -1,7 +1,7 @@
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { nudgeStep, type NudgeDir, type NudgeMode } from '../../../shared/board';
 import {
-  arrowSvg, beamOf, camSpec, cctColor, focalOf, footprint, frameWidth, FURNITURE, hfov, itemBody, lightColor, lightSpec, PERSON_COLORS, rotFromPoint, snapM, wedge,
+  arrowFrom, arrowMids, arrowPath, arrowPoints, arrowSvg, beamOf, insertPoint, removePoint, snapPoint, camSpec, cctColor, focalOf, footprint, frameWidth, FURNITURE, hfov, itemBody, lightColor, lightSpec, PERSON_COLORS, rotFromPoint, snapM, wedge,
   type PlanItem, type PlanProps,
   freeSpot,
 } from '../../../shared/plan';
@@ -31,6 +31,8 @@ type Drag =
   | { mode: 'pan'; sx: number; sy: number; o: View }
   | { mode: 'move'; ids: string[]; start: Record<string, { x: number; y: number }>; wx: number; wy: number; moved: boolean; px: number; py: number; pointer: string }
   | { mode: 'rot' | 'range' | 'size'; id: string }
+  /** one point of an arrow (a mid-point pulled out is a new point): one undo step per drag */
+  | { mode: 'pt'; id: string; i: number; abs: [number, number][]; moved: boolean; px: number; py: number; pointer: string; added: boolean }
   | { mode: 'marquee'; wx: number; wy: number; base: string[] }
   | { mode: 'pinch'; d0: number; a0: number; c: [number, number]; o: View; rotId: string | null; rot0: number };
 
@@ -156,10 +158,11 @@ export function PlanScreen() {
     const raf = requestAnimationFrame(() => {
       const it = itemsRef.current.find((i) => i.id === id);
       if (!it) return;
-      const v = viewRef.current, { W, H } = visible();
-      const py = (it.y - v.oy) * v.s, px = (it.x - v.ox) * v.s;
-      if (py > 40 && py < H - 40 && px > 20 && px < W - 20) return;
-      glide({ s: v.s, ox: it.x - W / 2 / v.s, oy: it.y - H / 2 / v.s });
+      // the whole item (an arrow: all its points) in view, else centred
+      const v = viewRef.current, { W, H } = visible(), f = footprint(it);
+      const x1 = (f.x - v.ox) * v.s, x2 = (f.x + f.w - v.ox) * v.s, y1 = (f.y - v.oy) * v.s, y2 = (f.y + f.h - v.oy) * v.s;
+      if (y1 > 40 && y2 < H - 40 && x1 > 20 && x2 < W - 20) return;
+      glide({ s: v.s, ox: f.x + f.w / 2 - W / 2 / v.s, oy: f.y + f.h / 2 - H / 2 / v.s });
     });
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -317,6 +320,29 @@ export function PlanScreen() {
     const h = t.closest('[data-h]') as HTMLElement | null;
     const g = t.closest('[data-pid]') as HTMLElement | null;
     const w = toM(e.clientX, e.clientY);
+    if (h && selRef.current.length === 1 && (h.dataset.h === 'pt' || h.dataset.h === 'mid')) {
+      e.stopPropagation();
+      const it = itemsRef.current.find((x) => x.id === selRef.current[0]);
+      if (!it || it.kind !== 'arrow') return;
+      const k = Number(h.dataset.i);
+      let abs = arrowPoints(it), i = k;
+      if (h.dataset.h === 'mid') {
+        abs = insertPoint(abs, k, arrowMids(abs, !!it.props.curve)[k]);
+        i = k + 1;
+      }
+      drag.current = { mode: 'pt', id: it.id, i, abs, moved: false, px: e.clientX, py: e.clientY, pointer: e.pointerType, added: h.dataset.h === 'mid' };
+      if (e.pointerType === 'touch' && h.dataset.h === 'pt') {
+        // a long press on a point: «احذف النقطة»
+        press.current = setTimeout(() => {
+          press.current = null;
+          if (drag.current?.mode === 'pt' && !drag.current.moved) {
+            drag.current = null;
+            pointMenu(it.id, k, e.clientX, e.clientY);
+          }
+        }, 550);
+      }
+      return;
+    }
     if (h && selRef.current.length === 1) {
       e.stopPropagation();
       drag.current = { mode: h.dataset.h as 'rot' | 'range' | 'size', id: selRef.current[0] };
@@ -382,6 +408,17 @@ export function PlanScreen() {
       setSel([...new Set([...D.base, ...inside])]);
       return;
     }
+    if (D.mode === 'pt') {
+      if (!D.moved && Math.hypot(e.clientX - D.px, e.clientY - D.py) < (D.pointer === 'touch' ? 8 : 3)) return;
+      endPress();
+      D.moved = true;
+      // the grid and the lines of the arrow's other points and of the other items (Alt = free)
+      const others = [...D.abs.filter((_, k) => k !== D.i), ...itemsRef.current.filter((x) => x.id !== D.id && x.kind !== 'arrow' && x.kind !== 'zone').map((x) => [x.x, x.y] as [number, number])];
+      const abs = D.abs.map((q, k) => (k === D.i ? snapPoint([w.x, w.y], others, snap && !e.altKey) : q));
+      const f = arrowFrom(abs);
+      setOver({ [D.id]: { x: f.x, y: f.y, props: { points: f.points } } });
+      return;
+    }
     if (D.mode === 'move') {
       if (!D.moved && Math.hypot(e.clientX - D.px, e.clientY - D.py) < (D.pointer === 'touch' ? 8 : 3)) return;
       endPress();
@@ -437,6 +474,13 @@ export function PlanScreen() {
       return;
     }
     if (D.mode === 'marquee') return setMarq(null);
+    if (D.mode === 'pt') {
+      const o = overRef.current[D.id];
+      const it = stored.find((x) => x.id === D.id);
+      if (D.moved && o && it) updateItems([{ id: D.id, fields: { x: o.x, y: o.y, props: { ...it.props, points: o.props!.points } } }], D.added ? 'انحناءة جديدة' : 'تحريك نقطة');
+      setOver({});
+      return;
+    }
     if (D.mode === 'move') {
       if (D.moved) commitMove(D);
       else if (mobile && D.ids.length) setSheet('props');
@@ -468,6 +512,19 @@ export function PlanScreen() {
     return () => el.removeEventListener('wheel', stop);
   }, []);
 
+  /** Double click / «احذف النقطة»: an arrow keeps at least two points. */
+  const removeArrowPoint = (id: string, i: number) => {
+    const it = itemsRef.current.find((x) => x.id === id);
+    if (!it || it.kind !== 'arrow') return;
+    const abs = arrowPoints(it);
+    if (abs.length <= 2) return setHud({ t: 'السهم يحتاج نقطتين على الأقل', n: Date.now() });
+    const f = arrowFrom(removePoint(abs, i));
+    updateItems([{ id, fields: { x: f.x, y: f.y, props: { ...it.props, points: f.points } } }], 'حذف نقطة');
+  };
+  const pointMenu = (id: string, i: number, x: number, y: number) => {
+    const it = itemsRef.current.find((q) => q.id === id);
+    openMenu(x, y, [{ label: 'احذف النقطة', icon: 'trash', danger: true, disabled: (it?.props.points?.length ?? 0) <= 2, run: () => removeArrowPoint(id, i), testid: 'pm-delete-point' }], 'plan-point-menu');
+  };
   const itemMenu = (id: string, x: number, y: number) => {
     if (!sc) return;
     setSel([id]);
@@ -560,7 +617,15 @@ export function PlanScreen() {
             const entry = PAL[tab as PTab]?.[Number(i)];
             if (entry) add(entry.make(itemsRef.current), toM(e.clientX, e.clientY));
           }}>
-          <svg ref={svgRef} className="pl-svg" data-testid="plan-svg" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onWheel={onWheel}
+          <svg ref={svgRef} className="pl-svg" data-testid="plan-svg"
+            onDoubleClick={(e) => {
+              // the svg holds the pointer during a press, so the point is found from where the click is
+              if (!one || one.kind !== 'arrow') return;
+              const r = svgRef.current!.getBoundingClientRect(), v = viewRef.current;
+              const i = arrowPoints(one).findIndex(([x, y]) => Math.hypot((x - v.ox) * v.s + r.left - e.clientX, (y - v.oy) * v.s + r.top - e.clientY) <= (mobile ? 22 : 12));
+              if (i >= 0) removeArrowPoint(one.id, i);
+            }}
+            onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onWheel={onWheel}
             onContextMenu={(e) => { e.preventDefault(); const g = (e.target as Element).closest('[data-pid]') as HTMLElement | null; if (g) itemMenu(g.dataset.pid!, e.clientX, e.clientY); }}>
             <defs>
               <pattern id="pl-grid" width={U} height={U} patternUnits="userSpaceOnUse" patternTransform={worldT}>
@@ -574,6 +639,7 @@ export function PlanScreen() {
               {marq && <rect x={marq.x * U} y={marq.y * U} width={marq.w * U} height={marq.h * U} fill="var(--color-accent-soft)" stroke="var(--color-accent)" vectorEffect="non-scaling-stroke" opacity={0.7} />}
             </g>
             {one && one.kind !== 'arrow' && <Handles it={one} view={view} mobile={mobile} />}
+            {one && one.kind === 'arrow' && !offline && <ArrowHandles it={one} view={view} mobile={mobile} />}
           </svg>
           <div className="pl-scale" data-testid="plan-scale"><i style={{ width: scaleM * view.s }} />{`${scaleM} م`}</div>
           {!mobile && (
@@ -668,12 +734,13 @@ const Item = memo(function Item({ it, on, k }: { it: PlanItem; on: boolean; k: n
   const X = it.x * U, Y = it.y * U;
   if (it.kind === 'arrow') {
     const col = it.color || '#3b6fd8';
+    const line = arrowPath(arrowPoints(it).map(([a, b]) => [a * U, b * U] as [number, number]), !!it.props.curve);
     return (
       <g data-pid={it.id} data-kind="arrow" style={{ cursor: 'move' }}>
         <g dangerouslySetInnerHTML={{ __html: arrowSvg(it, (x) => x * U, (y) => y * U, col) }} />
         {/* a wide invisible stroke so the thin arrow is easy to grab */}
-        <path d={(it.props.points ?? []).map(([a, b], i) => `${i ? 'L' : 'M'}${(it.x + a) * U} ${(it.y + b) * U}`).join('')} stroke="transparent" strokeWidth={22 / k} fill="none" />
-        {on && <path d={(it.props.points ?? []).map(([a, b], i) => `${i ? 'L' : 'M'}${(it.x + a) * U} ${(it.y + b) * U}`).join('')} stroke="var(--color-accent)" strokeOpacity={0.5} strokeWidth={8 / k} fill="none" />}
+        <path d={line} stroke="transparent" strokeWidth={22 / k} fill="none" />
+        {on && <path d={line} stroke="var(--color-accent)" strokeOpacity={0.5} strokeWidth={8 / k} fill="none" />}
       </g>
     );
   }
@@ -749,6 +816,35 @@ function Handles({ it, view, mobile }: { it: PlanItem; view: View; mobile: boole
   return <g data-testid="plan-handles">{out}</g>;
 }
 
+/** An arrow's points (circles) and the faint middles of its parts (pull one = a new bend). */
+function ArrowHandles({ it, view, mobile }: { it: PlanItem; view: View; mobile: boolean }) {
+  const abs = arrowPoints(it);
+  const sx = (p: [number, number]) => [(p[0] - view.ox) * view.s, (p[1] - view.oy) * view.s];
+  const hit = mobile ? 22 : 11, vis = mobile ? 9 : 6;
+  return (
+    <g data-testid="plan-arrow-handles">
+      {arrowMids(abs, !!it.props.curve).map((m, i) => {
+        const [x, y] = sx(m);
+        return (
+          <g key={`m${i}`} data-h="mid" data-i={i} data-testid="plan-mid" style={{ cursor: 'copy' }}>
+            <circle cx={x} cy={y} r={hit} fill="transparent" />
+            <circle cx={x} cy={y} r={vis - 2} fill="var(--color-bg)" stroke="var(--color-accent)" strokeWidth={1.5} opacity={0.55} />
+          </g>
+        );
+      })}
+      {abs.map((p, i) => {
+        const [x, y] = sx(p);
+        return (
+          <g key={`p${i}`} data-h="pt" data-i={i} data-testid="plan-pt" style={{ cursor: 'move' }}>
+            <circle cx={x} cy={y} r={hit} fill="transparent" />
+            <circle cx={x} cy={y} r={vis} fill={i === abs.length - 1 ? 'var(--color-accent)' : 'var(--color-bg)'} stroke="var(--color-accent)" strokeWidth={2.5} />
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
 function Thumb({ it }: { it: NewItem }) {
   const full: PlanItem = { ...it, id: 't', sceneId: '', x: 0, y: 0, z: 0 };
   let body: string;
@@ -815,6 +911,7 @@ function CopyFrom({ sceneId, onClose }: { sceneId: string; onClose: () => void }
 function Props({ it, n, counts, sceneId, onDup, onDel, offline, onCopy }: { it: PlanItem | null; n: number; counts: [number, number, number]; sceneId: string; onDup: () => void; onDel: () => void; offline: boolean; onCopy: () => void }) {
   const set = (fields: Partial<Omit<PlanItem, 'props'>> & { props?: PlanProps }, key?: string) => it && updateItems([{ id: it.id, fields }], 'تعديل المخطط', key ? `plan:${it.id}:${key}` : undefined);
   const setP = (patch: PlanProps, key?: string) => it && set({ props: { ...it.props, ...patch } }, key);
+  const mobile = useIsMobile();
   const actions = (
     <div className="pl-row2">
       <Button variant="outline" size="sm" icon="repeat" disabled={offline} data-testid="plan-dup" onClick={onDup}>تكرار</Button>
@@ -931,6 +1028,15 @@ function Props({ it, n, counts, sceneId, onDup, onDel, offline, onCopy }: { it: 
           <button className={`fd-chip${it.props.dashed ? ' on' : ''}`} disabled={offline} onClick={() => setP({ dashed: true })}>متقطع (كاميرا)</button>
           <button className={`fd-chip${!it.props.dashed ? ' on' : ''}`} disabled={offline} onClick={() => setP({ dashed: false })}>متصل (شخص)</button>
         </div></div>
+        <div className="pl-field"><span>الشكل</span><div className="pl-chips">
+          <button className={`fd-chip${!it.props.curve ? ' on' : ''}`} data-testid="plan-straight" disabled={offline} onClick={() => setP({ curve: false })}>مستقيم</button>
+          <button className={`fd-chip${it.props.curve ? ' on' : ''}`} data-testid="plan-curve" disabled={offline} onClick={() => setP({ curve: true })}>منحني</button>
+        </div></div>
+        <Button variant="outline" size="sm" icon="repeat" data-testid="plan-reverse" disabled={offline} onClick={() => {
+          const f = arrowFrom(arrowPoints(it).reverse());
+          updateItems([{ id: it.id, fields: { x: f.x, y: f.y, props: { ...it.props, points: f.points } } }], 'قلب الاتجاه');
+        }}>اقلب الاتجاه</Button>
+        <div className="pl-help">{mobile ? 'اسحب أي نقطة لتغيّر الشكل، واسحب النقطة الباهتة لانحناءة جديدة. ضغطة مطوّلة على نقطة تحذفها.' : 'اسحب أي نقطة لتغيّر الشكل، واسحب النقطة الباهتة لانحناءة جديدة. ضغطتين على نقطة تحذفها.'}</div>
         {name('الاسم')}
         {actions}
       </div>

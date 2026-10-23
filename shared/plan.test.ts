@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { beamOf, camDefaults, cctColor, focalOf, footprint, frameWidth, freeSpot, hfov, nextLetter, planSvg, rotFromPoint, snapM, type PlanItem } from './plan';
+import { beamOf, camDefaults, cctColor, focalOf, footprint, frameWidth, freeSpot, arrowFrom, arrowMids, arrowPath, arrowPoints, insertPoint, removePoint, snapPoint, arrowSvg, hfov, nextLetter, planSvg, rotFromPoint, snapM, type PlanItem } from './plan';
 
 const item = (o: Partial<PlanItem>): PlanItem => ({ id: 'p', sceneId: 's', kind: 'camera', refId: 'cam-zve10', x: 0, y: 0, rot: 0, w: 1, h: 1, z: 0, label: 'A', color: null, props: {}, ...o });
 
@@ -66,5 +66,33 @@ describe('a new item never lands on another (user note after phase B)', () => {
     expect(freeSpot([{ x: 1, y: 1 }], { x: 1, y: 1 })).toEqual({ x: 1.5, y: 1.5 });
     expect(freeSpot([{ x: 1, y: 1 }, { x: 1.5, y: 1.5 }], { x: 1, y: 1 })).toEqual({ x: 2, y: 2 });
     expect(freeSpot([{ x: 1, y: 1, kind: 'zone' }], { x: 1, y: 1 })).toEqual({ x: 1, y: 1 });
+  });
+});
+
+describe('editing an arrow (points, bends, straight / curved)', () => {
+  const a = item({ kind: 'arrow', x: 1, y: 1, props: { points: [[0, 0], [1, 0], [2, 1]] } });
+  it('points on the plan and back to the stored form (first point = x/y)', () => {
+    expect(arrowPoints(a)).toEqual([[1, 1], [2, 1], [3, 2]]);
+    expect(arrowFrom([[2, 2], [3, 1]])).toEqual({ x: 2, y: 2, points: [[0, 0], [1, -1]] });
+  });
+  it('a straight line goes point to point; a curved one passes through every point', () => {
+    expect(arrowPath([[0, 0], [10, 0], [20, 10]])).toBe('M0 0L10 0L20 10');
+    const c = arrowPath([[0, 0], [10, 0], [20, 10]], true);
+    expect(c.startsWith('M0 0C')).toBe(true);
+    expect(c.match(/C/g)).toHaveLength(2);
+    expect(c).toContain(' 10 0C'); // ends the first part on the middle point
+    expect(c.endsWith(' 20 10')).toBe(true);
+    expect(arrowSvg({ ...a, props: { ...a.props, curve: true } }, (x) => x, (y) => y)).toContain('C');
+  });
+  it('the middles of the parts; a new bend goes in its part; never fewer than two points', () => {
+    expect(arrowMids([[0, 0], [2, 0], [2, 2]])).toEqual([[1, 0], [2, 1]]);
+    expect(insertPoint([[0, 0], [2, 0]], 0, [1, 1])).toEqual([[0, 0], [1, 1], [2, 0]]);
+    expect(removePoint([[0, 0], [1, 1], [2, 0]], 1)).toEqual([[0, 0], [2, 0]]);
+    expect(removePoint([[0, 0], [2, 0]], 1)).toEqual([[0, 0], [2, 0]]);
+  });
+  it('a dragged point snaps to the 25 cm grid, lines up with a near point, and is free with the magnet off', () => {
+    expect(snapPoint([1.13, 0.9], [], true)).toEqual([1.25, 1]);
+    expect(snapPoint([1.13, 0.9], [[1.05, 5]], true)).toEqual([1.05, 1]);
+    expect(snapPoint([1.134, 0.9], [[1.05, 5]], false)).toEqual([1.13, 0.9]);
   });
 });

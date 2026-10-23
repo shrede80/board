@@ -127,6 +127,8 @@ export interface PlanProps {
   type?: string;
   /** arrow points, relative to x/y (m) */
   points?: [number, number][];
+  /** arrow: a smooth line through the points (camera orbits) instead of straight parts */
+  curve?: boolean;
   dashed?: boolean;
   /** drone height (m) */
   height?: number | null;
@@ -359,15 +361,80 @@ export function itemsSvg(items: PlanItem[], s: number, px: (x: number) => number
   return out;
 }
 
-export function arrowSvg(it: PlanItem, px: (x: number) => number, py: (y: number) => number, color = '#3b6fd8'): string {
-  const pts = (it.props.points ?? [[0, 0], [1.5, -0.8]]).map(([a, b]) => [px(it.x + a), py(it.y + b)]);
+type P2 = [number, number];
+/** Bézier controls of each part of a smooth line through every point (Catmull-Rom). */
+function curveParts(pts: P2[]): [P2, P2, P2, P2][] {
+  const out: [P2, P2, P2, P2][] = [];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] ?? pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] ?? pts[i + 1];
+    out.push([p1, [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6], [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6], p2]);
+  }
+  return out;
+}
+
+/** The arrow's line as an SVG path (straight parts, or smooth through the points). */
+export function arrowPath(pts: P2[], curve = false): string {
   if (pts.length < 2) return '';
-  const d = pts.map(([a, b], i) => `${i ? 'L' : 'M'}${n(a)} ${n(b)}`).join('');
-  const [ex, ey] = pts[pts.length - 1], [fx, fy] = pts[pts.length - 2];
+  if (!curve || pts.length < 3) return pts.map(([a, b], i) => `${i ? 'L' : 'M'}${n(a)} ${n(b)}`).join('');
+  return `M${n(pts[0][0])} ${n(pts[0][1])}` + curveParts(pts).map(([, c1, c2, e]) => `C${n(c1[0])} ${n(c1[1])} ${n(c2[0])} ${n(c2[1])} ${n(e[0])} ${n(e[1])}`).join('');
+}
+
+/** The middle of each part (where a new bend is pulled out from). */
+export function arrowMids(pts: P2[], curve = false): P2[] {
+  if (!curve || pts.length < 3) return pts.slice(1).map((q, i) => [(pts[i][0] + q[0]) / 2, (pts[i][1] + q[1]) / 2]);
+  return curveParts(pts).map(([a, c1, c2, b]) => [(a[0] + 3 * c1[0] + 3 * c2[0] + b[0]) / 8, (a[1] + 3 * c1[1] + 3 * c2[1] + b[1]) / 8]);
+}
+
+/** Where the head points from (the line's direction at its end). */
+function headFrom(pts: P2[], curve: boolean): P2 {
+  const e = pts[pts.length - 1];
+  if (curve && pts.length >= 3) {
+    const c2 = curveParts(pts).at(-1)![2];
+    if (Math.hypot(e[0] - c2[0], e[1] - c2[1]) > 1e-6) return c2;
+  }
+  return pts[pts.length - 2];
+}
+
+export function arrowSvg(it: PlanItem, px: (x: number) => number, py: (y: number) => number, color = '#3b6fd8'): string {
+  const pts = (it.props.points ?? [[0, 0], [1.5, -0.8]]).map(([a, b]) => [px(it.x + a), py(it.y + b)] as P2);
+  if (pts.length < 2) return '';
+  const curve = !!it.props.curve;
+  const d = arrowPath(pts, curve);
+  const [ex, ey] = pts[pts.length - 1], [fx, fy] = headFrom(pts, curve);
   const ang = Math.atan2(ey - fy, ex - fx), L = 11;
   const col = it.color || color;
   return `<g><path d="${d}" fill="none" stroke="${col}" stroke-width="2.2" stroke-dasharray="${it.props.dashed ? '7 6' : ''}" stroke-linecap="round"/><path d="M${n(ex)} ${n(ey)}L${n(ex - L * Math.cos(ang - 0.45))} ${n(ey - L * Math.sin(ang - 0.45))}L${n(ex - L * Math.cos(ang + 0.45))} ${n(ey - L * Math.sin(ang + 0.45))}Z" fill="${col}"/></g>`;
 }
+
+// ---------- editing an arrow's points (user's request before the final check) ----------
+
+/** The arrow's points in metres on the plan. */
+export const arrowPoints = (it: PlanItem): P2[] => (it.props.points ?? [[0, 0], [1.5, -0.8]]).map(([a, b]) => [it.x + a, it.y + b] as P2);
+
+/** Back to the stored form: x/y on the first point, the others relative to it (cm precision). */
+export function arrowFrom(abs: P2[]): { x: number; y: number; points: P2[] } {
+  const r = (v: number) => Math.round(v * 100) / 100;
+  const [x, y] = [r(abs[0][0]), r(abs[0][1])];
+  return { x, y, points: abs.map(([a, b]) => [r(r(a) - x), r(r(b) - y)] as P2) };
+}
+
+/**
+ * Where a dragged point lands: on the 25 cm grid with the magnet, and onto the line of another
+ * point or item centre when it is close (alignment wins over the grid). Alt / magnet off = free.
+ */
+export function snapPoint(p: P2, others: P2[], snap: boolean, tol = 0.12): P2 {
+  if (!snap) return [Math.round(p[0] * 100) / 100, Math.round(p[1] * 100) / 100];
+  const axis = (v: number, k: 0 | 1) => {
+    let best: number | null = null;
+    for (const o of others) if (Math.abs(o[k] - v) <= tol && (best === null || Math.abs(o[k] - v) < Math.abs(best - v))) best = o[k];
+    return best ?? snapM(v, true);
+  };
+  return [axis(p[0], 0), axis(p[1], 1)];
+}
+
+export const insertPoint = (abs: P2[], part: number, p: P2): P2[] => [...abs.slice(0, part + 1), p, ...abs.slice(part + 1)];
+/** Removes a point; an arrow keeps at least two. */
+export const removePoint = (abs: P2[], i: number): P2[] => (abs.length <= 2 ? abs : abs.filter((_, k) => k !== i));
 
 const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
