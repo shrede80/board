@@ -183,8 +183,9 @@ export function EquipmentPage() {
 }
 
 export function Overlay({ children, z = 60, onClose }: { children: React.ReactNode; z?: number; onClose?: () => void }) {
+  const phone = useIsMobile();
   return (
-    <div data-print-scroll="1" onClick={(e) => { if (onClose && e.target === e.currentTarget) onClose(); }} style={{ position: 'fixed', inset: 0, zIndex: z, background: 'rgba(20,18,16,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 28 }}>
+    <div data-print-scroll="1" className={phone ? 'm-dialog' : undefined} onClick={(e) => { if (onClose && e.target === e.currentTarget) onClose(); }} style={{ position: 'fixed', inset: 0, zIndex: z, background: 'rgba(20,18,16,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: phone ? 8 : 28 }}>
       {children}
     </div>
   );

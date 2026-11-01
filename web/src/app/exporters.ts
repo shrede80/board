@@ -2,9 +2,10 @@ import JSZip from 'jszip';
 import { api } from '../data/api';
 import { allShots, camLine, eqName, moveLine, type PProject } from '../data/project';
 import { STATUS } from '../lib/constants';
-import { download, imageUrl, mmss, pad2 } from '../lib/util';
+import { imageUrl, mmss, pad2 } from '../lib/util';
 import { buildXlsx } from '../lib/xlsx';
 import { openProject } from './actions';
+import { saveFile } from './files';
 import { uploadFile } from './images';
 import { engine, toast } from './state';
 import type { Row } from '../../../shared/schema';
@@ -29,8 +30,7 @@ export function shotRows(p: PProject, eq: Map<string, Row>) {
 export async function exportXlsx(p: PProject) {
   const rows = shotRows(p, engine.store.equipment);
   const blob = await buildXlsx('قائمة اللقطات', shotCols, rows.map((r) => shotCols.map((c) => r[c.key as keyof typeof r])));
-  download(`${p.name} — قائمة اللقطات.xlsx`, blob);
-  toast('قائمة اللقطات جاهزة');
+  await saveFile(`${p.name} — قائمة اللقطات.xlsx`, blob, 'قائمة اللقطات جاهزة');
 }
 
 /** PDF = the browser's print dialog with the @media print rules in dark.css (A4 landscape). */
@@ -63,8 +63,7 @@ export async function exportProjectZip(p: PProject, onProgress?: (done: number, 
   }
   zip.file('project.json', JSON.stringify(data, null, 2));
   const out = await zip.generateAsync({ type: 'blob', mimeType: 'application/zip' });
-  download(`${p.name}.zip`, out, 'application/zip');
-  toast('انحفظت نسخة المشروع على جهازك');
+  await saveFile(`${p.name}.zip`, out, 'نسخة المشروع جاهزة');
 }
 
 export interface ImportPreview {

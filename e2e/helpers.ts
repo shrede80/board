@@ -65,3 +65,24 @@ export async function shot(target: Page | import('@playwright/test').Locator, na
   if (!dir || !dir.startsWith('/') || dir.startsWith(process.cwd())) return;
   await target.screenshot({ path: `${dir}/${name}.png` });
 }
+
+/** Visible tap targets smaller than 44×44 inside `root` (buttons, labels that act as buttons, links). */
+export async function smallTargets(page: Page, root = '[data-testid=editor]') {
+  return page.evaluate((sel) => {
+    const out: string[] = [];
+    const scope = document.querySelector(sel);
+    if (!scope) return ['no ' + sel];
+    const els = scope.querySelectorAll<HTMLElement>('button, a[href], label, [role=button], input[type=checkbox], input[type=radio]');
+    for (const el of els) {
+      if (el.tagName === 'LABEL' && !el.querySelector('input[type=color], input[type=file]') && !el.onclick) continue;
+      const r = el.getBoundingClientRect();
+      const st = getComputedStyle(el);
+      if (!r.width || !r.height || st.visibility === 'hidden' || st.display === 'none' || Number(st.opacity) === 0) continue;
+      if (r.bottom < 0 || r.top > innerHeight * 6) continue;
+      if ((el as HTMLButtonElement).disabled) continue;
+      if (r.width < 43.5 || r.height < 43.5) out.push(`${el.tagName.toLowerCase()} "${(el.getAttribute('title') || el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 30)}" ${Math.round(r.width)}×${Math.round(r.height)}`);
+    }
+    return out;
+  }, root);
+}
+

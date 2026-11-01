@@ -56,6 +56,7 @@ export function MProject() {
     { label: 'إعدادات المشروع…', icon: 'settings', run: () => setState({ modal: 'projectSettings' }), testid: 'pm-settings' },
     { label: 'تكرار المشروع', icon: 'repeat', run: () => askDuplicate(p.id, p.name), testid: 'pm-duplicate' },
     ...saveProjectEntry(p.id, p.name, p.templateKind),
+    { label: 'تصدير…', icon: 'download', run: () => setState({ modal: 'export' }), testid: 'pm-export' },
     { label: 'عرض المشروع', icon: 'play', run: () => openPresent(0), testid: 'pm-present' },
     { label: p.archived ? 'إلغاء الأرشفة' : 'أرشفة', icon: 'folder', run: () => archiveProject(!p.archived), testid: 'pm-archive' },
     'sep',

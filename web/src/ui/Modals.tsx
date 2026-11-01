@@ -7,6 +7,7 @@ import { Button, Card, Checkbox, Field, Icon, Input, Radio, Table, Toast } from 
 import { TEMPLATES } from '../lib/constants';
 import { frameBg, imageUrl, mmss, pad2 } from '../lib/util';
 import { Overlay } from './Pages';
+import { useIsMobile } from '../lib/device';
 import { planSvgFor } from '../app/plan';
 import { AspectPicker, DuplicateProjectDialog, ProjectSettingsDialog, StagePicker } from './ProjectDialogs';
 import { ShortcutsDialog } from './Keys';
@@ -108,6 +109,7 @@ function NewProjectDialog() {
 }
 
 function ExportDialog() {
+  const phone = useIsMobile(); // UPDATE-4 أ: the same three exports on the phone, as one column
   const p = useProject();
   const eq = useEquipment();
   const tab = useApp((s) => s.exportTab);
@@ -145,14 +147,21 @@ function ExportDialog() {
     }
   };
   return (
-    <div data-component="ExportDialog" data-print-scroll="1" style={{ width: 1180, maxWidth: '100%', height: '100%', maxHeight: 820, background: 'var(--color-bg)', borderRadius: 14, boxShadow: 'var(--shadow-lift)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', borderBottom: '1px solid var(--color-border-subtle)' }}>
+    <div data-component="ExportDialog" data-print-scroll="1" style={{ width: phone ? '100%' : 1180, maxWidth: '100%', height: '100%', maxHeight: phone ? 'none' : 820, background: 'var(--color-bg)', borderRadius: 14, boxShadow: 'var(--shadow-lift)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: phone ? '8px 16px' : '18px 24px', borderBottom: '1px solid var(--color-border-subtle)' }}>
         <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 28 }}>تصدير</h2>
         <button title="إغلاق" onClick={close} style={xBtn}><Icon name="x" size={18} /></button>
       </div>
-      <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
-        <div style={{ width: 290, flexShrink: 0, borderInlineEnd: '1px solid var(--color-border-subtle)', padding: 18, display: 'flex', flexDirection: 'column', gap: 10, overflowY: 'auto' }}>
-          {opts.map(([v, t, d, ic]) => (
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: phone ? 'column' : 'row' }}>
+        <div style={{ width: phone ? 'auto' : 290, flexShrink: 0, borderInlineEnd: phone ? 'none' : '1px solid var(--color-border-subtle)', borderBottom: phone ? '1px solid var(--color-border-subtle)' : 'none', padding: phone ? 12 : 18, display: 'flex', flexDirection: 'column', gap: 10, overflowY: 'auto', maxHeight: phone ? '42%' : undefined }}>
+          {phone && (
+            <div style={{ display: 'flex', gap: 8 }}>
+              {opts.map(([v]) => (
+                <button key={v} data-testid={`export-tab-${v}`} aria-pressed={tab === v} onClick={() => setState({ exportTab: v })} style={{ flex: 1, minHeight: 44, padding: '6px 4px', border: `1px solid ${tab === v ? 'var(--color-accent)' : 'var(--color-border)'}`, background: tab === v ? 'var(--color-accent-soft)' : 'var(--color-bg)', borderRadius: 8, color: 'var(--color-text)', fontSize: 13, fontWeight: 700 }}>{({ pdf: 'ستوري بورد', table: 'قائمة اللقطات', project: 'ملف المشروع' } as Record<string, string>)[v]}</button>
+              ))}
+            </div>
+          )}
+          {!phone && opts.map(([v, t, d, ic]) => (
             <button key={v} data-testid={`export-tab-${v}`} onClick={() => setState({ exportTab: v })} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', textAlign: 'right', padding: 14, border: `1px solid ${tab === v ? 'var(--color-accent)' : 'var(--color-border)'}`, background: tab === v ? 'var(--color-accent-soft)' : 'var(--color-bg)', borderRadius: 8, cursor: 'pointer', color: 'var(--color-text)' }}>
               <span style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--color-surface-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--ink-700)' }}><Icon name={ic} size={17} /></span>
               <span style={{ display: 'flex', flexDirection: 'column', gap: 3 }}><span style={{ fontSize: 15, fontWeight: 700 }}>{t}</span><span style={{ fontSize: 12, color: 'var(--color-text-muted)', lineHeight: 1.5 }}>{d}</span></span>
@@ -175,12 +184,12 @@ function ExportDialog() {
         <div data-print-scroll="1" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', background: 'var(--color-surface)' }}>
           {tab === 'pdf' && (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid var(--color-border-subtle)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, padding: phone ? '8px 12px' : '12px 20px', borderBottom: '1px solid var(--color-border-subtle)' }}>
                 <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>{`معاينة · A4 أفقي · ${pages.length} صفحات`}</span>
                 <Button variant="primary" size="sm" icon="download" onClick={printPdf} data-testid="export-pdf">تصدير PDF</Button>
               </div>
-              <div data-print-scroll="1" style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
-                <div data-print-root="1" data-print-zoom="1" style={{ zoom: 0.62 }}>
+              <div data-print-scroll="1" style={{ flex: 1, overflowY: 'auto', padding: phone ? 8 : 24 }}>
+                <div data-print-root="1" data-print-zoom="1" style={{ zoom: phone ? 0.3 : 0.62 }}>
                   {pages.map((pg, pi) => (
                     <div key={pi} data-print-page="1" style={{ width: 1123, height: 794, background: '#fdfcfa', color: '#141210', position: 'relative', boxShadow: '0 6px 24px rgba(0,0,0,.18)', margin: '0 auto 28px', padding: '44px 52px 0', display: 'flex', flexDirection: 'column', direction: 'rtl', overflow: 'hidden', fontFamily: 'var(--font-sans)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -231,7 +240,7 @@ function ExportDialog() {
           )}
           {tab === 'table' && (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid var(--color-border-subtle)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, padding: phone ? '8px 12px' : '12px 20px', borderBottom: '1px solid var(--color-border-subtle)' }}>
                 <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>{`قائمة اللقطات · ${p.scenes.length} مشاهد · ${nShots} لقطة`}</span>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <Button variant="outline" size="sm" icon="file" onClick={printPdf} data-testid="export-table-pdf">PDF</Button>
@@ -246,11 +255,11 @@ function ExportDialog() {
             </>
           )}
           {tab === 'project' && (
-            <div style={{ flex: 1, overflowY: 'auto', padding: 32, display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 620 }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: phone ? 16 : 32, display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 620 }}>
               <Card>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><Icon name="folder" size={20} /><span style={{ fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 17 }}>{`${p.name}.zip`}</span></div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 8 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: phone ? 'repeat(3,1fr)' : 'repeat(5,1fr)', gap: 8 }}>
                     {summary.map(([k, v]) => <div key={k} style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: 10, background: 'var(--color-surface-strong)', borderRadius: 8 }}><span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22 }}>{String(v)}</span><span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{k}</span></div>)}
                   </div>
                   <span style={{ fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>ملف واحد بكل المشروع وصوره.</span>

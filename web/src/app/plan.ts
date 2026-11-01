@@ -2,7 +2,7 @@ import { asItem, camDefaults, FURNITURE, LIGHT_MODIFIERS, LIGHTS, nextLetter, PE
 import type { Op, Row } from '../../../shared/schema';
 import { pad2, uid } from '../lib/util';
 import { commit } from './actions';
-import { download } from '../lib/util';
+import { saveFile } from './files';
 import { engine, getState, project, setState, toast } from './state';
 
 /**
@@ -165,8 +165,7 @@ export async function exportPlanPng(sceneId: string) {
     g.scale(2, 2);
     g.drawImage(img, 0, 0);
     const blob: Blob = await new Promise((r) => cv.toBlob((b) => r(b!), 'image/png'));
-    download(`مخطط-المشهد-${pad2(si + 1)}.png`, blob, 'image/png');
-    toast('صورة المخطط جاهزة');
+    await saveFile(`مخطط-المشهد-${pad2(si + 1)}.png`, blob, 'صورة المخطط جاهزة');
   } catch {
     toast('ما قدرنا نجهّز الصورة', { tone: 'danger' });
   } finally {

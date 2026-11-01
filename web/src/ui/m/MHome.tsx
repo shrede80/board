@@ -66,12 +66,21 @@ export function MHome() {
         <section data-testid="my-projects" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 28 }}>مشاريعي</h2>
-            <button data-testid="new-project" disabled={bootOffline} onClick={() => setState({ modal: 'newProject' })} style={{ height: 44, padding: '0 6px', border: 'none', background: 'transparent', color: 'var(--color-text-muted)', fontSize: 14, fontWeight: 600 }}>+ مشروع</button>
+            <span style={{ display: 'flex', alignItems: 'center' }}>
+              <button data-testid="m-import" disabled={bootOffline} onClick={() => setState({ modal: 'import' })} style={{ height: 44, padding: '0 10px', border: 'none', background: 'transparent', color: 'var(--color-text-muted)', fontSize: 14, fontWeight: 600 }}>استيراد مشروع</button>
+              <button data-testid="new-project" disabled={bootOffline} onClick={() => setState({ modal: 'newProject' })} style={{ height: 44, padding: '0 6px', border: 'none', background: 'transparent', color: 'var(--color-text-muted)', fontSize: 14, fontWeight: 600 }}>+ مشروع</button>
+            </span>
           </div>
           <Chips testid="pf" value={f} onChange={setF} items={[['all', `الكل ${live.length}`], ...STAGE_ORDER.map((s) => [s, STAGE_LABEL[s]] as [string, string]), ...(nArch ? [['archived', `المؤرشفة ${nArch}`] as [string, string]] : [])]} />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {shown.map((s) => <ProjectRow key={s.id} s={s} now={now} renaming={renaming === s.id} onRename={() => setRenaming(s.id)} onRenamed={() => setRenaming(null)} />)}
             {!shown.length && <span style={{ padding: '18px 0', fontSize: 14, color: 'var(--color-text-muted)' }}>{live.length ? 'ما فيه مشاريع بهالمرحلة.' : 'ما فيه مشاريع بعد.'}</span>}
+            {!live.length && !list.some((x) => x.archived) && (
+              <div style={{ display: 'flex', gap: 10, paddingBottom: 14 }}>
+                <button data-testid="m-import-empty" disabled={bootOffline} onClick={() => setState({ modal: 'import' })} style={{ flex: 1, minHeight: 48, border: '1.5px dashed var(--color-border)', borderRadius: 10, background: 'transparent', color: 'var(--color-text)', fontSize: 15, fontWeight: 700 }}>استيراد مشروع</button>
+                <button data-testid="m-new-empty" disabled={bootOffline} onClick={() => setState({ modal: 'newProject' })} style={{ flex: 1, minHeight: 48, border: 'none', borderRadius: 10, background: 'var(--color-accent)', color: '#141210', fontSize: 15, fontWeight: 700 }}>+ مشروع جديد</button>
+              </div>
+            )}
           </div>
         </section>
       )}
