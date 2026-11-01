@@ -68,6 +68,10 @@ test('board: menus for every kind, resize with guides, frame carries its content
   await newProject(page, 'لوحة حرة', 'ad');
   const scenes = page.getByTestId('scene-card');
   await expect(scenes).toHaveCount(5);
+  // the board fits its scenes right after opening: wait until it stops moving, so the points
+  // clicked below mean the same place on the board every run (the heading and the note must not overlap)
+  let last = '';
+  await expect.poll(async () => { const now = JSON.stringify(await scenes.first().boundingBox()); const same = now === last; last = now; return same; }, { intervals: [300, 300, 300, 300, 300, 300, 300, 300] }).toBe(true);
 
   // empty board menu → add a heading, a note and a frame here
   const board = page.getByTestId('board');
