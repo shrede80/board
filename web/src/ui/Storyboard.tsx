@@ -229,8 +229,8 @@ const ShotCard = memo(function ShotCard({ sh, sceneId, num, hex, ar }: { sh: PSh
         else setOver({ kind: 'row', id: sceneId });
       }}
       onDrop={(e) => dropOnShot(e, sh.id)}
-      onMouseEnter={() => getState().hoverShot !== sh.id && setState({ hoverShot: sh.id })}
-      onMouseLeave={() => getState().hoverShot === sh.id && setState({ hoverShot: null })}
+      onPointerEnter={(e) => e.pointerType === 'mouse' && getState().hoverShot !== sh.id && setState({ hoverShot: sh.id })}
+      onPointerLeave={() => getState().hoverShot === sh.id && setState({ hoverShot: null })}
       onClick={() => openEditor('shot', sh.id)}
       style={{ width: cardW, flexShrink: 0, background: 'var(--color-bg)', border: '1px solid var(--color-border-subtle)', borderRadius: 8, overflow: 'hidden', boxShadow: over || selected ? '0 0 0 2px var(--color-accent)' : 'var(--shadow-card)', cursor: 'pointer', transform: over ? 'translateX(-6px)' : 'none', transition: 'transform 150ms var(--ease-standard),box-shadow 150ms' }}
     >

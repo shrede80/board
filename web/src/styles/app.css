@@ -1,9 +1,9 @@
-/* Hover styles from the prototype's `style-hover` attributes (inline styles can't express :hover). */
-.h-strong:hover { background: var(--color-surface-strong) !important; }
-.h-surface:hover { background: var(--color-surface) !important; }
-.h-bright:hover { filter: brightness(1.08); }
-.h-accent-text:hover { border-color: var(--color-accent) !important; color: var(--color-text) !important; }
-.h-accent:hover { border-color: var(--color-accent) !important; }
+/* Hover styles from the prototype's `style-hover` attributes (inline styles can't express :hover). Only where a mouse hovers: on a touch screen a tap would count as a hover first and need a second tap on iOS (UPDATE-4). */
+@media (hover: hover) { .h-strong:hover { background: var(--color-surface-strong) !important; } }
+@media (hover: hover) { .h-surface:hover { background: var(--color-surface) !important; } }
+@media (hover: hover) { .h-bright:hover { filter: brightness(1.08); } }
+@media (hover: hover) { .h-accent-text:hover { border-color: var(--color-accent) !important; color: var(--color-text) !important; } }
+@media (hover: hover) { .h-accent:hover { border-color: var(--color-accent) !important; } }
 
 button:disabled { cursor: not-allowed; }
 .sb-nodrag { -webkit-user-drag: none; }
@@ -44,7 +44,7 @@ button:disabled { cursor: not-allowed; }
 @media (prefers-reduced-motion: reduce) { .anim-rise { animation-duration: 1ms; } }
 
 /* board handles (UPDATE-3 §3.2): the mark takes the accent colour on hover */
-.board-handle:hover > i { background: var(--color-accent) !important; }
+@media (hover: hover) { .board-handle:hover > i { background: var(--color-accent) !important; } }
 
 /* phone editors: every tap target is at least 44×44, even when its shape stays small (UPDATE-3 §2.3) */
 .m-editor button, .m-editor [role=button], .m-editor label:has(> input[type=color]), .m-editor label:has(> input[type=file]) { min-width: 44px; min-height: 44px; }
@@ -74,14 +74,14 @@ button:disabled { cursor: not-allowed; }
 .kd-row .hint { font-size: 12px; color: var(--color-text-muted); font-weight: 400; }
 .kd-row .keys { display: flex; align-items: center; gap: 6px; direction: ltr; }
 .kd-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 34px; padding: 3px 6px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: var(--color-text); cursor: pointer; transition: background var(--dur-fast), border-color var(--dur-fast); font: inherit; }
-.kd-chip:hover:not(:disabled) { background: var(--color-surface); border-color: var(--color-border); }
+@media (hover: hover) { .kd-chip:hover:not(:disabled) { background: var(--color-surface); border-color: var(--color-border); } }
 .kd-chip.none { color: var(--color-text-muted); font-size: 13px; padding: 0 10px; border: 1px dashed var(--color-border); direction: rtl; }
 .kd-chip.lock { cursor: default; }
 .kd-kbd { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; padding: 0 7px; border-radius: 6px; border: 1px solid var(--color-border); border-bottom-width: 2px; background: var(--color-bg); font-family: var(--font-sans); font-size: 13px; font-weight: 700; color: var(--color-text); }
 .kd-rec { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; border-radius: 8px; border: 1.5px solid var(--color-accent); background: var(--color-accent-soft); font-size: 13px; font-weight: 700; direction: rtl; animation: kd-pulse 1.2s ease-in-out infinite; }
 @keyframes kd-pulse { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 25%, transparent); } }
 .kd-reset { width: 30px; height: 30px; border-radius: 6px; border: none; background: transparent; cursor: pointer; color: var(--color-text-muted); display: inline-flex; align-items: center; justify-content: center; font-size: 16px; }
-.kd-reset:hover { background: var(--color-surface); }
+@media (hover: hover) { .kd-reset:hover { background: var(--color-surface); } }
 .kd-lock { color: var(--color-text-muted); display: inline-flex; }
 .kd-warn { position: absolute; left: 0; top: calc(100% - 2px); z-index: 5; width: 440px; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: 10px; box-shadow: var(--shadow-lift); padding: 12px 14px; font-size: 14px; line-height: 1.6; animation: sb-rise 200ms var(--ease-enter) both; }
 .kd-warn.red { border-color: color-mix(in srgb, var(--color-danger) 50%, transparent); }
@@ -133,7 +133,7 @@ button:disabled { cursor: not-allowed; }
 .anim-sheet { animation: sb-sheet 260ms var(--ease-enter) both; }
 /* hover and press: cards lift 2px with a stronger shadow, buttons press to 97% */
 .sb-lift { transition: translate 150ms var(--ease-standard), box-shadow 150ms var(--ease-standard), transform 150ms var(--ease-standard); }
-.sb-lift:hover { translate: 0 -2px; box-shadow: var(--shadow-lift) !important; }
+@media (hover: hover) { .sb-lift:hover { translate: 0 -2px; box-shadow: var(--shadow-lift) !important; } }
 button { transition: scale 100ms var(--ease-standard); }
 button:active:not(:disabled) { scale: .97; }
 /* «حركة أقل» — from the system or the app (UPDATE-3 §5.3): every move becomes a short fade */
@@ -170,7 +170,7 @@ html[data-motion="less"] .kd-rec { animation: none; }
 .pl-tabs button.on { background: var(--color-inverse-bg); color: var(--color-inverse-text); border-color: transparent; }
 .pl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px 12px 16px; overflow: auto; }
 .pl-item { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px 10px; border: 1px solid var(--color-border-subtle); border-radius: 10px; background: var(--color-surface); cursor: grab; font: inherit; font-size: 12px; font-weight: 700; text-align: center; color: var(--color-text); }
-.pl-item:hover:not(:disabled) { translate: 0 -2px; box-shadow: var(--shadow-card); }
+@media (hover: hover) { .pl-item:hover:not(:disabled) { translate: 0 -2px; box-shadow: var(--shadow-card); } }
 .pl-item small { font-weight: 400; color: var(--color-text-muted); font-size: 11px; }
 .pl-hint { margin-top: auto; padding: 12px; font-size: 12px; color: var(--color-text-muted); line-height: 1.7; border-top: 1px solid var(--color-border-subtle); }
 .pl-canvas { flex: 1; position: relative; background: var(--plan-bg); overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }

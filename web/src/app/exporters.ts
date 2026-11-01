@@ -106,13 +106,20 @@ export async function importProjectZip(pre: ImportPreview, onProgress?: (done: n
   const imageMap: Record<string, string> = {};
   const files = pre.data.images.filter((i) => i.file);
   let done = 0;
-  for (const im of files) {
-    const blob = await pre.zip.file(im.file!)!.async('blob');
-    const type = im.file!.endsWith('.jpg') ? 'image/jpeg' : im.file!.endsWith('.png') ? 'image/png' : 'image/webp';
-    // stored byte for byte; only the thumbnail is generated
-    imageMap[im.id] = await uploadFile(new File([blob], im.file!.split('/').pop()!, { type }), true);
-    onProgress?.(++done, files.length);
-  }
+  onProgress?.(0, files.length);
+  // three photos at a time (a phone waits on the network, not only on itself)
+  let next = 0;
+  const worker = async () => {
+    while (next < files.length) {
+      const im = files[next++];
+      const blob = await pre.zip.file(im.file!)!.async('blob');
+      const type = im.file!.endsWith('.jpg') ? 'image/jpeg' : im.file!.endsWith('.png') ? 'image/png' : 'image/webp';
+      // stored byte for byte; only the thumbnail is generated
+      imageMap[im.id] = await uploadFile(new File([blob], im.file!.split('/').pop()!, { type }), true);
+      onProgress?.(++done, files.length);
+    }
+  };
+  await Promise.all([worker(), worker(), worker()]);
   const res = await api<{ projectId: string }>('/api/import', { method: 'POST', json: { project: pre.data, imageMap } });
   await openProject(res.projectId);
   toast('انستورد المشروع');

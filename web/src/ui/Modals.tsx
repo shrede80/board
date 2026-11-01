@@ -320,11 +320,13 @@ function ImportPanel() {
   const [busy, setBusy] = useState(false);
   const [pre, setPre] = useState<ImportPreview | null>(null);
   const [impErr, setImpErr] = useState('');
+  const [prog, setProg] = useState<[number, number] | null>(null);
   const run = async () => {
     if (!pre) return;
     setBusy(true);
+    setImpErr('');
     try {
-      await importProjectZip(pre);
+      await importProjectZip(pre, (d, t) => setProg([d, t]));
     } catch (e) {
       setImpErr(e instanceof Error && /[؀-ۿ]/.test(e.message) ? e.message : 'ما تمّت، جرّب مرة ثانية.');
     } finally {
@@ -347,8 +349,17 @@ function ImportPanel() {
             <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>سيُنشأ مشروع جديد باسم «{pre.name} (مستورد)» — لن يتغيّر أي مشروع موجود.</span>
             <div style={{ display: 'flex', gap: 10 }}>
               <Button variant="primary" loading={busy} onClick={() => void run()} data-testid="import-confirm">تأكيد الاستيراد</Button>
-              <Button variant="ghost" onClick={() => setPre(null)}>إلغاء</Button>
+              <Button variant="ghost" disabled={busy} onClick={() => setPre(null)}>إلغاء</Button>
             </div>
+            {busy && (
+              <div data-testid="import-progress" role="status" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 700 }}>{prog && prog[1] ? `يرفع الصور… ${prog[0]} من ${prog[1]}` : 'يجهّز المشروع…'}</span>
+                <div style={{ height: 6, borderRadius: 3, background: 'var(--color-surface-strong)', overflow: 'hidden' }}>
+                  <i style={{ display: 'block', height: '100%', width: `${prog && prog[1] ? (100 * prog[0]) / prog[1] : 100}%`, background: 'var(--color-accent)', transition: 'width 200ms' }} />
+                </div>
+                <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>لا تقفل الصفحة لين يخلص.</span>
+              </div>
+            )}
           </div>
         </Card>
       )}

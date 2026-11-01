@@ -68,7 +68,7 @@ export function SearchDialog() {
                 {list.map((h) => {
                   const i = order.indexOf(h);
                   return (
-                    <button key={`${h.kind}${h.id}`} data-testid="search-hit" data-kind={h.kind} onMouseEnter={() => setSel(i)} onClick={() => void openHit(h)}
+                    <button key={`${h.kind}${h.id}`} data-testid="search-hit" data-kind={h.kind} onPointerEnter={(e) => e.pointerType === 'mouse' && setSel(i)} onClick={() => void openHit(h)}
                       style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', border: 'none', borderRadius: 6, background: i === sel ? 'var(--color-surface-strong)' : 'transparent', color: 'var(--color-text)', textAlign: 'right', cursor: 'pointer' }}>
                       <Icon name={GROUP[k][1]} size={16} />
                       <span style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.title || 'بدون وصف'}</span>

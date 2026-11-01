@@ -334,13 +334,16 @@ function Button({
     disabled: inert,
     "aria-busy": loading || undefined,
     onClick: onClick,
-    onMouseEnter: () => setHover(true),
-    onMouseLeave: () => {
+    // hover / press tint for a mouse only. On a phone a tap fires «mouseenter» first; changing the
+    // button in answer makes iOS Safari treat the tap as a hover and swallow the click (several taps needed)
+    onPointerEnter: e => e.pointerType === 'mouse' && setHover(true),
+    onPointerLeave: () => {
       setHover(false);
       setPress(false);
     },
-    onMouseDown: () => setPress(true),
-    onMouseUp: () => setPress(false),
+    onPointerDown: e => e.pointerType === 'mouse' && setPress(true),
+    onPointerUp: () => setPress(false),
+    onPointerCancel: () => setPress(false),
     onFocus: () => setFocus(true),
     onBlur: () => setFocus(false),
     style: {
@@ -417,8 +420,8 @@ function Table({
     }
   }, col.label)))), /*#__PURE__*/React.createElement("tbody", null, rows.map((row, i) => /*#__PURE__*/React.createElement("tr", {
     key: i,
-    onMouseEnter: () => hoverable && setHoverRow(i),
-    onMouseLeave: () => hoverable && setHoverRow(null)
+    onPointerEnter: e => hoverable && e.pointerType === 'mouse' && setHoverRow(i),
+    onPointerLeave: () => hoverable && setHoverRow(null)
   }, columns.map(col => /*#__PURE__*/React.createElement("td", {
     key: col.key,
     style: {

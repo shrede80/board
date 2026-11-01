@@ -2,5 +2,5 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--color-bg);color:
 *{box-sizing:border-box}
 button,input,textarea,select{font-family:inherit}
 a{color:var(--tan-600)}
-a:hover{color:var(--color-accent)}
+@media (hover: hover) { a:hover{color:var(--color-accent)} }
 #root{height:100%}

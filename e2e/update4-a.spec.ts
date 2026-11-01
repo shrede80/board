@@ -132,3 +132,27 @@ test('phone: «استيراد مشروع» on Home (beside «+ مشروع» and 
   await page.getByTestId('m-import-empty').click();
   await expect(page.getByTestId('import-input')).toBeAttached();
 });
+
+test('phone: a tap is never a hover first (the iPhone needed several taps on a button) — buttons take hover tint from a mouse only', async ({ page }) => {
+  await login(page);
+  await page.goto('/');
+  await page.getByTestId('new-project').click();
+  const btn = page.getByTestId('np-create');
+  await expect(btn).toBeVisible();
+  const bg = () => btn.evaluate((e) => getComputedStyle(e).backgroundColor);
+  const base = await bg();
+  // what a finger sends first: pointer events of type touch
+  await btn.evaluate((e) => e.dispatchEvent(new PointerEvent('pointerover', { pointerType: 'touch', bubbles: true })));
+  await page.waitForTimeout(300);
+  expect(await bg()).toBe(base);
+  // …and the click right after goes through at once
+  await page.getByTestId('np-name').fill('نقرة وحدة');
+  await btn.tap();
+  await expect(page.getByTestId('m-scenes').or(page.getByTestId('project-name'))).toBeVisible({ timeout: 10_000 });
+  // a mouse still gets its tint
+  await page.goto('/');
+  await page.getByTestId('new-project').click();
+  await btn.evaluate((e) => e.dispatchEvent(new PointerEvent('pointerover', { pointerType: 'mouse', bubbles: true })));
+  await page.waitForTimeout(300);
+  expect(await bg()).not.toBe(base);
+});
