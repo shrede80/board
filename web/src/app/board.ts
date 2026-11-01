@@ -2,6 +2,7 @@ import { arrangeLayout, DEFAULT_SIZE, insideFrame, nudgeStep, PHOTO_KINDS, resiz
 import type { Op } from '../../../shared/schema';
 import type { PCard, PProject, PScene } from '../data/project';
 import { GRID, SNAP_PX } from '../lib/constants';
+import { isPhone } from '../lib/device';
 import { pad2 } from '../lib/util';
 import { commit, isCard, openEditor, registerCenterWorld, registerFitAll } from './actions';
 import { capture, playFlip } from './flip';
@@ -267,6 +268,11 @@ function cancelPointer() {
   setState({ dragPos: null, dragSize: null, guides: [], marquee: null });
 }
 
+/** A finger on the phone UI (the iPad keeps the laptop behaviour). */
+const phoneTouch = (e: { pointerType: string }) => e.pointerType === 'touch' && isPhone();
+/** The press now being handled came from a finger on the phone UI (set when an item is pressed). */
+let lastTouchPhone = false;
+
 export function onBoardDown(e: React.PointerEvent) {
   const st = getState();
   if (st.mode !== 'board' || (e.target as HTMLElement).closest('[data-item],[data-handle]')) return;
@@ -274,9 +280,14 @@ export function onBoardDown(e: React.PointerEvent) {
   if (st.space || e.button === 1) {
     e.preventDefault();
     ptr = { type: 'pan', sx: e.clientX, sy: e.clientY, vx: st.view.x, vy: st.view.y };
+  } else if (e.button === 0 && phoneTouch(e) && !st.boardSelect) {
+    // phone (UPDATE-4 ب): one finger on the empty board pans it; a tap on it clears the selection
+    ptr = { type: 'pan', sx: e.clientX, sy: e.clientY, vx: st.view.x, vy: st.view.y };
+    if (st.selection.length) setState({ selection: [], renaming: null });
+    startPress(e, null);
   } else if (e.button === 0) {
     const w = toWorld(e.clientX, e.clientY);
-    const base = e.shiftKey ? st.selection : [];
+    const base = e.shiftKey || (phoneTouch(e) && st.boardSelect) ? st.selection : [];
     ptr = { type: 'marq', wx: w.x, wy: w.y, base, sx: e.clientX, sy: e.clientY };
     setState({ marquee: { x: w.x, y: w.y, w: 0, h: 0 }, selection: base, renaming: null });
     startPress(e, null);
@@ -296,9 +307,12 @@ export function onItemDown(e: React.PointerEvent, id: string) {
   }
   if (e.button !== 0) return;
   e.stopPropagation();
+  lastTouchPhone = phoneTouch(e);
   if (st.renaming && st.renaming.id === id) return; // typing inside it
   let sel = st.selection;
-  if (e.shiftKey) sel = sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id];
+  // phone: in «تحديد» mode a tap adds / removes the item, like Shift on the laptop
+  const shift = e.shiftKey || (phoneTouch(e) && st.boardSelect);
+  if (shift) sel = sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id];
   else if (!sel.includes(id)) sel = [id];
   setState({ selection: sel, renaming: null });
   startPress(e, id);
@@ -306,7 +320,7 @@ export function onItemDown(e: React.PointerEvent, id: string) {
   const byId = new Map(boxes.map((b) => [b.id, b]));
   const moving = movingSet(sel, boxes);
   if (!moving.size) {
-    ptr = { type: 'click', sx: e.clientX, sy: e.clientY, id, shift: e.shiftKey, moved: false };
+    ptr = { type: 'click', sx: e.clientX, sy: e.clientY, id, shift, moved: false };
     listen();
     return;
   }
@@ -317,7 +331,7 @@ export function onItemDown(e: React.PointerEvent, id: string) {
   }
   const sizes: Record<string, { w: number; h: number }> = {};
   for (const b of boxes) sizes[b.id] = { w: b.w, h: b.h };
-  ptr = { type: 'move', sx: e.clientX, sy: e.clientY, orig, moved: false, id, shift: e.shiftKey, others: visibleBoxes(boxes.filter((b) => !(b.id in orig) && b.kind !== 'frame')), sizes };
+  ptr = { type: 'move', sx: e.clientX, sy: e.clientY, orig, moved: false, id, shift, others: visibleBoxes(boxes.filter((b) => !(b.id in orig) && b.kind !== 'frame')), sizes };
   listen();
 }
 
@@ -417,7 +431,7 @@ function onUp() {
   if (!P) return;
   if (P.type === 'marq') setState({ marquee: null });
   if (P.type === 'click') {
-    if (!P.moved && !P.shift) openItem(P.id);
+    if (!P.moved && !P.shift && !lastTouchPhone) openItem(P.id);
   }
   if (P.type === 'move') {
     const dp = getState().dragPos;
@@ -434,7 +448,8 @@ function onUp() {
       setState({ dragPos: null, guides: [] });
     } else {
       setState({ dragPos: null, guides: [] });
-      if (!P.shift) openItem(P.id);
+      // a tap selects (phone); the laptop and the iPad open the item
+      if (!P.shift && !lastTouchPhone) openItem(P.id);
     }
   }
   if (P.type === 'resize') {

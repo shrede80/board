@@ -2,6 +2,7 @@ import { useFields } from '../Fields';
 import { openPlan } from '../../app/plan';
 import { refreshSceneTemplates, saveProjectEntry, saveSceneEntry, sceneAddMenu } from '../../app/templates';
 import { TemplateBadge } from '../Templates';
+import { MBoard } from './MBoard';
 import { useEffect, useRef, useState } from 'react';
 import { addScene, addShot, commit, createFromTemplate, deleteScene, moveScene, moveShot, openEditor, openProject, undo } from '../../app/actions';
 import { duplicateSelection, libMenu, shotMenu } from '../../app/boardActions';
@@ -84,7 +85,7 @@ export function MProject() {
         <button aria-label="خيارات المشروع" data-testid="m-project-more" disabled={offline} onClick={(e) => openMenu(at(e).x, at(e).y, moreMenu, 'project-more')} style={iconBtn}><Icon name="more" size={20} /></button>
       </header>
       <div className="m-tabs" style={{ padding: '0 14px 8px' }}>
-        <Tabs items={[{ value: 'scenes', label: 'المشاهد' }, { value: 'shots', label: 'اللقطات' }, { value: 'library', label: 'المكتبة' }]} value={tab} onChange={(v) => setState({ mTab: v as 'scenes' | 'shots' | 'library' })} style={{ width: '100%' }} />
+        <Tabs items={[{ value: 'scenes', label: 'المشاهد' }, { value: 'shots', label: 'اللقطات' }, { value: 'board', label: 'لوحة الأفكار' }, { value: 'library', label: 'المكتبة' }]} value={tab} onChange={(v) => setState({ mTab: v as 'scenes' | 'shots' | 'board' | 'library' })} style={{ width: '100%' }} />
       </div>
       {tab === 'scenes' && (
         <div data-testid="m-scenes" style={{ flex: 1, overflowY: 'auto', padding: '0 14px 28px', overscrollBehavior: 'contain' }}>
@@ -99,6 +100,7 @@ export function MProject() {
         </div>
       )}
       {tab === 'shots' && <ShotList p={p} />}
+      {tab === 'board' && <MBoard />}
       {tab === 'library' && <LibraryTab p={p} />}
     </div>
   );

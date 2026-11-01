@@ -13,6 +13,7 @@ import { frameBg, imageUrl, mmss, pad2 } from '../lib/util';
 import { avatar } from './Library';
 import { useFields } from './Fields';
 import { hasPlan } from '../app/plan';
+import { isPhone } from '../lib/device';
 
 const sel = (on: boolean) => (on ? '0 0 0 2px var(--color-accent), var(--shadow-lift)' : 'var(--shadow-card)');
 
@@ -121,38 +122,64 @@ const Items = memo(function Items({ p, isBoard }: { p: PProject; isBoard: boolea
   return (
     <>
       {ordered.map((it, idx) => {
-        const pos = dragPos?.[it.id] ?? (it.scene ? { x: it.scene.boardX, y: it.scene.boardY } : { x: it.card!.x, y: it.card!.y });
-        const on = selection.includes(it.id) || (!!it.scene && editor?.type === 'scene' && editor.id === it.id);
-        const size = dragSize?.[it.id];
         const isFrame = it.kind === 'frame';
-        const dim = it.scene ? (matches(it.scene) ? 1 : 0.22) : filter && !isFrame ? 0.3 : 1;
-        const showHandles = isBoard && single === it.id && !it.locked;
-        const showDots = isBoard && (hover === it.id || single === it.id);
         const rename = renaming && renaming.id === it.id && (renaming.kind === 'card' || (renaming.kind === 'scene' && renaming.where === 'board')) ? renaming : null;
+        const dp = dragPos?.[it.id];
         return (
-          <div key={it.id} data-item="1" data-item-id={it.id} data-kind={it.kind} data-locked={it.locked ? '1' : undefined}
-            data-flip={it.card ? `card-${it.id}` : undefined}
-            data-testid={it.scene ? 'scene-card' : `card-${it.kind}`}
-            onPointerDown={isFrame ? undefined : (e) => onItemDown(e, it.id)}
-            onDoubleClick={(e) => {
-              if (it.kind === 'heading' || it.kind === 'image') (e.stopPropagation(), setState({ renaming: { kind: 'card', id: it.id }, selection: [it.id] }));
-            }}
-            onContextMenu={(e) => (e.preventDefault(), e.stopPropagation(), openItemsMenu(e.clientX, e.clientY, it.id))}
-            onPointerEnter={() => hoverIn(it.id)}
-            onPointerLeave={() => hoverOut(it.id)}
-            style={{ position: 'absolute', left: pos.x, top: pos.y, zIndex: idx + 1, opacity: dim, transition: 'opacity 200ms', pointerEvents: isFrame ? 'none' : undefined }}>
-            {it.scene && <SceneBody p={p} sc={it.scene} si={p.scenes.indexOf(it.scene)} on={on} w={size?.w ?? it.scene.boardW ?? DEFAULT_SIZE.scene[0]} ph={size?.ph} renaming={!!rename} />}
-            {it.card && <CardBody p={p} c={it.card} on={on} theme={theme} size={size} renaming={!!rename} z={isFrame ? z : 1} />}
-            {it.locked && <span data-testid="lock-badge" title="مقفل" style={{ position: 'absolute', top: isFrame ? 10 : 8, left: 8, width: 24, height: 24, borderRadius: '50%', background: 'rgba(20,18,16,.6)', color: '#fdfcfa', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3, pointerEvents: 'none' }}><Icon name="lock" size={13} /></span>}
-            {showDots && <DotsButton id={it.id} z={z} />}
-            {showHandles && <Handles it={it} z={z} />}
-            {size && <span style={{ position: 'absolute', bottom: -30 / z, left: 0, transform: `scale(${1 / z})`, transformOrigin: '0 0', background: 'var(--color-accent)', color: '#141210', fontSize: 12, fontWeight: 700, borderRadius: 6, padding: '3px 8px', direction: 'ltr', whiteSpace: 'nowrap' }} data-testid="size-tip">{it.kind === 'heading' && size.h ? `${size.h}px` : `${size.w} px`}</span>}
-          </div>
+          <ItemView key={it.id} p={p} it={it} idx={idx} theme={theme} z={z}
+            x={dp?.x ?? (it.scene ? it.scene.boardX : it.card!.x)} y={dp?.y ?? (it.scene ? it.scene.boardY : it.card!.y)}
+            on={selection.includes(it.id) || (!!it.scene && editor?.type === 'scene' && editor.id === it.id)}
+            size={dragSize?.[it.id]}
+            dim={it.scene ? (matches(it.scene) ? 1 : 0.22) : filter && !isFrame ? 0.3 : 1}
+            showHandles={isBoard && single === it.id && !it.locked}
+            showDots={isBoard && (hover === it.id || single === it.id)}
+            renaming={rename} />
         );
       })}
     </>
   );
 });
+
+type ItemSize = { w: number; h?: number; ph?: number };
+interface ItemViewProps {
+  p: PProject; it: Item; idx: number; theme: 'light' | 'dark'; z: number; x: number; y: number; on: boolean; size?: ItemSize; dim: number;
+  showHandles: boolean; showDots: boolean; renaming: { kind: string; id: string } | null;
+}
+
+/**
+ * One board item. Memoised on what it draws, so dragging or selecting one item (a phone with 100
+ * of them, UPDATE-4 ب) redraws that item only, not the whole board.
+ */
+const ItemView = memo(function ItemView({ p, it, idx, theme, z, x, y, on, size, dim, showHandles, showDots, renaming: rename }: ItemViewProps) {
+  const isFrame = it.kind === 'frame';
+  const pos = { x, y };
+  return (
+  <div data-item="1" data-item-id={it.id} data-kind={it.kind} data-locked={it.locked ? '1' : undefined}
+    data-flip={it.card ? `card-${it.id}` : undefined}
+    data-testid={it.scene ? 'scene-card' : `card-${it.kind}`}
+    onPointerDown={isFrame ? undefined : (e) => onItemDown(e, it.id)}
+    onDoubleClick={(e) => {
+      if (it.kind === 'heading' || it.kind === 'image') (e.stopPropagation(), setState({ renaming: { kind: 'card', id: it.id }, selection: [it.id] }));
+    }}
+    onContextMenu={(e) => (e.preventDefault(), e.stopPropagation(), openItemsMenu(e.clientX, e.clientY, it.id))}
+    onPointerEnter={() => hoverIn(it.id)}
+    onPointerLeave={() => hoverOut(it.id)}
+    style={{ position: 'absolute', left: pos.x, top: pos.y, zIndex: idx + 1, opacity: dim, transition: 'opacity 200ms', pointerEvents: isFrame ? 'none' : undefined }}>
+    {it.scene && <SceneBody p={p} sc={it.scene} si={p.scenes.indexOf(it.scene)} on={on} w={size?.w ?? it.scene.boardW ?? DEFAULT_SIZE.scene[0]} ph={size?.ph} renaming={!!rename} />}
+    {it.card && <CardBody p={p} c={it.card} on={on} theme={theme} size={size} renaming={!!rename} z={isFrame ? z : 1} />}
+    {it.locked && <span data-testid="lock-badge" title="مقفل" style={{ position: 'absolute', top: isFrame ? 10 : 8, left: 8, width: 24, height: 24, borderRadius: '50%', background: 'rgba(20,18,16,.6)', color: '#fdfcfa', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3, pointerEvents: 'none' }}><Icon name="lock" size={13} /></span>}
+    {showDots && <DotsButton id={it.id} z={z} />}
+    {showHandles && <Handles it={it} z={z} />}
+    {size && <span style={{ position: 'absolute', bottom: -30 / z, left: 0, transform: `scale(${1 / z})`, transformOrigin: '0 0', background: 'var(--color-accent)', color: '#141210', fontSize: 12, fontWeight: 700, borderRadius: 6, padding: '3px 8px', direction: 'ltr', whiteSpace: 'nowrap' }} data-testid="size-tip">{it.kind === 'heading' && size.h ? `${size.h}px` : `${size.w} px`}</span>}
+  </div>
+
+  );
+}, (a, b) => (
+  // `it` is a fresh wrapper every render: what counts is the row inside it
+  a.p === b.p && a.it.id === b.it.id && a.it.card === b.it.card && a.it.scene === b.it.scene && a.it.locked === b.it.locked && a.idx === b.idx
+  && a.theme === b.theme && a.z === b.z && a.x === b.x && a.y === b.y && a.on === b.on && a.size === b.size && a.dim === b.dim
+  && a.showHandles === b.showHandles && a.showDots === b.showDots && a.renaming === b.renaming
+));
 
 /** What the last arrow key did, under the board for 1.6 s (UPDATE-3 §3.1). */
 function NudgeHud() {
@@ -184,7 +211,7 @@ function DotsButton({ id, z }: { id: string; z: number }) {
         const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
         openItemsMenu(r.right, r.bottom + 4, id);
       }}
-      style={{ position: 'absolute', bottom: '100%', left: 0, marginBottom: 8 / z, transform: `scale(${1 / z})`, transformOrigin: '0 100%', width: 30, height: 30, borderRadius: 8, border: 'none', background: 'rgba(20,18,16,.62)', color: '#fdfcfa', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 5, pointerEvents: 'auto' }}>
+      style={{ position: 'absolute', bottom: '100%', left: 0, marginBottom: 8 / z, transform: `scale(${1 / z})`, transformOrigin: '0 100%', width: isPhone() ? 44 : 30, height: isPhone() ? 44 : 30, borderRadius: 8, border: 'none', background: 'rgba(20,18,16,.62)', color: '#fdfcfa', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 5, pointerEvents: 'auto' }}>
       <Icon name="more" size={16} />
     </button>
   );
@@ -201,11 +228,34 @@ const HANDLE_GAP = 6;
  */
 function Handles({ it, z }: { it: Item; z: number }) {
   const s = 1 / z;
+  const phone = isPhone();
   return (
     <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 6 }}>
       {handlesFor(it.kind).map((h) => {
         const side = h.length === 1;
         const vertical = h === 'e' || h === 'w';
+        if (phone) {
+          // finger: a 44×44 touch area that starts at the item's edge and reaches outward (inside it a press still moves the item)
+          const T = 44, M = side ? (vertical ? [10, 28] : [28, 10]) : [14, 14];
+          const px = (n: number) => `${n * s}px`;
+          const box: React.CSSProperties = {
+            position: 'absolute', width: px(T), height: px(T), pointerEvents: 'auto', touchAction: 'none',
+            left: h.includes('e') ? '100%' : h.includes('w') ? px(-T) : `calc(50% - ${px(T / 2)})`,
+            top: h.includes('s') ? '100%' : h.includes('n') ? px(-T) : `calc(50% - ${px(T / 2)})`,
+          };
+          const mark: React.CSSProperties = {
+            position: 'absolute', width: px(M[0]), height: px(M[1]), boxSizing: 'border-box', background: 'var(--color-bg)', border: `${2 * s}px solid var(--color-accent)`, borderRadius: px(3), display: 'block',
+            left: h.includes('e') ? px(HANDLE_GAP) : h.includes('w') ? undefined : `calc(50% - ${px(M[0] / 2)})`,
+            right: h.includes('w') ? px(HANDLE_GAP) : undefined,
+            top: h.includes('s') ? px(HANDLE_GAP) : h.includes('n') ? undefined : `calc(50% - ${px(M[1] / 2)})`,
+            bottom: h.includes('n') ? px(HANDLE_GAP) : undefined,
+          };
+          return (
+            <span key={h} data-handle={h} data-testid={`handle-${h}`} className="board-handle" onPointerDown={(e) => onHandleDown(e, it.id, h)} onDoubleClick={(e) => (e.stopPropagation(), resetSize(it.id))} style={box}>
+              <i style={mark} />
+            </span>
+          );
+        }
         const [vw, vh] = side ? (vertical ? [8, 24] : [24, 8]) : [12, 12];
         const [hw, hh] = side ? (vertical ? [18, 36] : [36, 18]) : [22, 22];
         // centre of the visible mark, measured from the item's box (screen px scaled to world)

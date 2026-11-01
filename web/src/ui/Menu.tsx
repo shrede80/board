@@ -42,7 +42,7 @@ export function MenuLayer() {
       style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', minHeight: mobile ? 44 : 38, padding: nested ? '0 10px 0 10px' : '0 10px', paddingInlineStart: nested ? 36 : 10, border: 'none', borderRadius: 4, background: open === it.label ? 'var(--color-surface-strong)' : 'transparent', color: it.danger ? 'var(--color-danger)' : 'var(--color-text)', fontSize: 14, fontWeight: 700, textAlign: 'right', cursor: it.disabled ? 'default' : 'pointer', opacity: it.disabled ? 0.4 : 1 }}>
       {it.icon && <Icon name={it.icon} size={16} />}
       <span style={{ flex: 1 }}>{it.label}</span>
-      {it.keys && <span style={{ fontSize: 12, color: 'var(--color-text-muted)', fontWeight: 400, direction: 'ltr' }}>{it.keys}</span>}
+      {it.keys && !mobile && <span style={{ fontSize: 12, color: 'var(--color-text-muted)', fontWeight: 400, direction: 'ltr' }}>{it.keys}</span>}
       {it.children && <Icon name="chevron-down" size={14} style={{ transform: open === it.label ? 'rotate(180deg)' : undefined }} />}
     </button>
   );
@@ -65,8 +65,10 @@ export function MenuLayer() {
             return (
               <div key={`${i}:${it.label}`} data-testid={it.testid ?? 'm-swatches'} style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '6px 10px 8px' }}>
                 {it.swatches.map((s) => (
-                  <button key={String(s.key)} title={s.label} aria-pressed={s.on} data-testid={`swatch-${s.key ?? 'none'}`} onClick={() => (closeMenu(), s.run())}
-                    style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid var(--color-border-subtle)', background: s.hex, cursor: 'pointer', padding: 0, boxShadow: s.on ? '0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-accent)' : 'none' }} />
+                  <button key={String(s.key)} title={s.label} aria-label={s.label} aria-pressed={s.on} data-testid={`swatch-${s.key ?? 'none'}`} onClick={() => (closeMenu(), s.run())}
+                    style={{ width: mobile ? 44 : 22, height: mobile ? 44 : 22, margin: mobile ? -6 : 0, padding: 0, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid var(--color-border-subtle)', background: s.hex, boxShadow: s.on ? '0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-accent)' : 'none' }} />
+                  </button>
                 ))}
               </div>
             );

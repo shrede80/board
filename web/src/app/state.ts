@@ -132,7 +132,10 @@ export interface UIState {
   /** phone: «حوّل الفكرة إلى» sheet for this idea (UPDATE-1 ج6) */
   ideaSheet: string | null;
   /** phone: project tabs (UPDATE-1 ج3) */
-  mTab: 'scenes' | 'shots' | 'library';
+  mTab: 'scenes' | 'shots' | 'board' | 'library';
+  /** phone, free board (UPDATE-4 ب): the multi-select mode, and which bottom sheet is open */
+  boardSelect: boolean;
+  boardSheet: null | 'add' | 'more';
   /** «⌂ الرئيسية ‹ project ▾» menu */
   projMenu: boolean;
   popMenu: PopMenu | null;
@@ -199,7 +202,7 @@ let state: UIState = {
   settings: null, libOpen: true, libTab: 'characters', editor: null,
   sections: { refs: true, basics: true, comp: true, cam: true, move: true, light: false, audio: false },
   selection: [], view: { x: 0, y: 0, z: 0.8 }, filter: null, toasts: [], save: 'saved', offline: typeof navigator !== 'undefined' ? !navigator.onLine : false,
-  modal: null, dupTarget: null, tplSave: null, npTemplate: null, choice: null, ideaEdit: null, bootOffline: false, pending: [], addSheet: null, ideaSheet: null, mTab: 'scenes', projMenu: false, popMenu: null, dragSize: null, renaming: null, newVersion: false, pickTarget: null, hoverItem: null, exportTab: 'pdf', exportScope: 'all', exportSel: [], confirm: null, dragOver: null,
+  modal: null, dupTarget: null, tplSave: null, npTemplate: null, choice: null, ideaEdit: null, bootOffline: false, pending: [], addSheet: null, ideaSheet: null, mTab: 'scenes', boardSelect: false, boardSheet: null, projMenu: false, popMenu: null, dragSize: null, renaming: null, newVersion: false, pickTarget: null, hoverItem: null, exportTab: 'pdf', exportScope: 'all', exportSel: [], confirm: null, dragOver: null,
   present: { open: false, i: 0, playing: false, tech: false, fill: 0 }, hoverShot: null, marquee: null, space: false, menu: false,
   pick: null, custom: null, customVal: '', flipping: false, guides: [], guidesFade: false, openSeq: 0, focusDesc: null, plan: null, nudgeHud: null, sbScrolling: false, dockH: 84, dragPos: null, uploads: {}, canUndo: false, canRedo: false, ch: [], chVersion: 0,
 };
