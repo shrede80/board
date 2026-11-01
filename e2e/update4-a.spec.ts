@@ -148,7 +148,7 @@ test('phone: a tap is never a hover first (the iPhone needed several taps on a b
   // …and the click right after goes through at once
   await page.getByTestId('np-name').fill('نقرة وحدة');
   await btn.tap();
-  await expect(page.getByTestId('m-scenes').or(page.getByTestId('project-name'))).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId('m-scenes')).toBeVisible({ timeout: 10_000 });
   // a mouse still gets its tint
   await page.goto('/');
   await page.getByTestId('new-project').click();
