@@ -6,6 +6,7 @@ import { sceneAddMenu } from '../../app/templates';
 import { getState, openMenu, setState, useApp, useProject, type MenuEntry } from '../../app/state';
 import { Icon } from '../../ds/ds';
 import { BoardCanvas } from '../Board';
+import { FilterBar } from './MProject';
 import { Sheet, SheetRow } from './kit';
 
 /**
@@ -30,6 +31,7 @@ export function MBoard() {
   return (
     <div data-testid="m-board" style={{ flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden', borderTop: '1px solid var(--color-border-subtle)' }}>
       <BoardCanvas />
+      <div style={{ position: 'absolute', top: 6, left: 10, right: 10, zIndex: 13 }}><FilterBar p={p} /></div>
       <BoardBars />
       <BoardSheets />
     </div>
@@ -62,8 +64,8 @@ function BoardBars() {
     openMenu(r.right, r.top - 8, entries, id);
   };
   const align: MenuEntry[] = [
-    { label: 'يمين', run: () => alignSel('right'), testid: 'm-align-right' }, { label: 'وسط أفقي', run: () => alignSel('hcenter') }, { label: 'يسار', run: () => alignSel('left') },
-    { label: 'أعلى', run: () => alignSel('top'), testid: 'm-align-top' }, { label: 'منتصف عمودي', run: () => alignSel('vmiddle') }, { label: 'أسفل', run: () => alignSel('bottom') },
+    { label: 'يمين', run: () => alignSel('right'), testid: 'm-align-right' }, { label: 'وسط أفقي', run: () => alignSel('hcenter'), testid: 'm-align-hcenter' }, { label: 'يسار', run: () => alignSel('left'), testid: 'm-align-left' },
+    { label: 'أعلى', run: () => alignSel('top'), testid: 'm-align-top' }, { label: 'منتصف عمودي', run: () => alignSel('vmiddle'), testid: 'm-align-vmiddle' }, { label: 'أسفل', run: () => alignSel('bottom'), testid: 'm-align-bottom' },
   ];
   const dist: MenuEntry[] = [
     { label: 'توزيع أفقي', run: () => distributeSel('h'), testid: 'm-dist-h' },
@@ -95,15 +97,15 @@ function BoardBars() {
   );
 }
 
-const ADD: { type: 'scene' | 'note' | 'heading' | 'image' | 'frame' | 'character' | 'location' | 'moodboard'; label: string; icon: string }[] = [
-  { type: 'scene', label: 'مشهد', icon: 'film' },
-  { type: 'note', label: 'ملاحظة', icon: 'file' },
-  { type: 'heading', label: 'عنوان', icon: 'heading' },
-  { type: 'image', label: 'صورة', icon: 'image' },
-  { type: 'frame', label: 'إطار', icon: 'frame' },
-  { type: 'character', label: 'شخصية', icon: 'user' },
-  { type: 'location', label: 'موقع', icon: 'map-pin' },
-  { type: 'moodboard', label: 'لوحة مزاج', icon: 'image' },
+const ADD: { type: 'scene' | 'note' | 'heading' | 'image' | 'frame' | 'character' | 'location' | 'moodboard'; label: string; icon: string; testid: string }[] = [
+  { type: 'scene', label: 'مشهد', icon: 'film', testid: 'm-board-add-scene' },
+  { type: 'note', label: 'ملاحظة', icon: 'file', testid: 'm-board-add-note' },
+  { type: 'heading', label: 'عنوان', icon: 'heading', testid: 'm-board-add-heading' },
+  { type: 'image', label: 'صورة', icon: 'image', testid: 'm-board-add-image' },
+  { type: 'frame', label: 'إطار', icon: 'frame', testid: 'm-board-add-frame' },
+  { type: 'character', label: 'شخصية', icon: 'user', testid: 'm-board-add-character' },
+  { type: 'location', label: 'موقع', icon: 'map-pin', testid: 'm-board-add-location' },
+  { type: 'moodboard', label: 'لوحة مزاج', icon: 'image', testid: 'm-board-add-moodboard' },
 ];
 
 function BoardSheets() {
@@ -129,7 +131,7 @@ function BoardSheets() {
       <Sheet onClose={close} testid="m-board-add-sheet" title="أضف للوحة">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, paddingBottom: 6 }}>
           {ADD.map((a) => (
-            <button key={a.type} data-testid={`m-board-add-${a.type}`} disabled={offline} onClick={() => add(a.type)}
+            <button key={a.type} data-testid={a.testid} disabled={offline} onClick={() => add(a.type)}
               style={{ minHeight: 78, border: '1px solid var(--color-border-subtle)', borderRadius: 14, background: 'var(--color-surface)', color: 'var(--color-text)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 13, fontWeight: 700 }}>
               <Icon name={a.icon} size={22} />{a.label}
             </button>
@@ -148,6 +150,7 @@ function BoardSheets() {
       <SheetRow icon="frame" label="تكبير على المحدد" disabled={!sel.length} onClick={() => (close(), zoomToSelection())} testid="m-board-zoom-sel" />
       <SheetRow icon="frame" label="تحديد الكل" onClick={() => (close(), selectAll())} testid="m-board-select-all" />
       <SheetRow icon="copy" label="نسخ" disabled={!sel.length} onClick={() => (close(), copySelection())} testid="m-board-copy" />
+      <SheetRow icon="x" label="قص" disabled={!sel.length || offline} onClick={() => (close(), copySelection(true))} testid="m-board-cut" />
       <SheetRow icon="clipboard" label="لصق" disabled={!hasClipboard() || offline} onClick={() => (close(), paste(centerWorldRef()))} testid="m-board-paste" />
     </Sheet>
   );

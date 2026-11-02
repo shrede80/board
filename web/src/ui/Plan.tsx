@@ -72,6 +72,10 @@ export function PlanScreen() {
   const [view, setView] = useState<View>({ s: mobile ? 30 : 58, ox: -1, oy: -1 });
   const [sel, setSel] = useState<string[]>([]);
   const [snap, setSnap] = useState(true);
+  // phone: «تحديد» (several items: a tap adds / removes one, a drag on the empty plan boxes them)
+  const [multi, setMulti] = useState(false);
+  const multiRef = useRef(multi);
+  multiRef.current = multi;
   const [ptab, setPtab] = useState<PTab>('كاميرات');
   const [sheet, setSheet] = useState<null | 'palette' | 'props' | 'more'>(null);
   const sheetRef = useRef(sheet);
@@ -356,7 +360,7 @@ export function PlanScreen() {
     if (g) {
       const id = g.dataset.pid!;
       let next = selRef.current;
-      if (e.shiftKey) next = next.includes(id) ? next.filter((x) => x !== id) : [...next, id];
+      if (e.shiftKey || (e.pointerType === 'touch' && multiRef.current)) next = next.includes(id) ? next.filter((x) => x !== id) : [...next, id];
       else if (!next.includes(id)) next = [id];
       setSel(next);
       const start: Record<string, { x: number; y: number }> = {};
@@ -373,7 +377,7 @@ export function PlanScreen() {
       }
       return;
     }
-    if (e.shiftKey && e.pointerType === 'mouse') {
+    if ((e.shiftKey && e.pointerType === 'mouse') || (multiRef.current && e.pointerType === 'touch')) {
       drag.current = { mode: 'marquee', wx: w.x, wy: w.y, base: selRef.current };
       return;
     }
@@ -665,6 +669,7 @@ export function PlanScreen() {
         <>
           <div className="pl-mbar" style={{ bottom: sheet ? 'calc(55% + 10px)' : 16 }}>
             <button className="pl-ib add" data-testid="plan-m-add" disabled={offline} onClick={() => { setSel([]); setSheet(sheet === 'palette' ? null : 'palette'); }}><Icon name="plus" size={18} />عنصر</button>
+            <button className={`pl-ib${multi ? ' add' : ''}`} aria-label="تحديد" aria-pressed={multi} data-testid="plan-m-select" onClick={() => setMulti((v) => !v)}><Icon name="check" size={18} /></button>
             <button className="pl-ib" aria-label="تراجع" data-testid="plan-undo" disabled={!canUndo || offline} onClick={() => void undo()}><Icon name="arrow-right" size={18} /></button>
             <button className="pl-ib" aria-label="إعادة" data-testid="plan-redo" disabled={!canRedo || offline} onClick={() => void redo()}><Icon name="arrow-left" size={18} /></button>
             <button className="pl-ib" aria-label="ملاءمة" data-testid="plan-fit" onClick={() => fit()}><Icon name="maximize" size={18} /></button>
@@ -677,6 +682,12 @@ export function PlanScreen() {
               {sheet === 'more' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <Button variant="outline" icon="file" disabled={offline} onClick={() => { setSheet(null); setCopyOpen(true); }}>انسخ من مشهد</Button>
+                  <Button variant="outline" icon="check" data-testid="plan-select-all" disabled={!items.length} onClick={() => { setSheet(null); setSel(items.map((i) => i.id)); }}>تحديد الكل</Button>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <Button variant="outline" data-testid="plan-zoom-in" onClick={() => setView((v) => zoomAround(v, 1.25, size()))} style={{ flex: 1 }}>تكبير +</Button>
+                    <Button variant="outline" data-testid="plan-zoom-out" onClick={() => setView((v) => zoomAround(v, 0.8, size()))} style={{ flex: 1 }}>تصغير −</Button>
+                  </div>
+                  {nCam + nLight > 0 && <Legend items={items} inline />}
                   <div className="pl-seg" style={{ alignSelf: 'flex-start' }}><button className={snap ? 'on' : ''} onClick={() => setSnap(true)}>مغناطيس الشبكة</button><button className={!snap ? 'on' : ''} onClick={() => setSnap(false)}>حر</button></div>
                 </div>
               )}
@@ -864,9 +875,9 @@ function Thumb({ it }: { it: NewItem }) {
   return <svg viewBox="-24 -24 48 48" width={46} height={46} aria-hidden="true" dangerouslySetInnerHTML={{ __html: body }} />;
 }
 
-function Legend({ items }: { items: PlanItem[] }) {
+function Legend({ items, inline }: { items: PlanItem[]; inline?: boolean }) {
   return (
-    <div className="pl-legend" data-testid="plan-legend">
+    <div className="pl-legend" data-testid={inline ? 'plan-legend-m' : 'plan-legend'} style={inline ? { position: 'static', boxShadow: 'none', border: 'none', padding: 0, background: 'transparent' } : undefined}>
       {items.filter((i) => i.kind === 'camera').map((c) => <div key={c.id}><i style={{ background: camSpec(c.refId).hex }} /><b>{c.label}</b>{` ${eqShort(c.refId) || 'كاميرا'} · ${Math.round(focalOf(c))}mm`}</div>)}
       {items.filter((i) => i.kind === 'light').map((l) => <div key={l.id}><i style={{ background: lightColor(l), border: '1px solid #c9b98f' }} />{`${l.label || 'ضوء'} · ${eqShort(l.refId)}`}</div>)}
     </div>

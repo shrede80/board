@@ -9,7 +9,7 @@ import {
 } from '../app/actions';
 import { currentDrag, dragEnd, dragStart, hasFiles, setOver } from '../app/dnd';
 import { addFiles, moveImage, removeImage, retryUpload, setCover, type OwnerKind } from '../app/images';
-import { getState, openMenu, setState, useApp, useEquipment, useProject, type MenuEntry } from '../app/state';
+import { engine, getState, openMenu, setState, useApp, useEquipment, useProject, type MenuEntry } from '../app/state';
 import { api } from '../data/api';
 import { allShots, coverOf, eqName, findShot, moodHex, moodName, sceneDur, type PLib, type PProject, type PScene, type PShot } from '../data/project';
 import { Button, EmptyState, Icon, Input, Textarea } from '../ds/ds';
@@ -141,7 +141,8 @@ function MobileEditor({ comp, head, body }: { comp: string; head: { kicker: stri
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '8px 18px 28px', overscrollBehavior: 'contain' }}>{body}</div>
         <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px calc(6px + env(safe-area-inset-bottom))', borderTop: '1px solid var(--color-border-subtle)' }}>
           <button data-testid="m-prev" disabled={!head.nav?.prev} onClick={() => editorNav(-1)} style={{ ...navBtn, opacity: head.nav?.prev ? 1 : 0.3 }}><Icon name="chevron-down" size={14} style={{ transform: 'rotate(90deg)' }} />السابقة</button>
-          <span data-testid="m-saved" style={{ fontSize: 13, color: offline || save === 'error' ? 'var(--color-danger)' : 'var(--color-text-muted)' }}>{saveLbl}</span>
+          {/* a failed save: one tap tries again (the laptop's save indicator) */}
+          <button data-testid="m-saved" disabled={save !== 'error'} onClick={() => engine.retry()} style={{ minHeight: 44, minWidth: 44, border: 'none', background: 'transparent', padding: '0 8px', fontSize: 13, fontWeight: save === 'error' ? 700 : 400, color: offline || save === 'error' ? 'var(--color-danger)' : 'var(--color-text-muted)' }}>{save === 'error' && !offline ? 'ما انحفظ · اضغط للإعادة' : saveLbl}</button>
           <button data-testid="m-next" disabled={!head.nav?.next} onClick={() => editorNav(1)} style={{ ...navBtn, justifyContent: 'flex-end', opacity: head.nav?.next ? 1 : 0.3 }}>التالية<Icon name="chevron-down" size={14} style={{ transform: 'rotate(-90deg)' }} /></button>
         </div>
       </div>

@@ -20,13 +20,14 @@ export function MHome() {
   const bootOffline = useApp((s) => s.bootOffline);
   const [now, setNow] = useState(() => new Date());
   const [f, setF] = useState<string>('all');
+  const [sort, setSort] = useState<'updated' | 'name' | 'shoot'>('updated');
   const [renaming, setRenaming] = useState<string | null>(null);
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(t);
   }, []);
   const live = (list ?? []).filter((s) => !s.archived);
-  const shown = (f === 'all' ? live : f === 'archived' ? (list ?? []).filter((s) => s.archived) : live.filter((s) => s.stage === f)).sort((a, b) => b.updatedAt - a.updatedAt);
+  const shown = (f === 'all' ? live : f === 'archived' ? (list ?? []).filter((s) => s.archived) : live.filter((s) => s.stage === f)).sort((a, b) => (sort === 'name' ? a.name.localeCompare(b.name, 'ar') : sort === 'shoot' ? (a.shootDate ?? '9999').localeCompare(b.shootDate ?? '9999') : b.updatedAt - a.updatedAt));
   const last = list?.find((s) => s.id === settings?.lastProjectId && !s.archived) ?? null;
   const next = list ? upcoming(list) : null;
   const nArch = (list?.length ?? 0) - live.length;
@@ -37,6 +38,7 @@ export function MHome() {
           <span style={{ fontSize: 14, color: 'var(--color-text-muted)', fontWeight: 600 }}>{greeting(now)}</span>
           <h1 data-testid="greeting" style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 40, lineHeight: 1.1 }}>إبراهيم</h1>
         </div>
+        <button data-testid="m-search" aria-label="بحث" onClick={() => setState({ modal: 'search' })} style={{ width: 44, height: 44, flexShrink: 0, marginInlineStart: 'auto', border: '1px solid var(--color-border)', borderRadius: '50%', background: 'transparent', color: 'var(--color-text)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="search" size={19} /></button>
         <img src={theme === 'dark' ? '/img/logo-white.png' : '/img/logo-black.png'} alt="إبراهيم الشريدي" style={{ width: 76, height: 46, objectFit: 'cover', mixBlendMode: theme === 'dark' ? 'normal' : 'multiply' }} />
       </header>
 
@@ -72,6 +74,10 @@ export function MHome() {
             </span>
           </div>
           <Chips testid="pf" value={f} onChange={setF} items={[['all', `الكل ${live.length}`], ...STAGE_ORDER.map((s) => [s, STAGE_LABEL[s]] as [string, string]), ...(nArch ? [['archived', `المؤرشفة ${nArch}`] as [string, string]] : [])]} />
+          <button data-testid="m-sort" onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); openMenu(r.right, r.bottom + 4, (['updated', 'name', 'shoot'] as const).map((k) => ({ label: { updated: 'آخر تعديل', name: 'الاسم', shoot: 'يوم التصوير' }[k], icon: sort === k ? 'check' : undefined, run: () => setSort(k), testid: `m-sort-${k}` })), 'm-sort-menu'); }}
+            style={{ alignSelf: 'flex-start', minHeight: 44, display: 'flex', alignItems: 'center', gap: 6, border: 'none', background: 'transparent', fontSize: 14, color: 'var(--color-text-muted)', padding: 0 }}>
+            ترتيب: <b style={{ color: 'var(--color-text)' }}>{{ updated: 'آخر تعديل', name: 'الاسم', shoot: 'يوم التصوير' }[sort]}</b><Icon name="chevron-down" size={14} />
+          </button>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {shown.map((s) => <ProjectRow key={s.id} s={s} now={now} renaming={renaming === s.id} onRename={() => setRenaming(s.id)} onRenamed={() => setRenaming(null)} />)}
             {!shown.length && <span style={{ padding: '18px 0', fontSize: 14, color: 'var(--color-text-muted)' }}>{live.length ? 'ما فيه مشاريع بهالمرحلة.' : 'ما فيه مشاريع بعد.'}</span>}

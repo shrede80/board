@@ -6,7 +6,7 @@ import { EditorPanel } from '../Editor';
 import { IdeaEditDialog } from '../Ideas';
 import { Modals } from '../Modals';
 import { PresentationMode } from '../Present';
-import { ChoiceDialog } from '../Search';
+import { ChoiceDialog, SearchDialog } from '../Search';
 import { AddSheet } from './AddSheet';
 import { ChallengeLayer } from '../Challenge';
 
@@ -47,6 +47,7 @@ export function MobileApp() {
   const editor = useApp((s) => s.editor);
   const addSheet = useApp((s) => s.addSheet);
   const ideaSheet = useApp((s) => s.ideaSheet);
+  const modal = useApp((s) => s.modal);
   useApp((s) => s.dataVersion);
   const nNew = liveIdeas().filter((i) => i.isNew).length;
   const nPending = useApp((s) => s.pending.length);
@@ -92,6 +93,7 @@ export function MobileApp() {
       {addSheet && <AddSheet />}
       {ideaSheet && <IdeaSheet />}
       <Modals />
+      {modal === 'search' && <SearchDialog />}
       <ChoiceDialog />
       <IdeaEditDialog />
       <PresentationMode />

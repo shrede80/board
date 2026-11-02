@@ -164,6 +164,14 @@ test('sweep', async ({ page, viewport }) => {
       await step('ideas', theme, async () => { await page.getByTestId('ideas-all').click(); await page.waitForTimeout(500); });
     } else {
       await step('project', theme, async () => { await page.getByTestId('my-projects').getByTestId('project-card').first().click(); await page.getByTestId('m-scenes').waitFor(); await keepTheme(); });
+      await step('board', theme, async () => { await page.getByText('لوحة الأفكار', { exact: true }).first().click(); await page.getByTestId('m-board').waitFor(); await page.waitForTimeout(500); });
+      await step('board-add-sheet', theme, async () => { await page.getByTestId('m-board-add').click(); await page.getByTestId('m-board-add-sheet').waitFor(); });
+      await page.keyboard.press('Escape').catch(() => {});
+      await page.goBack().catch(() => {});
+      await step('board-more-sheet', theme, async () => { await page.getByTestId('m-board-more').click(); await page.getByTestId('m-board-more-sheet').waitFor(); });
+      await page.goBack().catch(() => {});
+      await step('board-selected', theme, async () => { await page.getByTestId('m-board-more').click(); await page.getByTestId('m-board-select-all').click(); await page.getByTestId('m-board-selbar').waitFor(); });
+      await page.getByText('المشاهد', { exact: true }).first().click();
       await step('scene-menu', theme, async () => { await page.getByTestId('m-scene-dots').first().click(); await page.getByTestId('m-plan').waitFor(); });
       await esc();
       await step('scene-add-menu', theme, async () => { await page.getByTestId('m-add-scene').scrollIntoViewIfNeeded(); await page.getByTestId('m-add-scene').click(); await page.getByTestId('scene-add-menu').waitFor(); });

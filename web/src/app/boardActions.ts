@@ -5,7 +5,7 @@ import { MAX_UPLOAD_BYTES, type Op, type Row } from '../../../shared/schema';
 import { findShot } from '../data/project';
 import { MOOD_PALETTE, MOODS } from '../lib/constants';
 import { pad2, uid } from '../lib/util';
-import { addScene, addShot, centerWorldRef, commit, nextZ, createFromTemplate, deleteScene, deleteShot, deleteSelection, duplicateShot, moveScene, moveShot, openEditor, renumberOps } from './actions';
+import { addScene, addShot, centerWorldRef, commit, nextZ, createFromTemplate, deleteScene, deleteShot, deleteSelection, duplicateShot, moveScene, moveShot, openEditor, renumberOps, toggleFilter } from './actions';
 import { boardItems, boxOf, fitAll, itemBoxes, itemOf, openItem, posOp, autoArrange, type Item } from './board';
 import { uploadFile } from './images';
 import { kb } from './keyLabels';
@@ -438,7 +438,7 @@ export function itemsMenu(ids: string[]): MenuEntry[] {
       { label: 'إطار حول المحدد', icon: 'frame', keys: kb('frameSel'), run: frameSelection, testid: 'm-frame-around' },
       { label: 'تكرار', icon: 'repeat', keys: kb('duplicate'), run: () => duplicateSelection(ids) },
       { label: 'نسخ', icon: 'copy', keys: kb('copy'), run: () => copySelection() },
-      { label: 'الترتيب (أمام / خلف)', icon: 'layers', children: ORDER_ITEMS(ids) },
+      { label: 'الترتيب (أمام / خلف)', icon: 'layers', children: ORDER_ITEMS(ids), testid: 'm-order' },
       lockItem,
       'sep',
       { label: `حذف ${n} عناصر`, icon: 'trash', keys: kb('delete'), danger: true, run: deleteSelection, testid: 'm-delete' },
@@ -531,7 +531,7 @@ export function shotMenu(shotId: string): MenuEntry[] {
   if (!p || !f) return [];
   return [
     { label: 'فتح', icon: 'edit', run: () => openEditor('shot', shotId) },
-    { label: 'تكرار', icon: 'repeat', run: () => duplicateShot(shotId) },
+    { label: 'تكرار', icon: 'repeat', run: () => duplicateShot(shotId), testid: 'm-dup-shot' },
     { label: 'نقل إلى مشهد…', icon: 'arrow-up-right', testid: 'm-move-to', children: p.scenes.map((sc, i) => ({
       label: `${pad2(i + 1)} · ${sc.name}`, disabled: sc.id === f.sc.id, testid: `m-move-${i + 1}`,
       run: () => (moveShot(shotId, sc.id, null), toast(`انتقلت للمشهد ${pad2(i + 1)}`, { undo: true })),
@@ -541,9 +541,21 @@ export function shotMenu(shotId: string): MenuEntry[] {
   ];
 }
 
+/** A library item as a card in the middle of the board (the laptop drags it there; on the phone it's a menu item). */
+export function addLibToBoard(type: LibType, id: string) {
+  const p = project();
+  if (!p) return;
+  if (p.cards.some((c) => c.kind === type && c.refId === id)) return toast('موجود على اللوحة');
+  const pos = centerWorldRef();
+  commit([{ op: 'create', entity: 'boardCards', id: uid('bc'), fields: { projectId: p.id, kind: type, refId: id, x: Math.round(pos.x), y: Math.round(pos.y), z: nextZ() } }], { history: 'إضافة إلى اللوحة' });
+  toast('انضاف للوحة الأفكار');
+}
+
 export function libMenu(type: LibType, id: string): MenuEntry[] {
   return [
     { label: 'تعديل', icon: 'edit', run: () => openEditor(type, id) },
+    { label: 'أضفه إلى لوحة الأفكار', icon: 'grid', run: () => addLibToBoard(type, id), testid: 'm-lib-to-board' },
+    ...(type === 'moodboard' ? [] : [{ label: 'اعرض مشاهده', icon: 'search', run: () => toggleFilter(type, id), testid: 'm-lib-filter' }]),
     { label: 'تكرار', icon: 'repeat', run: () => duplicateLib(type, id), testid: 'm-duplicate' },
     'sep',
     { label: 'حذف (للسلة)', icon: 'trash', danger: true, run: () => deleteLib(type, id), testid: 'm-delete' },

@@ -302,7 +302,7 @@ export function SettingsPage() {
         <Card>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <h2 style={{ margin: 0, fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 20 }}>المظهر</h2>
-            <div style={{ display: 'flex', gap: 24 }}>
+            <div data-testid="theme-toggle" style={{ display: 'flex', gap: 24 }}>
               <Radio checked={theme === 'light'} onChange={() => void setTheme('light')} label="فاتح" />
               <Radio checked={theme === 'dark'} onChange={() => void setTheme('dark')} label="داكن" />
             </div>

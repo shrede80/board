@@ -1,5 +1,6 @@
 import { APP_VERSION } from '../../../../shared/version';
 import { askLogout } from '../../app/projects';
+import { setTheme } from '../../app/actions';
 import { setState, useApp } from '../../app/state';
 import { Icon } from '../../ds/ds';
 import { EquipmentPage, SettingsPage, TrashPage } from '../Pages';
@@ -7,6 +8,7 @@ import { iconBtn } from './kit';
 
 /** «المزيد» (UPDATE-1 ج7): equipment, trash, settings, sign out, version. */
 export function MMore() {
+  const theme = useApp((s) => s.theme);
   const screen = useApp((s) => s.screen);
   const bootOffline = useApp((s) => s.bootOffline);
   if (screen === 'equipment' || screen === 'trash' || screen === 'settings') {
@@ -35,6 +37,7 @@ export function MMore() {
       {row('camera', 'معداتي', () => setState({ screen: 'equipment' }), 'more-equipment')}
       {row('trash', 'سلة المحذوفات', () => setState({ screen: 'trash' }), 'more-trash')}
       {row('settings', 'الإعدادات', () => setState({ screen: 'settings' }), 'more-settings')}
+      {row(theme === 'dark' ? 'sun' : 'settings', theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن', () => void setTheme(theme === 'dark' ? 'light' : 'dark'), 'm-theme-quick')}
       {row('log-out', 'تسجيل الخروج', askLogout, 'menu-logout', true)}
       <span style={{ marginTop: 18, fontSize: 12, color: 'var(--color-text-muted)', textAlign: 'center' }}>لوحة المشاهد · النسخة <bdi data-testid="app-version" dir="ltr">{APP_VERSION}</bdi></span>
     </div>

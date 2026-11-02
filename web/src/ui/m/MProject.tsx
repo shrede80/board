@@ -4,11 +4,11 @@ import { refreshSceneTemplates, saveProjectEntry, saveSceneEntry, sceneAddMenu }
 import { TemplateBadge } from '../Templates';
 import { MBoard } from './MBoard';
 import { useEffect, useRef, useState } from 'react';
-import { addScene, addShot, commit, createFromTemplate, deleteScene, moveScene, moveShot, openEditor, openProject, undo } from '../../app/actions';
+import { addScene, addShot, commit, createFromTemplate, deleteScene, moveScene, moveShot, openEditor, openProject, redo, undo } from '../../app/actions';
 import { duplicateSelection, libMenu, shotMenu } from '../../app/boardActions';
 import { openPresent } from '../../app/present';
 import { archiveProject, askDuplicate, deleteProject, renameProject } from '../../app/projects';
-import { openMenu, setState, toast, useApp, useEquipment, useProject, type MenuEntry } from '../../app/state';
+import { engine, openMenu, setState, toast, useApp, useEquipment, useProject, type MenuEntry } from '../../app/state';
 import { allShots, camLine, coverOf, moodHex, moveLine, sceneDur, type PLib, type PProject, type PScene, type ShotRef } from '../../data/project';
 import { EmptyState, Icon, Tabs } from '../../ds/ds';
 import { ORDER, STATUS, type Status } from '../../lib/constants';
@@ -30,6 +30,9 @@ export function MProject() {
   const tab = useApp((s) => s.mTab);
   const offline = useApp((s) => s.offline);
   const canUndo = useApp((s) => s.canUndo);
+  const canRedo = useApp((s) => s.canRedo);
+  const filter = useApp((s) => s.filter);
+  const save = useApp((s) => s.save);
   const bootOffline = useApp((s) => s.bootOffline);
   const list = useSummaries();
   const [renaming, setRenaming] = useState(false);
@@ -48,7 +51,8 @@ export function MProject() {
   const done = all.filter((x) => x.sh.status !== 'planned').length;
   const total = p.scenes.reduce((a, s) => a + sceneDur(s), 0);
   const switchMenu: MenuEntry[] = [
-    ...(list ?? []).filter((s) => !s.archived).map((s) => ({ label: s.name, icon: s.id === p.id ? 'check' : 'folder', disabled: s.id === p.id, run: () => void openProject(s.id), testid: 'm-switch-project' })),
+    ...(list ?? []).filter((s) => !s.archived || s.id === p.id).map((s) => ({ label: s.name, icon: s.id === p.id ? 'check' : 'folder', disabled: s.id === p.id, run: () => void openProject(s.id), testid: 'm-switch-project' })),
+    ...((list ?? []).some((s) => s.archived && s.id !== p.id) ? ['sep' as const, { label: 'المؤرشفة', note: true } as MenuEntry, ...(list ?? []).filter((s) => s.archived && s.id !== p.id).map((s) => ({ label: s.name, icon: 'folder', run: () => void openProject(s.id), testid: 'm-switch-archived' }))] : []),
     'sep',
     { label: 'إعدادات المشروع…', icon: 'settings', run: () => setState({ modal: 'projectSettings' }), testid: 'pm-settings' },
   ];
@@ -58,6 +62,7 @@ export function MProject() {
     { label: 'تكرار المشروع', icon: 'repeat', run: () => askDuplicate(p.id, p.name), testid: 'pm-duplicate' },
     ...saveProjectEntry(p.id, p.name, p.templateKind),
     { label: 'تصدير…', icon: 'download', run: () => setState({ modal: 'export' }), testid: 'pm-export' },
+    { label: 'بحث', icon: 'search', run: () => setState({ modal: 'search' }), testid: 'pm-search' },
     { label: 'عرض المشروع', icon: 'play', run: () => openPresent(0), testid: 'pm-present' },
     { label: p.archived ? 'إلغاء الأرشفة' : 'أرشفة', icon: 'folder', run: () => archiveProject(!p.archived), testid: 'pm-archive' },
     'sep',
@@ -78,10 +83,13 @@ export function MProject() {
           <button data-testid="project-menu" onClick={(e) => openMenu(at(e).x, at(e).y, switchMenu, 'project-menu-list')} style={{ flex: 1, minWidth: 0, minHeight: 44, display: 'flex', alignItems: 'center', gap: 6, border: 'none', background: 'transparent', color: 'var(--color-text)', padding: '0 6px', textAlign: 'right' }}>
             <span data-testid="project-name" style={{ fontFamily: 'var(--font-serif-text)', fontWeight: 700, fontSize: 20, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
             {p.templateKind && <TemplateBadge />}
+            {p.archived && <span data-testid="m-archived" style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, color: 'var(--color-text-muted)', border: '1px solid var(--color-border)', borderRadius: 999, padding: '1px 8px', flexShrink: 0 }}>مؤرشف</span>}
             <Icon name="chevron-down" size={16} />
           </button>
         )}
+        {save === 'error' && <button data-testid="m-save-error" onClick={() => engine.retry()} style={{ minHeight: 44, padding: '0 10px', border: 'none', borderRadius: 10, background: 'transparent', color: 'var(--color-danger)', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>ما انحفظ ↻</button>}
         <button aria-label="تراجع" data-testid="m-undo" disabled={!canUndo || offline} onClick={() => void undo()} style={{ ...iconBtn, opacity: canUndo ? 1 : 0.35 }}><UndoIcon /></button>
+        <button aria-label="إعادة" data-testid="m-redo" disabled={!canRedo || offline} onClick={() => void redo()} style={{ ...iconBtn, opacity: canRedo ? 1 : 0.35 }}><UndoIcon flip /></button>
         <button aria-label="خيارات المشروع" data-testid="m-project-more" disabled={offline} onClick={(e) => openMenu(at(e).x, at(e).y, moreMenu, 'project-more')} style={iconBtn}><Icon name="more" size={20} /></button>
       </header>
       <div className="m-tabs" style={{ padding: '0 14px 8px' }}>
@@ -93,7 +101,8 @@ export function MProject() {
             <span><b style={{ color: 'var(--color-text)' }}>{`${p.scenes.length} مشاهد · ${all.length} لقطة`}</b>{` · ${mmss(total)}`}</span>
             <span>{`${done} تصوّرت`}</span>
           </div>
-          {p.scenes.map((sc, si) => <SceneBlock key={sc.id} p={p} sc={sc} si={si} />)}
+          <FilterBar p={p} />
+          {p.scenes.map((sc, si) => (filter && !(filter.kind === 'character' ? sc.characterIds.includes(filter.id) : sc.locationId === filter.id) ? null : <SceneBlock key={sc.id} p={p} sc={sc} si={si} />))}
           <button data-testid="m-add-scene" disabled={offline} onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); void sceneAddMenu(r.right - 12, r.top, () => addScene({ open: true })); }} style={{ width: '100%', height: 52, marginTop: 14, border: '1.5px dashed var(--color-border)', borderRadius: 10, background: 'transparent', color: 'var(--color-text)', fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             <Icon name="plus" size={17} />مشهد جديد
           </button>
@@ -107,6 +116,20 @@ export function MProject() {
 }
 
 // ---------- scenes ----------
+
+/** «تعرض: مشاهد فهد (3)» with ✕: the library's «اعرض مشاهده» (the laptop's FilterBanner). */
+export function FilterBar({ p }: { p: PProject }) {
+  const f = useApp((s) => s.filter);
+  if (!f) return null;
+  const e = f.kind === 'character' ? p.library.characters.find((c) => c.id === f.id) : p.library.locations.find((l) => l.id === f.id);
+  const n = p.scenes.filter((sc) => (f.kind === 'character' ? sc.characterIds.includes(f.id) : sc.locationId === f.id)).length;
+  return (
+    <div data-testid="m-filter-bar" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '6px 0', padding: '0 4px 0 10px', minHeight: 48, borderRadius: 12, background: 'var(--color-accent-soft)', fontSize: 14, fontWeight: 700 }}>
+      <span style={{ flex: 1 }}>{`تعرض: مشاهد ${e ? (e.name as string) : ''} (${n})`}</span>
+      <button data-testid="m-filter-clear" aria-label="إلغاء الفلتر" onClick={() => setState({ filter: null })} style={{ width: 44, height: 44, border: 'none', borderRadius: 10, background: 'transparent', color: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" size={18} /></button>
+    </div>
+  );
+}
 
 function sceneMenu(p: PProject, sc: PScene, si: number): MenuEntry[] {
   const n = p.scenes.length;
@@ -129,6 +152,10 @@ function sceneMenu(p: PProject, sc: PScene, si: number): MenuEntry[] {
 
 function SceneBlock({ p, sc, si }: { p: PProject; sc: PScene; si: number }) {
   const offline = useApp((s) => s.offline);
+  const sf = useFields().shown.sceneCard; // «الحقول»: what the scene shows, like the laptop's row
+  const loc = sc.locationId ? p.library.locations.find((l) => l.id === sc.locationId) : null;
+  const chars = sf.has('characters') ? sc.characterIds.map((id) => p.library.characters.find((c) => c.id === id)).filter((c): c is NonNullable<typeof c> => !!c) : [];
+  const meta = [sf.has('intExt') && `${sc.intExt === 'int' ? 'داخلي' : 'خارجي'} · ${sc.dayNight === 'night' ? 'ليل' : 'نهار'}`, sf.has('location') && (loc ? (loc.name as string) : 'بلا موقع'), chars.length > 0 && chars.map((c) => c.name as string).join('، ')].filter(Boolean) as string[];
   return (
     <section data-testid="m-scene" data-scene-id={sc.id} style={{ paddingTop: 14 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -139,6 +166,7 @@ function SceneBlock({ p, sc, si }: { p: PProject; sc: PScene; si: number }) {
         <span style={{ fontSize: 13, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>{`${sc.shots.length} لقطة · ${mmss(sceneDur(sc))}`}</span>
         <button aria-label="خيارات المشهد" data-testid="m-scene-dots" disabled={offline} onClick={(e) => openMenu(at(e).x, at(e).y, sceneMenu(p, sc, si), 'scene-menu')} style={{ ...iconBtn, color: 'var(--color-text-muted)' }}><Icon name="more" size={19} /></button>
       </div>
+      {meta.length > 0 && <div data-testid="m-scene-meta" style={{ margin: '-2px 0 2px', paddingInlineStart: 12, fontSize: 12, color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{meta.join(' · ')}</div>}
       <ShotStrip p={p} sc={sc} si={si} />
     </section>
   );
@@ -175,6 +203,8 @@ function ShotStrip({ p, sc, si }: { p: PProject; sc: PScene; si: number }) {
     g.current = null;
     if (!s.on) return;
     suppress.current = true;
+    // the click that follows a slide may not reach the button: don't let the flag eat the next real tap
+    setTimeout(() => (suppress.current = false), 80);
     setDrag(null);
     if (s.moved && s.over !== s.from) {
       moveShot(s.id, sc.id, s.over > s.from ? s.over + 1 : s.over);
@@ -188,7 +218,7 @@ function ShotStrip({ p, sc, si }: { p: PProject; sc: PScene; si: number }) {
         const target = drag && !lifted && drag.over === hi;
         return (
           <button key={sh.id} data-testid="m-strip-shot" data-shot-id={sh.id} data-strip-i={hi} data-status={sh.status}
-            onClick={() => { if (suppress.current) return void (suppress.current = false); openEditor('shot', sh.id); }}
+            onClick={() => { if (suppress.current) return; openEditor('shot', sh.id); }}
             onContextMenu={(e) => e.preventDefault()}
             onPointerDown={(e) => {
               if (offline || e.button > 0) return;
@@ -293,6 +323,7 @@ function ShotList({ p }: { p: PProject }) {
                       {(cf.has('size') || cf.has('dur')) && <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>{[cf.has('size') && (x.sh.size ?? ''), cf.has('dur') && mmss(x.sh.durationS)].filter(Boolean).join(' · ')}</span>}
                     </span>
                   </button>
+                  <button title="خيارات اللقطة" aria-label="خيارات اللقطة" data-testid="m-shot-dots" disabled={offline} onClick={(e) => openMenu(at(e).x, at(e).y, shotMenu(x.sh.id), 'shot-menu')} style={{ ...iconBtn, width: 44, color: 'var(--color-text-muted)' }}><Icon name="more" size={18} /></button>
                   <button title="تغيير الحالة" data-testid="m-status" data-status={x.sh.status} disabled={offline} onClick={() => cycle(x.sh.id, x.sh.status)} style={{ width: 84, height: 48, flexShrink: 0, borderRadius: 999, border: `1.5px solid ${sv.sBorder}`, background: sv.sBg, color: sv.sFg, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: offline ? 0.45 : 1 }}>
                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: sv.dot, border: `1.5px solid ${sv.ring}` }} />{sv.status}
                   </button>
