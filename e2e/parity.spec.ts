@@ -19,7 +19,8 @@ test('every phone twin in the parity table exists in the phone code', () => {
   const missing: string[] = [];
   for (const [id, t] of Object.entries(PHONE_TWIN)) {
     if ('keyboard' in t) continue;
-    const re = new RegExp(`(data-testid=["'{\`]|testid: ['"\`]|testid=["'])${t.phone}["'\`]`);
+    // the id as a quoted token (a data-testid, a menu item's testid, or one passed to a row helper)
+    const re = new RegExp(`['"\`]${t.phone}['"\`]`);
     if (!re.test(PHONE_CODE)) missing.push(`${id} → ${t.phone}`);
   }
   expect(missing).toEqual([]);

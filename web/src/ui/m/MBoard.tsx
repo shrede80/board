@@ -72,7 +72,7 @@ function BoardBars() {
     { label: 'توزيع عمودي', run: () => distributeSel('v'), testid: 'm-dist-v' },
   ];
   return (
-    <div style={{ position: 'absolute', left: 0, right: 0, bottom: 10, zIndex: 14, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, pointerEvents: 'none', opacity: dragging ? 0.35 : 1, transition: 'opacity 150ms' }}>
+    <div style={{ position: 'absolute', left: 0, right: 0, bottom: 34, zIndex: 14, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, pointerEvents: 'none', opacity: dragging ? 0.35 : 1, transition: 'opacity 150ms' }}>
       {n > 0 && (
         <div data-testid="m-board-selbar" style={{ ...pill, pointerEvents: 'auto' }}>
           {n > 1 && <span data-testid="m-board-count" aria-label={`${n} محددة`} style={{ ...barBtn(true), cursor: 'default', fontSize: 15 }}>{n}</span>}

@@ -127,6 +127,9 @@ test('phone: the shot plan selects several items, zooms and shows its legend fro
   await page.getByTestId('plan-m-select').click();
   const cdp = await page.context().newCDPSession(page);
   const tap = async (sel: string) => {
+    // the plan glides the item above the sheet after a tap: wait until it stops, then tap where it is
+    let last = '';
+    await expect.poll(async () => { const now = JSON.stringify(await page.locator(sel).first().boundingBox()); const same = now === last; last = now; return same; }, { intervals: [250, 250, 250, 250, 250, 250] }).toBe(true);
     const b = (await page.locator(sel).first().boundingBox())!;
     const x = b.x + b.width / 2, y = b.y + b.height / 2;
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y, id: 1 }] });
